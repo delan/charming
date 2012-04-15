@@ -296,7 +296,21 @@
 							return l;
 						});
 						data_blocks = s;
-						data_ready();
+						get_file('NameAliases.txt', function(s) {
+							s = s.split('\n');
+							s = s.map(function(l) {
+								l = l.split(';');
+								l[0] = parseInt(l[0], 16);
+								return l;
+							});
+							s = s.filter(function(l) {
+								return (l[2] == 'control');
+							});
+							s.forEach(function(l) {
+								data_main[l[0]][0] = l[1];
+							});
+							data_ready();
+						});
 					});
 				});
 			}
