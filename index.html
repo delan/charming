@@ -69,6 +69,30 @@
 				white-space: pre;
 				font-family: monospace;
 			}
+			#toolbox {
+				width: 50%;
+				position: absolute;
+				bottom: 0;
+				right: 0;
+			}
+			#toolbox div {
+				padding: 1em;
+			}
+			.dialog {
+				display: none;
+				background: white;
+				position: absolute;
+				top: 15%;
+				left: 15%;
+				bottom: 15%;
+				right: 15%;
+				border: 1px solid black;
+				padding: 1em;
+			}
+			#help td {
+				border: none;
+				padding: 0em 1em 0em 0em;
+			}
 		</style>
 	</head>
 	<body>
@@ -96,6 +120,45 @@
 				<span></span>
 			</div>
 		</section>
+		<div id="toolbox">
+			<div>
+				<button data-dialog-id="help">Help</button>
+				<button data-dialog-id="goto">Go to</button>
+				<button data-dialog-id="search">Search</button>
+			</div>
+		</div>
+		<div id="help" class="dialog">
+			<div>
+				<h2>Help</h2>
+				<table>
+					<tr><td>Left arrow<td>Previous character
+					<tr><td>Right arrow<td>Next character
+					<tr><td>Up arrow<td>Previous row
+					<tr><td>Down arrow<td>Next row
+					<tr><td>Home<td>First character in view
+					<tr><td>End<td>Last character in view
+					<tr><td>Page up<td>Previous view
+					<tr><td>Page down<td>Next view
+					<tr><td>Plus<td>Zoom in
+					<tr><td>Minus<td>Zoom out
+				</table>
+			</div>
+		</div>
+		<div id="goto" class="dialog">
+			<div>
+				<h2>Go to codepoint (decimal)</h2>
+				<input id="cp_input"> <button id="goto_cp">Go</button>
+				<h2>Go to codepoint (hexadecimal)</h2>
+				<input id="cp_hex_input"> <button id="goto_cp_hex">Go</button>
+				<h2>Go to character</h2>
+				<input id="char_input"> <button id="goto_char">Go</button>
+			</div>
+		</div>
+		<div id="search" class="dialog">
+			<div>
+				<h2>Search</h2>
+			</div>
+		</div>
 		<script>
 			function $(s) {
 				return Array.prototype.slice.call(
@@ -115,6 +178,11 @@
 					String.fromCharCode(
 						0xd800 + ((c - 0x10000) >>> 10),
 						0xdc00 + ((c - 0x10000) & 0x3ff));
+			}
+			function surr2cp(s) {
+				var a = s.charCodeAt(0);
+				var b = s.charCodeAt(1);
+				return 0x10000 + (((a - 0xd800) << 10) | (b - 0xdc00));
 			}
 			function padb(s) {
 				s = s.toString(16).toUpperCase();
@@ -309,7 +377,6 @@
 			var data_main = [];
 			var data_blocks;
 			addEventListener('keydown', function(e) {
-				console.log(e.keyCode);
 				switch (e.keyCode) {
 					case 33: grid_goby(-grid_w * grid_h); break;
 					case 34: grid_goby(grid_w * grid_h); break;
@@ -329,7 +396,7 @@
 						break;
 					case 109:
 					case 189:
-						if (grid_w == 32)
+						if (grid_w == 16)
 							break;
 						grid_w = grid_h *= 2;
 						grid_construct();
@@ -337,6 +404,32 @@
 						break;
 				}
 			});
+			$('.dialog').forEach(function(e) {
+				e.style.display = 'none';
+			});
+			$('#toolbox button').forEach(function(b) {
+				b.addEventListener('click', function(e) {
+					var dialog = $$('#' + e.target.dataset.dialogId);
+					var already_open = (dialog.style.display == 'block');
+					$('.dialog').forEach(function(e) {
+						e.style.display = 'none';
+					});
+					dialog.style.display = already_open ? 'none' : 'block';
+				}, false);
+			});
+			$$('#goto_cp').addEventListener('click', function() {
+				grid_goto(parseInt($$('#cp_input').value, 10));
+			}, false);
+			$$('#goto_cp_hex').addEventListener('click', function() {
+				grid_goto(parseInt($$('#cp_hex_input').value, 16));
+			}, false);
+			$$('#goto_char').addEventListener('click', function() {
+				var s = $$('#char_input').value;
+				if (s.charCodeAt(0) >= 0xd800 && s.charCodeAt(0) < 0xdc00)
+					grid_goto(surr2cp(s));
+				else
+					grid_goto(s.charCodeAt(0));
+			}, false);
 			load_data();
 		</script>
 	</body>
