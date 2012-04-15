@@ -147,11 +147,17 @@
 		<div id="goto" class="dialog">
 			<div>
 				<h2>Go to codepoint (decimal)</h2>
-				<input id="cp_input"> <button id="goto_cp">Go</button>
+				<form id="goto_cp">
+					<input id="cp_input"> <input type="submit" value="Go">
+				</form>
 				<h2>Go to codepoint (hexadecimal)</h2>
-				<input id="cp_hex_input"> <button id="goto_cp_hex">Go</button>
+				<form id="goto_cp_hex">
+					<input id="cp_hex_input"> <input type="submit" value="Go">
+				</form>
 				<h2>Go to character</h2>
-				<input id="char_input"> <button id="goto_char">Go</button>
+				<form id="goto_char">
+					<input id="char_input"> <input type="submit" value="Go">
+				</form>
 			</div>
 		</div>
 		<div id="search" class="dialog">
@@ -418,21 +424,24 @@
 					dialog.style.display = already_open ? 'none' : 'block';
 				}, false);
 			});
-			$$('#goto_cp').addEventListener('click', function() {
+			$$('#goto_cp').addEventListener('submit', function(e) {
 				grid_goto(parseInt($$('#cp_input').value, 10));
 				close_all_dialogs();
+				e.preventDefault();
 			}, false);
-			$$('#goto_cp_hex').addEventListener('click', function() {
+			$$('#goto_cp_hex').addEventListener('submit', function(e) {
 				grid_goto(parseInt($$('#cp_hex_input').value, 16));
 				close_all_dialogs();
+				e.preventDefault();
 			}, false);
-			$$('#goto_char').addEventListener('click', function() {
+			$$('#goto_char').addEventListener('submit', function(e) {
 				var s = $$('#char_input').value;
 				if (s.charCodeAt(0) >= 0xd800 && s.charCodeAt(0) < 0xdc00)
 					grid_goto(surr2cp(s));
 				else
 					grid_goto(s.charCodeAt(0));
 				close_all_dialogs();
+				e.preventDefault();
 			}, false);
 			load_data();
 		</script>
