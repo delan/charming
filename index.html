@@ -368,6 +368,11 @@
 					['[unassigned or no known name]',
 						'', '', '', '', '', '', '', '', '', ''];
 			}
+			function close_all_dialogs() {
+				$('.dialog').forEach(function(e) {
+					e.style.display = 'none';
+				});
+			}
 			var grid_w = 16;
 			var grid_h = 16;
 			var grid_s = 0;
@@ -404,24 +409,22 @@
 						break;
 				}
 			});
-			$('.dialog').forEach(function(e) {
-				e.style.display = 'none';
-			});
+			close_all_dialogs();
 			$('#toolbox button').forEach(function(b) {
 				b.addEventListener('click', function(e) {
 					var dialog = $$('#' + e.target.dataset.dialogId);
 					var already_open = (dialog.style.display == 'block');
-					$('.dialog').forEach(function(e) {
-						e.style.display = 'none';
-					});
+					close_all_dialogs();
 					dialog.style.display = already_open ? 'none' : 'block';
 				}, false);
 			});
 			$$('#goto_cp').addEventListener('click', function() {
 				grid_goto(parseInt($$('#cp_input').value, 10));
+				close_all_dialogs();
 			}, false);
 			$$('#goto_cp_hex').addEventListener('click', function() {
 				grid_goto(parseInt($$('#cp_hex_input').value, 16));
+				close_all_dialogs();
 			}, false);
 			$$('#goto_char').addEventListener('click', function() {
 				var s = $$('#char_input').value;
@@ -429,6 +432,7 @@
 					grid_goto(surr2cp(s));
 				else
 					grid_goto(s.charCodeAt(0));
+				close_all_dialogs();
 			}, false);
 			load_data();
 		</script>
