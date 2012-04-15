@@ -192,7 +192,8 @@
 				$$('#loading span').textContent += '\n+ ' + url;
 				r.open('GET', url);
 				r.setRequestHeader('Content-type', ct);
-				r.overrideMimeType(ct);
+				if (r.overrideMimeType)
+					r.overrideMimeType(ct);
 				r.addEventListener('readystatechange', function(e) {
 					if (r.readyState == 4)
 						fn(r.responseText, r, e);
