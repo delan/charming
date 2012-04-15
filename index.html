@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>charming</title>
+		<style>
+			* {
+				margin: 0;
+				padding: 0;
+				border-collapse: collapse;
+				font-family: sans-serif;
+				font-size: 16px;
+			}
+			html, body {
+				height: 100%;
+			}
+			section {
+				float: left;
+				width: 50%;
+				height: 100%;
+			}
+			td, th {
+				border: 1px solid #ccc;
+				padding: 0.5em;
+			}
+			h1 {
+				font-size: 2em;
+			}
+			#grid {
+				width: 100%;
+				height: 100%;
+				table-layout: fixed;
+			}
+			#grid td {
+				padding: 0;
+				text-align: center;
+				vertical-align: middle;
+			}
+			#grid td.selected {
+				background: #ccc;
+			}
+			#grid th {
+				font-size: 50%;
+				font-family: monospace;
+				word-wrap: break-word;
+			}
+			#info_section {
+				display: none;
+			}
+			#info table {
+				margin-top: 0.5em;
+			}
+			#i_cp {
+				font-family: monospace;
+				font-weight: bold;
+			}
+			#i_name {
+				font-weight: bold;
+			}
+			#i_disp {
+				float: right;
+				font-size: 10em;
+				padding-right: 0.4em;
+			}
+			#info, #loading {
+				margin: 1em;
+			}
+			#loading span {
+				white-space: pre;
+				font-family: monospace;
+			}
+		</style>
+	</head>
+	<body>
+		<section>
+			<table id="grid"></table>
+		</section>
+		<section id="info_section">
+			<div id="info">
+				<div id="i_disp"></div>
+				<div id="i_cp"></div>
+				<div id="i_name"></div>
+				<table>
+					<tr><td>Block<td id="i_block">
+					<tr><td>UTF-8<td id="i_utf8">
+					<tr><td>UTF-16 BE<td id="i_utf16be">
+					<tr><td>UTF-16 LE<td id="i_utf16le">
+					<tr><td>UTF-32 BE<td id="i_utf32be">
+					<tr><td>UTF-32 LE<td id="i_utf32le">
+				</table>
+			</div>
+		</section>
+		<section id="loading_section">
+			<div id="loading">
+				<h1>Loading, please wait...</h1>
+				<span></span>
+			</div>
+		</section>
+		<script>
+			function $(s) {
+				return Array.prototype.slice.call(
+					document.querySelectorAll(s));
+			}
+			function $$(s) {
+				return document.querySelector(s);
+			}
+			function $e(element, tag_name, text) {
+				var new_element = document.createElement(tag_name);
+				new_element.textContent = text ? text : '';
+				element.appendChild(new_element);
+				return new_element;
+			}
+			function fcc(c) {
+				return (c < 0x10000) ? String.fromCharCode(c) :
+					String.fromCharCode(
+						0xd800 + ((c - 0x10000) >>> 10),
+						0xdc00 + ((c - 0x10000) & 0x3ff));
+			}
+			function padb(s) {
+				s = s.toString(16).toUpperCase();
+				if (s.length < 2)
+					s = ('00' + s).slice(-2);
+				return s;
+			}
+			function cp2str(s) {
+				s = s.toString(16).toUpperCase();
+				if (s.length < 4)
+					s = ('0000' + s).slice(-4);
+				return s;
+			}
+			function cp2strl(s) {
+				s = Number(s).toString(16).toUpperCase();
+				if (s.length < 6)
+					s = ('000000' + s).slice(-6);
+				return s;
+			}
+			function as_utf8(c) {
+				if (c < 0x80) {
+					return padb(c);
+				} else if (c < 0x800) {
+					return padb((c >> 6) | 0xc0) + ' ' +
+						padb((c & 0x3f) | 0x80);
+				} else if (c < 0x10000) {
+					return padb((c >> 12) | 0xe0) + ' ' +
+						padb((c >> 6 & 0x3f) | 0x80) + ' ' +
+						padb((c & 0x3f) | 0x80);
+				} else {
+					return padb((c >> 18) | 0xf0) + ' ' +
+						padb((c >> 12 & 0x3f) | 0x80) + ' ' +
+						padb((c >> 6 & 0x3f) | 0x80) + ' ' +
+						padb((c & 0x3f) | 0x80);
+				}
+			}
+			function as_utf16be(c) {
+				if (c < 0x10000) {
+					return padb(c >> 8) + ' ' + padb(c & 0xff);
+				} else {
+					var h = 0xd800 + ((c - 0x10000) >>> 10);
+					var l = 0xdc00 + ((c - 0x10000) & 0x3ff);
+					return padb(h >> 8) + ' ' + padb(h & 0xff) + ' ' +
+						padb(l >> 8) + ' ' + padb(l & 0xff);
+				}
+			}
+			function as_utf16le(c) {
+				if (c < 0x10000) {
+					return padb(c & 0xff) + ' ' + padb(c >> 8);
+				} else {
+					var h = 0xd800 + ((c - 0x10000) >>> 10);
+					var l = 0xdc00 + ((c - 0x10000) & 0x3ff);
+					return padb(h & 0xff) + ' ' + padb(h >> 8) + ' ' +
+						padb(l & 0xff) + ' ' + padb(l >> 8);
+				}
+			}
+			function as_utf32be(c) {
+				return padb(c >> 24) + ' ' + padb((c >> 16) & 0xff) + ' ' +
+					padb((c >> 8) & 0xff) + ' ' + padb(c & 0xff);
+			}
+			function as_utf32le(c) {
+				return padb(c & 0xff) + ' ' + padb((c >> 8) & 0xff) + ' ' +
+					padb((c >> 16) & 0xff) + ' ' + padb(c >> 24);
+			}
+			function find_block(c) {
+				for (var i = 0; i < data_blocks.length; i++)
+					if (c >= data_blocks[i][0] && c <= data_blocks[i][1])
+						return data_blocks[i][2];
+				return '[not in a known block]';
+			}
+			function get_file(url, f) {
+				var ct = 'text/plain; charset=utf-8';
+				var r = new XMLHttpRequest;
+				var fn = f;
+				$$('#loading span').textContent += '\n+ ' + url;
+				r.open('GET', url);
+				r.setRequestHeader('Content-type', ct);
+				r.overrideMimeType(ct);
+				r.addEventListener('readystatechange', function(e) {
+					if (r.readyState == 4)
+						fn(r.responseText, r, e);
+				});
+				r.send(null);
+			}
+			function load_data() {
+				get_file('UnicodeData.txt', function(s) {
+					s = s.split('\n');
+					s.pop();
+					s = s.map(function(l) {
+						return l.split(';');
+					});
+					s.forEach(function(l) {
+						data_main[parseInt(l[0], 16)] = l.slice(1);
+					});
+					get_file('Blocks.txt', function(s) {
+						s = s.split('\n');
+						s = s.filter(function(l) {
+							return /^[A-Z0-9]/.test(l);
+						});
+						s = s.map(function(l) {
+							l = l.split(/\.\.|; /);
+							l[0] = parseInt(l[0], 16);
+							l[1] = parseInt(l[1], 16);
+							return l;
+						});
+						data_blocks = s;
+						data_ready();
+					});
+				});
+			}
+			function data_ready() {
+				$$('#loading_section').style.display = 'none';
+				$$('#info_section').style.display = 'block';
+				grid_construct();
+				grid_goto(0);
+			}
+			function grid_construct() {
+				var grid = $$('#grid');
+				grid.innerHTML = '';
+				grid_c = [];
+				grid_th = [];
+				for (var i = 0; i < grid_h; i++) {
+					var row = grid.insertRow(-1);
+					var cells = [];
+					grid_c.push(cells);
+					grid_th.push($e(row, 'th', '0000'));
+					for (var j = 0; j < grid_w; j++) {
+						var cell = row.insertCell(-1);
+						cells.push(cell);
+						cell.textContent = '-';
+						cell.addEventListener('click', grid_click, false);
+						cell.style.fontSize =  16 / grid_h + 'em';
+					}
+				}
+				grid_populate();
+			}
+			function grid_populate() {
+				for (var i = 0; i < grid_h; i++) {
+					grid_th[i].textContent = cp2str(grid_s + i * grid_h);
+					for (var j = 0; j < grid_w; j++) {
+						var c = grid_s + i * grid_h + j;
+						grid_c[i][j].textContent = fcc(c);
+						grid_c[i][j].dataset.codepoint = c;
+					}
+				}
+			}
+			function grid_goto(c) {
+				if (c < 0 || c > 0x10ffff)
+					return;
+				var grid_s_new = c - c % (grid_w * grid_h);
+				if (grid_s_new != grid_s) {
+					grid_s = grid_s_new;
+					grid_populate();
+				}
+				grid_click({target: grid_c
+					[Math.floor((c - grid_s) / grid_w)]
+					[(c - grid_s) % grid_w]
+				});
+			}
+			function grid_goby(delta) {
+				grid_goto(grid_cur + delta);
+			}
+			function grid_click(e) {
+				var c = Number(e.target.dataset.codepoint);
+				grid_cur = c;
+				$('td').forEach(function(e) {
+					e.className = '';
+				});
+				e.target.className = 'selected';
+				$$('#i_cp').textContent = 'U+' + cp2str(c);
+				$$('#i_name').textContent = data_main_get(c)[0];
+				$$('#i_disp').textContent = fcc(c);
+				$$('#i_block').textContent = find_block(c);
+				$$('#i_utf8').textContent = as_utf8(c);
+				$$('#i_utf16be').textContent = as_utf16be(c);
+				$$('#i_utf16le').textContent = as_utf16le(c);
+				$$('#i_utf32be').textContent = as_utf32be(c);
+				$$('#i_utf32le').textContent = as_utf32le(c);
+			}
+			function data_main_get(c) {
+				return data_main[c] ? data_main[c] :
+					['[unassigned or no known name]',
+						'', '', '', '', '', '', '', '', '', ''];
+			}
+			var grid_w = 16;
+			var grid_h = 16;
+			var grid_s = 0;
+			var grid_cur;
+			var grid_c;
+			var grid_th;
+			var data_main = [];
+			var data_blocks;
+			addEventListener('keydown', function(e) {
+				console.log(e.keyCode);
+				switch (e.keyCode) {
+					case 33: grid_goby(-grid_w * grid_h); break;
+					case 34: grid_goby(grid_w * grid_h); break;
+					case 35: grid_goto(grid_s + grid_w * grid_h - 1); break;
+					case 36: grid_goto(grid_s); break;
+					case 37: grid_goby(-1); break;
+					case 38: grid_goby(-grid_w); break;
+					case 39: grid_goby(1); break;
+					case 40: grid_goby(grid_w); break;
+					case 107:
+					case 187:
+						if (grid_w == 1)
+							break;
+						grid_w = grid_h /= 2;
+						grid_construct();
+						grid_goto(grid_cur);
+						break;
+					case 109:
+					case 189:
+						if (grid_w == 32)
+							break;
+						grid_w = grid_h *= 2;
+						grid_construct();
+						grid_goto(grid_cur);
+						break;
+				}
+			});
+			load_data();
+		</script>
+	</body>
+</html>
