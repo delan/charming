@@ -453,6 +453,7 @@
 			}
 			function hashchange_handler() {
 				var c = parseInt(location.hash.substring(1), 16);
+				close_all_dialogs();
 				if (isNaN(c))
 					location.hash = '#0';
 				else
@@ -510,12 +511,10 @@
 			});
 			$$('#goto_cp').addEventListener('submit', function(e) {
 				grid_goto(parseInt($$('#cp_input').value, 10));
-				close_all_dialogs();
 				e.preventDefault();
 			}, false);
 			$$('#goto_cp_hex').addEventListener('submit', function(e) {
 				grid_goto(parseInt($$('#cp_hex_input').value, 16));
-				close_all_dialogs();
 				e.preventDefault();
 			}, false);
 			$$('#goto_char').addEventListener('submit', function(e) {
@@ -524,7 +523,6 @@
 					grid_goto(surr2cp(s));
 				else
 					grid_goto(s.charCodeAt(0));
-				close_all_dialogs();
 				e.preventDefault();
 			}, false);
 			$$('#search_form').addEventListener('submit', function(e) {
@@ -540,13 +538,8 @@
 					var cp = c;
 					cell = row.insertCell(-1);
 					cell.appendChild(link);
-					link.href = '#';
+					link.href = '#' + c.toString(16);
 					link.textContent = 'U+' + cp2str(c);
-					link.addEventListener('click', function(e) {
-						grid_goto(cp);
-						close_all_dialogs();
-						e.preventDefault();
-					}, false);
 					cell = row.insertCell(-1);
 					cell.textContent = data_main_get(c)[0];
 				});
