@@ -421,6 +421,12 @@
 					e.style.display = 'none';
 				});
 			}
+			function key_lock_on() {
+				key_lock = true;
+			}
+			function key_lock_off() {
+				key_lock = false;
+			}
 			var grid_w = 16;
 			var grid_h = 16;
 			var grid_s = 0;
@@ -430,7 +436,10 @@
 			var data_main = [];
 			var data_blocks;
 			var data_gencat;
+			var key_lock = false;
 			addEventListener('keydown', function(e) {
+				if (key_lock)
+					return;
 				switch (e.keyCode) {
 					case 33: grid_goby(-grid_w * grid_h); break;
 					case 34: grid_goby(grid_w * grid_h); break;
@@ -510,6 +519,10 @@
 				});
 				e.preventDefault();
 			}, false);
+			$('input').forEach(function(e) {
+				e.addEventListener('focus', key_lock_on, false);
+				e.addEventListener('blur', key_lock_off, false);
+			});
 			load_data();
 		</script>
 	</body>
