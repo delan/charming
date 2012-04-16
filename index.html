@@ -364,7 +364,7 @@
 				$$('#loading_section').style.display = 'none';
 				$$('#info_section').style.display = 'block';
 				grid_construct();
-				grid_goto(0);
+				hashchange_handler();
 			}
 			function grid_construct() {
 				var grid = $$('#grid');
@@ -397,8 +397,11 @@
 				}
 			}
 			function grid_goto(c) {
-				if (c < 0 || c > 0x10ffff)
+				if (isNaN(c) || c < 0 || c > 0x10ffff)
 					return;
+				location.hash = '#' + c.toString(16);
+			}
+			function grid_goto_real(c) {
 				var grid_s_new = c - c % (grid_w * grid_h);
 				if (grid_s_new != grid_s) {
 					grid_s = grid_s_new;
@@ -447,6 +450,13 @@
 			}
 			function key_lock_off() {
 				key_lock = false;
+			}
+			function hashchange_handler() {
+				var c = parseInt(location.hash.substring(1), 16);
+				if (isNaN(c))
+					location.hash = '#0';
+				else
+					grid_goto_real(c);
 			}
 			var grid_w = 16;
 			var grid_h = 16;
@@ -546,6 +556,7 @@
 				e.addEventListener('focus', key_lock_on, false);
 				e.addEventListener('blur', key_lock_off, false);
 			});
+			addEventListener('hashchange', hashchange_handler, false);
 			load_data();
 		</script>
 	</body>
