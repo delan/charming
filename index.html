@@ -512,6 +512,7 @@
 					link.textContent = 'U+' + cp2str(c);
 					link.addEventListener('click', function(e) {
 						grid_goto(cp);
+						close_all_dialogs();
 						e.preventDefault();
 					}, false);
 					cell = row.insertCell(-1);
