@@ -106,6 +106,7 @@
 				<div id="i_name"></div>
 				<table>
 					<tr><td>Block<td id="i_block">
+					<tr><td>General category<td id="i_gencat">
 					<tr><td>UTF-8<td id="i_utf8">
 					<tr><td>UTF-16 BE<td id="i_utf16be">
 					<tr><td>UTF-16 LE<td id="i_utf16le">
@@ -259,6 +260,11 @@
 						return data_blocks[i][2];
 				return '[not in a known block]';
 			}
+			function find_gencat(abbr) {
+				return data_gencat[abbr] ?
+					data_gencat[abbr] + ' (' + abbr + ')' :
+					'[not in a known general category]';
+			}
 			function get_file(url, f) {
 				var ct = 'text/plain; charset=utf-8';
 				var r = new XMLHttpRequest;
@@ -309,7 +315,21 @@
 							s.forEach(function(l) {
 								data_main[l[0]][0] = l[1];
 							});
-							data_ready();
+							get_file('PropertyValueAliases.txt', function(s) {
+								s = s.split('\n');
+								s = s.filter(function(l) {
+									return /^gc ;/.test(l);
+								});
+								var r = {};
+								s.forEach(function(l) {
+									r[l.match(/^gc ; ([A-Za-z]+)/)[1]] =
+										l.match(
+										/^gc ; [A-Za-z]+\s+; ([A-Za-z_]+)/)[1].
+										replace(/_/g, ' ');
+								});
+								data_gencat = r;
+								data_ready();
+							});
 						});
 					});
 				});
@@ -368,15 +388,18 @@
 			}
 			function grid_click(e) {
 				var c = Number(e.target.dataset.codepoint);
+				var dm = data_main_get(c);
 				grid_cur = c;
 				$('td').forEach(function(e) {
 					e.className = '';
 				});
 				e.target.className = 'selected';
 				$$('#i_cp').textContent = 'U+' + cp2str(c);
-				$$('#i_name').textContent = data_main_get(c)[0];
+				$$('#i_name').textContent = dm[0];
 				$$('#i_disp').textContent = fcc(c);
 				$$('#i_block').textContent = find_block(c);
+				console.log(data_gencat);
+				$$('#i_gencat').textContent = find_gencat(dm[1]);
 				$$('#i_utf8').textContent = as_utf8(c);
 				$$('#i_utf16be').textContent = as_utf16be(c);
 				$$('#i_utf16le').textContent = as_utf16le(c);
@@ -401,6 +424,7 @@
 			var grid_th;
 			var data_main = [];
 			var data_blocks;
+			var data_gencat;
 			addEventListener('keydown', function(e) {
 				switch (e.keyCode) {
 					case 33: grid_goby(-grid_w * grid_h); break;
