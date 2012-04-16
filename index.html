@@ -82,14 +82,14 @@
 				display: none;
 				background: white;
 				position: absolute;
-				top: 15%;
-				left: 15%;
-				bottom: 15%;
-				right: 15%;
+				top: 1em;
+				left: 55%;
+				bottom: 5em;
+				right: 5%;
 				border: 1px solid black;
 				padding: 1em;
 			}
-			#help td {
+			#help td, #search_result td {
 				border: none;
 				padding: 0em 1em 0em 0em;
 			}
@@ -164,6 +164,12 @@
 		<div id="search" class="dialog">
 			<div>
 				<h2>Search</h2>
+				<form id="search_form">
+					Regular expression: <input id="regex">
+						<input type="submit" value="Go">
+				</form>
+				<table id="search_result">
+				</table>
 			</div>
 		</div>
 		<script>
@@ -398,7 +404,6 @@
 				$$('#i_name').textContent = dm[0];
 				$$('#i_disp').textContent = fcc(c);
 				$$('#i_block').textContent = find_block(c);
-				console.log(data_gencat);
 				$$('#i_gencat').textContent = find_gencat(dm[1]);
 				$$('#i_utf8').textContent = as_utf8(c);
 				$$('#i_utf16be').textContent = as_utf16be(c);
@@ -479,6 +484,30 @@
 				else
 					grid_goto(s.charCodeAt(0));
 				close_all_dialogs();
+				e.preventDefault();
+			}, false);
+			$$('#search_form').addEventListener('submit', function(e) {
+				var r = new RegExp($$('#regex').value, 'i');
+				var table = $$('#search_result');
+				var n = 0;
+				table.innerHTML = '';
+				data_main.forEach(function(d, c) {
+					if (!r.test(d) || ++n > 10)
+						return;
+					var row = table.insertRow(-1);
+					var cell, link = document.createElement('a');
+					var cp = c;
+					cell = row.insertCell(-1);
+					cell.appendChild(link);
+					link.href = '#';
+					link.textContent = 'U+' + cp2str(c);
+					link.addEventListener('click', function(e) {
+						grid_goto(cp);
+						e.preventDefault();
+					}, false);
+					cell = row.insertCell(-1);
+					cell.textContent = data_main_get(c)[0];
+				});
 				e.preventDefault();
 			}, false);
 			load_data();
