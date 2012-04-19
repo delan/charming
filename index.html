@@ -287,10 +287,10 @@
 				r.setRequestHeader('Content-type', ct);
 				if (r.overrideMimeType)
 					r.overrideMimeType(ct);
-				r.addEventListener('readystatechange', function(e) {
+				r.onreadystatechange = function(e) {
 					if (r.readyState == 4)
 						fn(r.responseText, r, e);
-				});
+				};
 				r.send(null);
 			}
 			function load_data() {
