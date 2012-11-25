@@ -106,7 +106,8 @@
 				<div id="i_name"></div>
 				<table>
 					<tr><td>Block<td id="i_block">
-					<tr><td>General category<td id="i_gencat">
+					<tr><td>General category
+						<td id="i_gencat">
 					<tr><td>Introduced in<td id="i_age">
 					<tr><td>UTF-8<td id="i_utf8">
 					<tr><td>UTF-16 BE<td id="i_utf16be">
@@ -150,15 +151,18 @@
 			<div>
 				<h2>Go to codepoint (decimal)</h2>
 				<form id="goto_cp">
-					<input id="cp_input"> <input type="submit" value="Go">
+					<input id="cp_input">
+					<input type="submit" value="Go">
 				</form>
 				<h2>Go to codepoint (hexadecimal)</h2>
 				<form id="goto_cp_hex">
-					<input id="cp_hex_input"> <input type="submit" value="Go">
+					<input id="cp_hex_input">
+					<input type="submit" value="Go">
 				</form>
 				<h2>Go to character</h2>
 				<form id="goto_char">
-					<input id="char_input"> <input type="submit" value="Go">
+					<input id="char_input">
+					<input type="submit" value="Go">
 				</form>
 			</div>
 		</div>
@@ -167,390 +171,390 @@
 				<h2>Search</h2>
 				<form id="search_form">
 					Regular expression: <input id="regex">
-						<input type="submit" value="Go">
+					<input type="submit" value="Go">
 				</form>
 				<table id="search_result">
 				</table>
 			</div>
 		</div>
 		<script>
-			function $(s) {
-				return Array.prototype.slice.call(
-					document.querySelectorAll(s));
-			}
-			function $$(s) {
-				return document.querySelector(s);
-			}
-			function $e(element, tag_name, text) {
-				var new_element = document.createElement(tag_name);
-				new_element.textContent = text ? text : '';
-				element.appendChild(new_element);
-				return new_element;
-			}
-			function fcc(c) {
-				return (c < 0x10000) ? String.fromCharCode(c) :
-					String.fromCharCode(
-						0xd800 + ((c - 0x10000) >>> 10),
-						0xdc00 + ((c - 0x10000) & 0x3ff));
-			}
-			function surr2cp(s) {
-				var a = s.charCodeAt(0);
-				var b = s.charCodeAt(1);
-				return 0x10000 + (((a - 0xd800) << 10) | (b - 0xdc00));
-			}
-			function padb(s) {
-				s = s.toString(16).toUpperCase();
-				if (s.length < 2)
-					s = ('00' + s).slice(-2);
-				return s;
-			}
-			function cp2str(s) {
-				s = s.toString(16).toUpperCase();
-				if (s.length < 4)
-					s = ('0000' + s).slice(-4);
-				return s;
-			}
-			function cp2strl(s) {
-				s = Number(s).toString(16).toUpperCase();
-				if (s.length < 6)
-					s = ('000000' + s).slice(-6);
-				return s;
-			}
-			function as_utf8(c) {
-				if (c < 0x80) {
-					return padb(c);
-				} else if (c < 0x800) {
-					return padb((c >> 6) | 0xc0) + ' ' +
-						padb((c & 0x3f) | 0x80);
-				} else if (c < 0x10000) {
-					return padb((c >> 12) | 0xe0) + ' ' +
-						padb((c >> 6 & 0x3f) | 0x80) + ' ' +
-						padb((c & 0x3f) | 0x80);
-				} else {
-					return padb((c >> 18) | 0xf0) + ' ' +
-						padb((c >> 12 & 0x3f) | 0x80) + ' ' +
-						padb((c >> 6 & 0x3f) | 0x80) + ' ' +
-						padb((c & 0x3f) | 0x80);
-				}
-			}
-			function as_utf16be(c) {
-				if (c < 0x10000) {
-					return padb(c >> 8) + ' ' + padb(c & 0xff);
-				} else {
-					var h = 0xd800 + ((c - 0x10000) >>> 10);
-					var l = 0xdc00 + ((c - 0x10000) & 0x3ff);
-					return padb(h >> 8) + ' ' + padb(h & 0xff) + ' ' +
-						padb(l >> 8) + ' ' + padb(l & 0xff);
-				}
-			}
-			function as_utf16le(c) {
-				if (c < 0x10000) {
-					return padb(c & 0xff) + ' ' + padb(c >> 8);
-				} else {
-					var h = 0xd800 + ((c - 0x10000) >>> 10);
-					var l = 0xdc00 + ((c - 0x10000) & 0x3ff);
-					return padb(h & 0xff) + ' ' + padb(h >> 8) + ' ' +
-						padb(l & 0xff) + ' ' + padb(l >> 8);
-				}
-			}
-			function as_utf32be(c) {
-				return padb(c >> 24) + ' ' + padb((c >> 16) & 0xff) + ' ' +
-					padb((c >> 8) & 0xff) + ' ' + padb(c & 0xff);
-			}
-			function as_utf32le(c) {
-				return padb(c & 0xff) + ' ' + padb((c >> 8) & 0xff) + ' ' +
-					padb((c >> 16) & 0xff) + ' ' + padb(c >> 24);
-			}
-			function find_block(c) {
-				for (var i = 0; i < data_blocks.length; i++)
-					if (c >= data_blocks[i][0] && c <= data_blocks[i][1])
-						return data_blocks[i][2];
-				return '[not in a known block]';
-			}
-			function find_gencat(abbr) {
-				return data_gencat[abbr] ?
-					data_gencat[abbr] + ' (' + abbr + ')' :
-					'[not in a known general category]';
-			}
-			function find_age(c) {
-				for (var i = 0; i < data_age.length; i++)
-					if (c >= data_age[i][0] &&
-						c < data_age[i][0] + data_age[i][1])
-						return 'Unicode ' + data_age[i][2];
-			}
-			function get_file(url, f) {
-				var ct = 'text/plain; charset=utf-8';
-				var r = new XMLHttpRequest;
-				var fn = f;
-				$$('#loading span').textContent += '\n+ ' + url;
-				r.open('GET', url);
-				r.setRequestHeader('Content-type', ct);
-				if (r.overrideMimeType)
-					r.overrideMimeType(ct);
-				r.onreadystatechange = function(e) {
-					if (r.readyState == 4)
-						fn(r.responseText, r, e);
-				};
-				r.send(null);
-			}
-			function load_data() {
-				get_file('UnicodeData.txt', function(s) {
-					s = s.split('\n');
-					s.pop();
-					s = s.map(function(l) {
-						return l.split(';');
-					});
-					s.forEach(function(l) {
-						data_main[parseInt(l[0], 16)] = l.slice(1);
-					});
-				get_file('Blocks.txt', function(s) {
-					s = s.split('\n');
-					s = s.filter(function(l) {
-						return /^[A-Z0-9]/.test(l);
-					});
-					s = s.map(function(l) {
-						l = l.split(/\.\.|; /);
-						l[0] = parseInt(l[0], 16);
-						l[1] = parseInt(l[1], 16);
-						return l;
-					});
-					data_blocks = s;
-				get_file('NameAliases.txt', function(s) {
-					s = s.split('\n');
-					s = s.map(function(l) {
-						l = l.split(';');
-						l[0] = parseInt(l[0], 16);
-						return l;
-					});
-					s = s.filter(function(l) {
-						return (l[2] == 'control');
-					});
-					s.forEach(function(l) {
-						data_main[l[0]][0] = l[1];
-					});
-				get_file('PropertyValueAliases.txt', function(s) {
-					s = s.split('\n');
-					s = s.filter(function(l) {
-						return /^gc ;/.test(l);
-					});
-					var r = {};
-					s.forEach(function(l) {
-						r[l.match(/^gc ; ([A-Za-z]+)/)[1]] =
-							l.match(/^gc ; [A-Za-z]+\s+; ([A-Za-z_]+)/)[1].
-							replace(/_/g, ' ');
-					});
-					data_gencat = r;
-				get_file('DerivedAge.txt', function(s) {
-					s = s.split('\n');
-					s = s.filter(function(l) {
-						return /^[0-9A-F]/.test(l);
-					});
-					s = s.map(function(l) {
-						var r = [], m;
-						r[0] = parseInt(l.match(/^([0-9A-F]+)/)[1], 16);
-						r[1] = (m = l.match(/# +\[(\d+)\]/)) ? 1 * m[1] : 1;
-						r[2] = l.match(/; (\d\.\d) #/)[1];
-						return r;
-					});
-					data_age = s;
-					data_ready();
-				});
-				});
-				});
-				});
-				});
-			}
-			function data_ready() {
-				$$('#loading_section').style.display = 'none';
-				$$('#info_section').style.display = 'block';
-				grid_construct();
-				hashchange_handler();
-			}
-			function grid_construct() {
-				var grid = $$('#grid');
-				grid.innerHTML = '';
-				grid_c = [];
-				grid_th = [];
-				for (var i = 0; i < grid_h; i++) {
-					var row = grid.insertRow(-1);
-					var cells = [];
-					grid_c.push(cells);
-					grid_th.push($e(row, 'th', '0000'));
-					for (var j = 0; j < grid_w; j++) {
-						var cell = row.insertCell(-1);
-						cells.push(cell);
-						cell.textContent = '-';
-						cell.addEventListener('click', grid_click, false);
-						cell.style.fontSize =  16 / grid_h + 'em';
-					}
-				}
-				grid_populate();
-			}
-			function grid_populate() {
-				for (var i = 0; i < grid_h; i++) {
-					grid_th[i].textContent = cp2str(grid_s + i * grid_h);
-					for (var j = 0; j < grid_w; j++) {
-						var c = grid_s + i * grid_h + j;
-						grid_c[i][j].textContent = fcc(c);
-						grid_c[i][j].dataset.codepoint = c;
-					}
-				}
-			}
-			function grid_goto(c) {
-				if (isNaN(c) || c < 0 || c > 0x10ffff)
-					return;
-				location.hash = '#' + c.toString(16);
-			}
-			function grid_goto_real(c) {
-				var grid_s_new = c - c % (grid_w * grid_h);
-				if (grid_s_new != grid_s) {
-					grid_s = grid_s_new;
-					grid_populate();
-				}
-				grid_click({target: grid_c
-					[Math.floor((c - grid_s) / grid_w)]
-					[(c - grid_s) % grid_w]
-				});
-			}
-			function grid_goby(delta) {
-				grid_goto(grid_cur + delta);
-			}
-			function grid_click(e) {
-				var c = Number(e.target.dataset.codepoint);
-				var dm = data_main_get(c);
-				grid_cur = c;
-				$('td').forEach(function(e) {
-					e.className = '';
-				});
-				e.target.className = 'selected';
-				$$('#i_cp').textContent = 'U+' + cp2str(c);
-				$$('#i_name').textContent = dm[0];
-				$$('#i_disp').textContent = fcc(c);
-				$$('#i_block').textContent = find_block(c);
-				$$('#i_gencat').textContent = find_gencat(dm[1]);
-				$$('#i_age').textContent = find_age(c);
-				$$('#i_utf8').textContent = as_utf8(c);
-				$$('#i_utf16be').textContent = as_utf16be(c);
-				$$('#i_utf16le').textContent = as_utf16le(c);
-				$$('#i_utf32be').textContent = as_utf32be(c);
-				$$('#i_utf32le').textContent = as_utf32le(c);
-			}
-			function data_main_get(c) {
-				return data_main[c] ? data_main[c] :
-					['[unassigned or no known name]',
-						'', '', '', '', '', '', '', '', '', ''];
-			}
-			function close_all_dialogs() {
-				$('.dialog').forEach(function(e) {
-					e.style.display = 'none';
-				});
-			}
-			function key_lock_on() {
-				key_lock = true;
-			}
-			function key_lock_off() {
-				key_lock = false;
-			}
-			function hashchange_handler() {
-				var c = parseInt(location.hash.substring(1), 16);
-				close_all_dialogs();
-				if (isNaN(c))
-					location.hash = '#0';
-				else
-					grid_goto_real(c);
-			}
-			var grid_w = 16;
-			var grid_h = 16;
-			var grid_s = 0;
-			var grid_cur;
-			var grid_c;
-			var grid_th;
-			var data_main = [];
-			var data_blocks;
-			var data_gencat;
-			var data_age;
-			var key_lock = false;
-			addEventListener('keydown', function(e) {
-				if (key_lock)
-					return;
-				switch (e.keyCode) {
-					case 33: grid_goby(-grid_w * grid_h); break;
-					case 34: grid_goby(grid_w * grid_h); break;
-					case 35: grid_goto(grid_s + grid_w * grid_h - 1); break;
-					case 36: grid_goto(grid_s); break;
-					case 37: grid_goby(-1); break;
-					case 38: grid_goby(-grid_w); break;
-					case 39: grid_goby(1); break;
-					case 40: grid_goby(grid_w); break;
-					case 107:
-					case 187:
-						if (grid_w == 1)
-							break;
-						grid_w = grid_h /= 2;
-						grid_construct();
-						grid_goto(grid_cur);
-						break;
-					case 109:
-					case 189:
-						if (grid_w == 16)
-							break;
-						grid_w = grid_h *= 2;
-						grid_construct();
-						grid_goto(grid_cur);
-						break;
-				}
-			});
-			close_all_dialogs();
-			$('#toolbox button').forEach(function(b) {
-				b.addEventListener('click', function(e) {
-					var dialog = $$('#' + e.target.dataset.dialogId);
-					var already_open = (dialog.style.display == 'block');
-					close_all_dialogs();
-					dialog.style.display = already_open ? 'none' : 'block';
-				}, false);
-			});
-			$$('#goto_cp').addEventListener('submit', function(e) {
-				grid_goto(parseInt($$('#cp_input').value, 10));
-				e.preventDefault();
-			}, false);
-			$$('#goto_cp_hex').addEventListener('submit', function(e) {
-				grid_goto(parseInt($$('#cp_hex_input').value, 16));
-				e.preventDefault();
-			}, false);
-			$$('#goto_char').addEventListener('submit', function(e) {
-				var s = $$('#char_input').value;
-				if (s.charCodeAt(0) >= 0xd800 && s.charCodeAt(0) < 0xdc00)
-					grid_goto(surr2cp(s));
-				else
-					grid_goto(s.charCodeAt(0));
-				e.preventDefault();
-			}, false);
-			$$('#search_form').addEventListener('submit', function(e) {
-				var r = new RegExp($$('#regex').value, 'i');
-				var table = $$('#search_result');
-				var n = 0;
-				table.innerHTML = '';
-				data_main.forEach(function(d, c) {
-					if (!r.test(d) || ++n > 10)
-						return;
-					var row = table.insertRow(-1);
-					var cell, link = document.createElement('a');
-					var cp = c;
-					cell = row.insertCell(-1);
-					cell.appendChild(link);
-					link.href = '#' + c.toString(16);
-					link.textContent = 'U+' + cp2str(c);
-					cell = row.insertCell(-1);
-					cell.textContent = data_main_get(c)[0];
-				});
-				e.preventDefault();
-			}, false);
-			$('input').forEach(function(e) {
-				e.addEventListener('focus', key_lock_on, false);
-				e.addEventListener('blur', key_lock_off, false);
-			});
-			addEventListener('hashchange', hashchange_handler, false);
-			load_data();
+function $(s) {
+	return Array.prototype.slice.call(
+		document.querySelectorAll(s));
+}
+function $$(s) {
+	return document.querySelector(s);
+}
+function $e(element, tag_name, text) {
+	var new_element = document.createElement(tag_name);
+	new_element.textContent = text ? text : '';
+	element.appendChild(new_element);
+	return new_element;
+}
+function fcc(c) {
+	return (c < 0x10000) ? String.fromCharCode(c) :
+		String.fromCharCode(
+			0xd800 + ((c - 0x10000) >>> 10),
+			0xdc00 + ((c - 0x10000) & 0x3ff));
+}
+function surr2cp(s) {
+	var a = s.charCodeAt(0);
+	var b = s.charCodeAt(1);
+	return 0x10000 + (((a - 0xd800) << 10) | (b - 0xdc00));
+}
+function padb(s) {
+	s = s.toString(16).toUpperCase();
+	if (s.length < 2)
+		s = ('00' + s).slice(-2);
+	return s;
+}
+function cp2str(s) {
+	s = s.toString(16).toUpperCase();
+	if (s.length < 4)
+		s = ('0000' + s).slice(-4);
+	return s;
+}
+function cp2strl(s) {
+	s = Number(s).toString(16).toUpperCase();
+	if (s.length < 6)
+		s = ('000000' + s).slice(-6);
+	return s;
+}
+function as_utf8(c) {
+	if (c < 0x80) {
+		return padb(c);
+	} else if (c < 0x800) {
+		return padb((c >> 6) | 0xc0) + ' ' +
+			padb((c & 0x3f) | 0x80);
+	} else if (c < 0x10000) {
+		return padb((c >> 12) | 0xe0) + ' ' +
+			padb((c >> 6 & 0x3f) | 0x80) + ' ' +
+			padb((c & 0x3f) | 0x80);
+	} else {
+		return padb((c >> 18) | 0xf0) + ' ' +
+			padb((c >> 12 & 0x3f) | 0x80) + ' ' +
+			padb((c >> 6 & 0x3f) | 0x80) + ' ' +
+			padb((c & 0x3f) | 0x80);
+	}
+}
+function as_utf16be(c) {
+	if (c < 0x10000) {
+		return padb(c >> 8) + ' ' + padb(c & 0xff);
+	} else {
+		var h = 0xd800 + ((c - 0x10000) >>> 10);
+		var l = 0xdc00 + ((c - 0x10000) & 0x3ff);
+		return padb(h >> 8) + ' ' + padb(h & 0xff) + ' ' +
+			padb(l >> 8) + ' ' + padb(l & 0xff);
+	}
+}
+function as_utf16le(c) {
+	if (c < 0x10000) {
+		return padb(c & 0xff) + ' ' + padb(c >> 8);
+	} else {
+		var h = 0xd800 + ((c - 0x10000) >>> 10);
+		var l = 0xdc00 + ((c - 0x10000) & 0x3ff);
+		return padb(h & 0xff) + ' ' + padb(h >> 8) + ' ' +
+			padb(l & 0xff) + ' ' + padb(l >> 8);
+	}
+}
+function as_utf32be(c) {
+	return padb(c >> 24) + ' ' + padb((c >> 16) & 0xff) + ' ' +
+		padb((c >> 8) & 0xff) + ' ' + padb(c & 0xff);
+}
+function as_utf32le(c) {
+	return padb(c & 0xff) + ' ' + padb((c >> 8) & 0xff) + ' ' +
+		padb((c >> 16) & 0xff) + ' ' + padb(c >> 24);
+}
+function find_block(c) {
+	for (var i = 0; i < data_blocks.length; i++)
+		if (c >= data_blocks[i][0] && c <= data_blocks[i][1])
+			return data_blocks[i][2];
+	return '[not in a known block]';
+}
+function find_gencat(abbr) {
+	return data_gencat[abbr] ?
+		data_gencat[abbr] + ' (' + abbr + ')' :
+		'[not in a known general category]';
+}
+function find_age(c) {
+	for (var i = 0; i < data_age.length; i++)
+		if (c >= data_age[i][0] &&
+			c < data_age[i][0] + data_age[i][1])
+			return 'Unicode ' + data_age[i][2];
+}
+function get_file(url, f) {
+	var ct = 'text/plain; charset=utf-8';
+	var r = new XMLHttpRequest;
+	var fn = f;
+	$$('#loading span').textContent += '\n+ ' + url;
+	r.open('GET', url);
+	r.setRequestHeader('Content-type', ct);
+	if (r.overrideMimeType)
+		r.overrideMimeType(ct);
+	r.onreadystatechange = function(e) {
+		if (r.readyState == 4)
+			fn(r.responseText, r, e);
+	};
+	r.send(null);
+}
+function load_data() {
+	get_file('UnicodeData.txt', function(s) {
+		s = s.split('\n');
+		s.pop();
+		s = s.map(function(l) {
+			return l.split(';');
+		});
+		s.forEach(function(l) {
+			data_main[parseInt(l[0], 16)] = l.slice(1);
+		});
+	get_file('Blocks.txt', function(s) {
+		s = s.split('\n');
+		s = s.filter(function(l) {
+			return /^[A-Z0-9]/.test(l);
+		});
+		s = s.map(function(l) {
+			l = l.split(/\.\.|; /);
+			l[0] = parseInt(l[0], 16);
+			l[1] = parseInt(l[1], 16);
+			return l;
+		});
+		data_blocks = s;
+	get_file('NameAliases.txt', function(s) {
+		s = s.split('\n');
+		s = s.map(function(l) {
+			l = l.split(';');
+			l[0] = parseInt(l[0], 16);
+			return l;
+		});
+		s = s.filter(function(l) {
+			return (l[2] == 'control');
+		});
+		s.forEach(function(l) {
+			data_main[l[0]][0] = l[1];
+		});
+	get_file('PropertyValueAliases.txt', function(s) {
+		s = s.split('\n');
+		s = s.filter(function(l) {
+			return /^gc ;/.test(l);
+		});
+		var r = {};
+		s.forEach(function(l) {
+			r[l.match(/^gc ; ([A-Za-z]+)/)[1]] =
+				l.match(/^gc ; [A-Za-z]+\s+; ([A-Za-z_]+)/)[1].
+				replace(/_/g, ' ');
+		});
+		data_gencat = r;
+	get_file('DerivedAge.txt', function(s) {
+		s = s.split('\n');
+		s = s.filter(function(l) {
+			return /^[0-9A-F]/.test(l);
+		});
+		s = s.map(function(l) {
+			var r = [], m;
+			r[0] = parseInt(l.match(/^([0-9A-F]+)/)[1], 16);
+			r[1] = (m = l.match(/# +\[(\d+)\]/)) ? 1 * m[1] : 1;
+			r[2] = l.match(/; (\d\.\d) #/)[1];
+			return r;
+		});
+		data_age = s;
+		data_ready();
+	});
+	});
+	});
+	});
+	});
+}
+function data_ready() {
+	$$('#loading_section').style.display = 'none';
+	$$('#info_section').style.display = 'block';
+	grid_construct();
+	hashchange_handler();
+}
+function grid_construct() {
+	var grid = $$('#grid');
+	grid.innerHTML = '';
+	grid_c = [];
+	grid_th = [];
+	for (var i = 0; i < grid_h; i++) {
+		var row = grid.insertRow(-1);
+		var cells = [];
+		grid_c.push(cells);
+		grid_th.push($e(row, 'th', '0000'));
+		for (var j = 0; j < grid_w; j++) {
+			var cell = row.insertCell(-1);
+			cells.push(cell);
+			cell.textContent = '-';
+			cell.addEventListener('click', grid_click, false);
+			cell.style.fontSize =  16 / grid_h + 'em';
+		}
+	}
+	grid_populate();
+}
+function grid_populate() {
+	for (var i = 0; i < grid_h; i++) {
+		grid_th[i].textContent = cp2str(grid_s + i * grid_h);
+		for (var j = 0; j < grid_w; j++) {
+			var c = grid_s + i * grid_h + j;
+			grid_c[i][j].textContent = fcc(c);
+			grid_c[i][j].dataset.codepoint = c;
+		}
+	}
+}
+function grid_goto(c) {
+	if (isNaN(c) || c < 0 || c > 0x10ffff)
+		return;
+	location.hash = '#' + c.toString(16);
+}
+function grid_goto_real(c) {
+	var grid_s_new = c - c % (grid_w * grid_h);
+	if (grid_s_new != grid_s) {
+		grid_s = grid_s_new;
+		grid_populate();
+	}
+	grid_click({target: grid_c
+		[Math.floor((c - grid_s) / grid_w)]
+		[(c - grid_s) % grid_w]
+	});
+}
+function grid_goby(delta) {
+	grid_goto(grid_cur + delta);
+}
+function grid_click(e) {
+	var c = Number(e.target.dataset.codepoint);
+	var dm = data_main_get(c);
+	grid_cur = c;
+	$('td').forEach(function(e) {
+		e.className = '';
+	});
+	e.target.className = 'selected';
+	$$('#i_cp').textContent = 'U+' + cp2str(c);
+	$$('#i_name').textContent = dm[0];
+	$$('#i_disp').textContent = fcc(c);
+	$$('#i_block').textContent = find_block(c);
+	$$('#i_gencat').textContent = find_gencat(dm[1]);
+	$$('#i_age').textContent = find_age(c);
+	$$('#i_utf8').textContent = as_utf8(c);
+	$$('#i_utf16be').textContent = as_utf16be(c);
+	$$('#i_utf16le').textContent = as_utf16le(c);
+	$$('#i_utf32be').textContent = as_utf32be(c);
+	$$('#i_utf32le').textContent = as_utf32le(c);
+}
+function data_main_get(c) {
+	return data_main[c] ? data_main[c] :
+		['[unassigned or no known name]',
+			'', '', '', '', '', '', '', '', '', ''];
+}
+function close_all_dialogs() {
+	$('.dialog').forEach(function(e) {
+		e.style.display = 'none';
+	});
+}
+function key_lock_on() {
+	key_lock = true;
+}
+function key_lock_off() {
+	key_lock = false;
+}
+function hashchange_handler() {
+	var c = parseInt(location.hash.substring(1), 16);
+	close_all_dialogs();
+	if (isNaN(c))
+		location.hash = '#0';
+	else
+		grid_goto_real(c);
+}
+var grid_w = 16;
+var grid_h = 16;
+var grid_s = 0;
+var grid_cur;
+var grid_c;
+var grid_th;
+var data_main = [];
+var data_blocks;
+var data_gencat;
+var data_age;
+var key_lock = false;
+addEventListener('keydown', function(e) {
+	if (key_lock)
+		return;
+	switch (e.keyCode) {
+		case 33: grid_goby(-grid_w * grid_h); break;
+		case 34: grid_goby(grid_w * grid_h); break;
+		case 35: grid_goto(grid_s + grid_w * grid_h - 1); break;
+		case 36: grid_goto(grid_s); break;
+		case 37: grid_goby(-1); break;
+		case 38: grid_goby(-grid_w); break;
+		case 39: grid_goby(1); break;
+		case 40: grid_goby(grid_w); break;
+		case 107:
+		case 187:
+			if (grid_w == 1)
+				break;
+			grid_w = grid_h /= 2;
+			grid_construct();
+			grid_goto(grid_cur);
+			break;
+		case 109:
+		case 189:
+			if (grid_w == 16)
+				break;
+			grid_w = grid_h *= 2;
+			grid_construct();
+			grid_goto(grid_cur);
+			break;
+	}
+});
+close_all_dialogs();
+$('#toolbox button').forEach(function(b) {
+	b.addEventListener('click', function(e) {
+		var dialog = $$('#' + e.target.dataset.dialogId);
+		var already_open = (dialog.style.display == 'block');
+		close_all_dialogs();
+		dialog.style.display = already_open ? 'none' : 'block';
+	}, false);
+});
+$$('#goto_cp').addEventListener('submit', function(e) {
+	grid_goto(parseInt($$('#cp_input').value, 10));
+	e.preventDefault();
+}, false);
+$$('#goto_cp_hex').addEventListener('submit', function(e) {
+	grid_goto(parseInt($$('#cp_hex_input').value, 16));
+	e.preventDefault();
+}, false);
+$$('#goto_char').addEventListener('submit', function(e) {
+	var s = $$('#char_input').value;
+	if (s.charCodeAt(0) >= 0xd800 && s.charCodeAt(0) < 0xdc00)
+		grid_goto(surr2cp(s));
+	else
+		grid_goto(s.charCodeAt(0));
+	e.preventDefault();
+}, false);
+$$('#search_form').addEventListener('submit', function(e) {
+	var r = new RegExp($$('#regex').value, 'i');
+	var table = $$('#search_result');
+	var n = 0;
+	table.innerHTML = '';
+	data_main.forEach(function(d, c) {
+		if (!r.test(d) || ++n > 10)
+			return;
+		var row = table.insertRow(-1);
+		var cell, link = document.createElement('a');
+		var cp = c;
+		cell = row.insertCell(-1);
+		cell.appendChild(link);
+		link.href = '#' + c.toString(16);
+		link.textContent = 'U+' + cp2str(c);
+		cell = row.insertCell(-1);
+		cell.textContent = data_main_get(c)[0];
+	});
+	e.preventDefault();
+}, false);
+$('input').forEach(function(e) {
+	e.addEventListener('focus', key_lock_on, false);
+	e.addEventListener('blur', key_lock_off, false);
+});
+addEventListener('hashchange', hashchange_handler, false);
+load_data();
 		</script>
 	</body>
 </html>
