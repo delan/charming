@@ -306,7 +306,8 @@ $('#search_form, #search_han').on('submit change', function(e) {
 		return;
 	sr.empty();
 	data.filter(function(o) {
-		return (o.name || '').toLowerCase().indexOf(q) != -1;
+		return (o.name || '').toLowerCase().indexOf(
+			q.toLowerCase()) != -1;
 	}).slice(0, 50).filter(function(o) {
 		if (!$('#search_han').is(':checked') && o.han)
 			return false;
