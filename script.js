@@ -183,6 +183,8 @@ function hashchange_handler() {
 	if (isNaN(cp) || cp < 0 || cp > 0x10ffff)
 		if (current_cp == undefined)
 			return set_hash(0);
+		else if (!location.hash.length)
+			return;
 		else
 			return set_hash(current_cp);
 	current_cp = cp;
