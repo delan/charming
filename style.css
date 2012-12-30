@@ -133,6 +133,10 @@ th {
 	width: 100%;
 }
 #goto input {
+	font-size: 2em;
+	width: 6em;
+}
+#goto_hex, #goto_dec {
 	font-family: monospace;
 }
 #goto_char {
