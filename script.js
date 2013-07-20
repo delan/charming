@@ -3,101 +3,8 @@ var	ucd_version = '6.2.0',
 	grid_base,
 	current_cp,
 	data_ready = false,
-	data = [],
-	data_files = [{
-		name: 'Symbola.ttf'
-	}, {
-		name: 'UnicodeData.txt',
-		handler: function(s) {
-			s = s.split('\n');
-			s.pop();
-			s.forEach(function(l) {
-				l = l.split(';');
-				var cp = parseInt(l[0], 16);
-				set_data(cp, 'name', l[1]);
-				set_data(cp, 'gc', l[2]);
-			});
-		}
-	}, {
-		name: 'Blocks.txt',
-		handler: function(s) {
-			s.split('\n').filter(function(l) {
-				return /^[0-9A-F]/. test(l);
-			}).forEach(function(l) {
-				l = l.split(/\.\.|; /);
-				var a = parseInt(l[0], 16);
-				var b = parseInt(l[1], 16);
-				for (; a <= b; a++)
-					set_data(a, 'block', l[2]);
-			});
-		}
-	}, {
-		name: 'DerivedAge.txt',
-		handler: function(s) {
-			s.split('\n').filter(function(l) {
-				return /^[0-9A-F]/.test(l);
-			}).forEach(function(l) {
-				l = l.split(/\.\.|\s*; | #/);
-				var a = parseInt(l[0], 16);
-				var b = parseInt(l[1], 16);
-				for (; a <= b; a++)
-					set_data(a, 'age', 'Unicode ' + l[2]);
-			});
-		}
-	}, {
-		name: 'NameAliases.txt',
-		handler: function(s) {
-			s.split('\n').filter(function(l) {
-				return /^[0-9A-F]/.test(l);
-			}).forEach(function(l) {
-				l = l.split(';');
-				var cp = parseInt(l[0], 16);
-				var n = get_data(cp, 'name');
-				if (l[2] != 'control' || n != '<control>')
-					return;
-				set_data(cp, 'name', l[1]);
-			});
-		}
-	}, {
-		name: 'PropertyValueAliases.txt',
-		handler: function(s) {
-			var gc_map = {};
-			s.split('\n').filter(function(l) {
-				return /^gc ; /.test(l);
-			}).forEach(function(l) {
-				l = l.split(/;|#/);
-				gc_map[l[1].trim()] = l[2].trim().
-					replace('_', ' ');
-			});
-			for (var i = 0; i <= 0x10ffff; i++) {
-				set_data(i, 'cp', i);
-				set_data(i, 'gc', gc_map[get_data(i, 'gc')]);
-			}
-		}
-	}, {
-		name: 'Unihan_Readings.txt',
-		handler: function(s) {
-			s.split('\n').filter(function(l) {
-				return /^U\+[0-9A-F]{4,6}\tkDefinition\t/.
-					test(l);
-			}).forEach(function(l) {
-				l = l.split('\t');
-				var cp = parseInt(l[0].substr(2), 16);
-				set_data(cp, 'name', l[2]);
-				set_data(cp, 'han', true);
-			});
-			s.split('\n').filter(function(l) {
-				return /^U\+[0-9A-F]{4,6}\tkMandarin\t/.
-					test(l);
-			}).forEach(function(l) {
-				l = l.split('\t');
-				var cp = parseInt(l[0].substr(2), 16);
-				set_data(cp, 'mpy', l[2]);
-			});
-		}
-	}],
+	data = null,
 	data_defaults = {
-		name: '(unknown or unassigned)',
 		u16: function(cp) {
 			return cp_char(cp).split('').map(function(x) {
 				return ('0000' + x.charCodeAt(0).toString(16).
@@ -115,9 +22,10 @@ var	ucd_version = '6.2.0',
 		ent: function(cp) {
 			return '&#' + cp + ';';
 		},
-		block: '(unknown or unassigned)',
-		age: '(unknown or unassigned)',
-		gc: 'Cn',
+		name: '(unknown or unassigned)',
+		block: '(unknown)',
+		age: '(unknown)',
+		gc: 'Unassigned (Cn)',
 		mpy: '(not applicable)'
 	};
 
@@ -209,31 +117,16 @@ function click_handler() {
 function load_data() {
 	$('#loading_noscript').hide();
 	$('#loading_files').show();
-	$('#loading_file_b').text(data_files.length);
-	load_data_next();
-}
-
-function load_data_next() {
-	if (!data_files.length) {
+	$.get('data.json', function(d) {
+		data = d;
+		data.forEach(function(o, i) {
+			o.cp = i;
+		});
 		data_ready = true;
 		$('#loading').hide();
 		$('#ui').show();
 		update_info();
-		return;
-	}
-	var data_file = data_files.shift();
-	var a = parseInt($('#loading_file_a').text());
-	$('#loading_file_a').text(a + 1);
-	$('#loading_file_name').text(data_file.name);
-	$.ajax({
-		url: 'data/' + data_file.name,
-		mimeType: 'text/plain',
-		success: function(s) {
-			if (data_file.handler)
-				data_file.handler(s);
-			load_data_next();
-		}
-	});
+	}, 'json');
 }
 
 function get_data(cp, prop) {
