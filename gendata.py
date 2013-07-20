@@ -94,9 +94,3 @@ j = json.dumps(data)
 print 'Writing data ...'
 
 open('data.json', 'w').write(j)
-
-print 'Compressing with gzip ...'
-
-f = gzip.open('data.json.gz', 'w')
-f.write(j)
-f.close()
