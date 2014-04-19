@@ -78,6 +78,7 @@ function update_info() {
 	$('#big').text(cp_char(cp));
 	if (!data_ready)
 		return;
+	document.title = cp_string(cp) + ' ' + get_data(cp, 'name');
 	for (var x in data_defaults)
 		$('#data_' + x).text(get_data(cp, x));
 }
