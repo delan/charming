@@ -118,8 +118,10 @@ function click_handler() {
 function load_data() {
 	$('#loading_noscript').hide();
 	$('#loading_files').show();
-	$.get('data.json', function(d) {
-		data = d;
+	$.get('data.json.lzo.64', function(base64) {
+		var lzo = atob(base64);
+		var json = lzo1x.decompress(lzo);
+		data = JSON.parse(json);
 		data.forEach(function(o, i) {
 			o.cp = i;
 		});
@@ -127,7 +129,7 @@ function load_data() {
 		$('#loading').hide();
 		$('#ui').show();
 		update_info();
-	}, 'json');
+	});
 }
 
 function get_data(cp, prop) {

@@ -1,0 +1,3 @@
+[submodule "minilzo-js"]
+	path = minilzo-js
+	url = https://github.com/abraidwood/minilzo-js.git
