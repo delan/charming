@@ -1,4 +1,4 @@
-var	ucd_version = '6.2.0',
+var	ucd_version = '7.0.0',
 	grid_elements = [],
 	grid_base,
 	current_cp,
