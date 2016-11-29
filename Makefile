@@ -1,15 +1,15 @@
 data.json.lzo.64: data.json.lzo
-	base64 -w 0 data.json.lzo > data.json.lzo.64
+	openssl base64 < data.json.lzo | tr -d '\n' > data.json.lzo.64
 
-data.json.lzo: data.json comp/comp
-	comp/comp data.json data.json.lzo
+data.json.lzo: data.json compress/compress
+	compress/compress data.json data.json.lzo
 
 data.json:
 	python gendata.py
 
-comp/comp:
-	$(MAKE) -C comp
+compress/compress:
+	$(MAKE) -C compress
 
 clean:
-	$(MAKE) -C comp clean
+	$(MAKE) -C compress clean
 	rm -f data.*
