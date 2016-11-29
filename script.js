@@ -204,11 +204,11 @@ $('#search_form, #search_han').on('submit change', function(e) {
 	data.filter(function(o) {
 		return (o.name || '').toLowerCase().indexOf(
 			q.toLowerCase()) != -1;
-	}).slice(0, 50).filter(function(o) {
+	}).filter(function(o) {
 		if (!$('#search_han').is(':checked') && o.han)
 			return false;
 		return true;
-	}).forEach(function(o) {
+	}).slice(0, 50).forEach(function(o) {
 		sr.append(
 			$('<div>').
 			text(cp_string(o.cp) + '\u2001' + o.name).
