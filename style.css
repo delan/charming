@@ -1,6 +1,10 @@
 @font-face {
+	font-family: EmojiOne;
+	src: url(EmojiOneColor-SVGinOT.ttf);
+}
+@font-face {
 	font-family: Symbola;
-	src: url(Symbola_hint.ttf);
+	src: url(Symbola.ttf);
 }
 body {
 	font-family: sans-serif;
@@ -23,7 +27,7 @@ th {
 	border: 1px solid #c0c0c0;
 }
 #grid div, #big {
-	font-family: Symbola;
+	font-family: EmojiOne, Symbola;
 }
 #grid div, #cp, #big {
 	height: 1.5em;
