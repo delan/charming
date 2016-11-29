@@ -94,7 +94,8 @@ th {
 	display: inline-block;
 	color: black;
 	text-decoration: none;
-	padding: 9px;
+	padding: 10.5px;
+	line-height: 1;
 }
 #ui_tabs a.selected {
 	background: #808080;
