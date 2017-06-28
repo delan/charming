@@ -7,16 +7,13 @@ var	ucd_version = '10.0.0',
 	data_defaults = {
 		u16: function(cp) {
 			return cp_char(cp).split('').map(function(x) {
-				return ('0000' + x.charCodeAt(0).toString(16).
-					toUpperCase()).slice(-4);
+				return ('0000' + hex(x.charCodeAt(0))).slice(-4);
 			}).join(' ');
 		},
 		u8: function(cp) {
 			return unescape(encodeURIComponent(cp_char(cp))).
 				split('').map(function(x) {
-					return ('00' + x.charCodeAt(0).
-						toString(16).toUpperCase()).
-						slice(-2);
+					return ('00' + hex(x.charCodeAt(0))).slice(-2);
 				}).join(' ');
 		},
 		ent: function(cp) {
@@ -28,6 +25,10 @@ var	ucd_version = '10.0.0',
 		gc: 'Unassigned (Cn)',
 		mpy: '(not applicable)'
 	};
+
+function hex(cp) {
+	return cp.toString(16).toUpperCase();
+}
 
 function init_grid() {
 	var row, cell, div;
@@ -59,7 +60,7 @@ function cp_char(cp) {
 }
 
 function cp_string(cp) {
-	var s = cp.toString(16).toUpperCase();
+	var s = hex(cp);
 	if (s.length < 5)
 		s = ('000' + s).slice(-4);
 	return 'U+' + s;
@@ -84,7 +85,7 @@ function update_info() {
 }
 
 function set_hash(cp) {
-	location.hash = cp.toString(16);
+	location.hash = hex(cp);
 }
 
 function hashchange_handler() {
@@ -102,7 +103,7 @@ function hashchange_handler() {
 		grid_base = new_grid_base;
 		update_grid();
 	}
-	$('#goto_hex').val(cp.toString(16));
+	$('#goto_hex').val(hex(cp));
 	$('#goto_dec').val(cp);
 	$('#goto_char').val(cp_char(cp));
 	$('#grid div').removeClass('selected');
