@@ -88,15 +88,19 @@ function set_hash(cp) {
 	location.hash = hex(cp);
 }
 
+function replace(cp) {
+	location.replace("#" + hex(cp));
+}
+
 function hashchange_handler() {
-	var cp = parseInt(location.hash.substr(1), 16);
+	var cp = parseInt(location.hash.slice(1), 16);
 	if (isNaN(cp) || cp < 0 || cp > 0x10ffff)
 		if (current_cp == undefined)
-			return set_hash(0);
-		else if (!location.hash.length)
-			return;
+			return replace(0);
 		else
-			return set_hash(current_cp);
+			return replace(current_cp);
+	if (location.hash.slice(1) != hex(cp))
+		return replace(cp);
 	current_cp = cp;
 	var new_grid_base = cp - cp % 256;
 	if (new_grid_base != grid_base) {
