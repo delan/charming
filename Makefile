@@ -4,7 +4,7 @@ data.json.lzo.64: data.json.lzo
 data.json.lzo: data.json compress/compress
 	compress/compress data.json data.json.lzo
 
-data.json:
+data.json: data/UnicodeData.txt
 	python gendata.py
 
 compress/compress:
