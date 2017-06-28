@@ -1,10 +1,10 @@
 @font-face {
-	font-family: EmojiOne;
-	src: url(EmojiOneColor-SVGinOT.ttf);
+	font-family: "TwitterColorEmoji-SVGinOT.ttf";
+	src: url("TwitterColorEmoji-SVGinOT.ttf");
 }
 @font-face {
-	font-family: Symbola;
-	src: url(Symbola.ttf);
+	font-family: "Symbola.ttf";
+	src: url("Symbola.ttf");
 }
 body {
 	font-family: sans-serif;
@@ -26,8 +26,8 @@ th {
 	padding: 0;
 	border: 1px solid #c0c0c0;
 }
-#grid div, #big {
-	font-family: EmojiOne, Symbola;
+#grid div, #big, #goto_char {
+	font-family: "TwitterColorEmoji-SVGinOT.ttf", "Symbola.ttf";
 }
 #grid div, #cp, #big {
 	height: 1.5em;
@@ -143,7 +143,4 @@ th {
 }
 #goto_hex, #goto_dec {
 	font-family: monospace;
-}
-#goto_char {
-	font-family: Symbola;
 }
