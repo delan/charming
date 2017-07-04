@@ -76,7 +76,7 @@ function update_grid() {
 function update_info() {
 	var cp = current_cp;
 	$('#cp').text(cp_string(cp));
-	$('#big').text(cp_char(cp));
+	$('#big').val(cp_char(cp));
 	if (!data_ready)
 		return;
 	document.title = cp_string(cp) + ' ' + get_data(cp, 'name');
@@ -234,7 +234,7 @@ $('#goto_dec').on('change keydown paste input', function() {
 		return;
 	set_hash(parseInt(this.value, 10));
 });
-$('#goto_char').on('change keydown paste input', function() {
+$('#big, #goto_char').on('change keydown paste input', function() {
 	if (this.value.length == 0)
 		return;
 	else if (this.value.length == 1)
@@ -246,7 +246,7 @@ $('#goto_char').on('change keydown paste input', function() {
 			(this.value.charCodeAt(1) - 0xdc00)
 		);
 });
-$('#goto_char').on('focus click', function() {
+$('#big, #goto_char').on('change keydown paste input focus click', function() {
 	// select entire box, even when there is only an invisible character
 	// this prevents confusion when inputing in a seemingly empty box fails
 	$(this).select();

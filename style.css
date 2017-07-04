@@ -58,9 +58,14 @@ th {
 	width: 12em;
 }
 #big {
+	display: block;
 	margin: 0 auto;
 	font-size: 8em;
 	width: 2.75em;
+	padding: 0;
+	background: none;
+	border: none;
+	outline: none;
 }
 #loading {
 	height: 369px; /* 10 * 36 + 9 */
