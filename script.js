@@ -23,7 +23,8 @@ var	ucd_version = '10.0.0',
 		block: '(unknown)',
 		age: '(unknown)',
 		gc: 'Unassigned (Cn)',
-		mpy: '(not applicable)'
+		mpy: '(not applicable)',
+		emoji: 0x00,
 	};
 
 function hex(cp) {
@@ -70,6 +71,9 @@ function update_grid() {
 	grid_elements.forEach(function(e, i) {
 		var cp = grid_base + i;
 		e.text(cp_char(cp));
+		e.removeClass("emoji");
+		if (is_emoji(cp))
+			e.addClass("emoji");
 	});
 }
 
@@ -77,6 +81,9 @@ function update_info() {
 	var cp = current_cp;
 	$('#cp').text(cp_string(cp));
 	$('#big').val(cp_char(cp));
+	$("#big, #goto_char").removeClass("emoji");
+	if (is_emoji(cp))
+		$("#big, #goto_char").addClass("emoji");
 	if (!data_ready)
 		return;
 	document.title = cp_string(cp) + ' ' + get_data(cp, 'name');
@@ -133,12 +140,13 @@ function load_data() {
 		data_ready = true;
 		$('#loading').hide();
 		$('#ui').show();
+		update_grid();
 		update_info();
 	});
 }
 
 function get_data(cp, prop) {
-	if (!data[cp] || !data[cp][prop]) {
+	if (!data || !data[cp] || !data[cp][prop]) {
 		var def = data_defaults[prop];
 		if (def instanceof Function)
 			return def(cp);
@@ -152,6 +160,11 @@ function set_data(cp, prop, value) {
 	if (!data[cp])
 		data[cp] = {};
 	data[cp][prop] = value;
+}
+
+function is_emoji(cp) {
+	var Emoji_Presentation = 0x02;
+	return !!(get_data(cp, "emoji") & Emoji_Presentation);
 }
 
 init_grid();

@@ -30,6 +30,7 @@ for l in open('data/UnicodeData.txt'):
 	cp = int(f[0], 16)
 	data[cp]['name'] = f[1]
 	data[cp]['gc'] = pretty_gencat(f[2])
+	data[cp]["emoji"] = 0x00
 
 print 'Processing Blocks.txt ...'
 
@@ -86,6 +87,33 @@ for l in open('data/Unihan_Readings.txt'):
 	elif m.group(2) == 'kDefinition':
 		data[cp]['name'] = m.group(3)
 		data[cp]['han'] = True
+
+print 'Processing emoji-data.txt ...'
+
+z = {
+	"Emoji": 0x01,
+	"Emoji_Presentation": 0x02,
+	"Emoji_Modifier": 0x04,
+	"Emoji_Modifier_Base": 0x08,
+	"Emoji_Component": 0x10,
+}
+
+for l in open('data/emoji-data.txt'):
+	if l[0] not in '0123456789ABCDEF':
+		continue
+	l = l.rstrip('\r\n')
+	m = re.match('([0-9A-F]+)\.\.([0-9A-F]+)\s*;\s*([^ ]+)', l)
+	if m:
+		start = int(m.group(1), 16)
+		end = int(m.group(2), 16)
+		property = m.group(3)
+	else:
+		m = re.match('([0-9A-F]+)\s*;\s*([^ ]+)', l)
+		start = int(m.group(1), 16)
+		end = start
+		property = m.group(2)
+	for i in range(start, end + 1):
+		data[i]["emoji"] |= z[property]
 
 print 'Generating JSON ...'
 

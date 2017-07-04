@@ -27,6 +27,9 @@ th {
 	border: 1px solid #c0c0c0;
 }
 #grid div, #big, #goto_char {
+	font-family: "Symbola.ttf";
+}
+.emoji:not(#specificity):not(#specificity) {
 	font-family: "TwitterColorEmoji-SVGinOT.ttf", "Symbola.ttf";
 }
 #grid div, #cp, #big {
