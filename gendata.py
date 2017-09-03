@@ -7,6 +7,7 @@ BITS = {
 	"kDefinition exists": 0x01,
 	"Emoji_Presentation": 0x02,
 	"General_Category Zs": 0x04,
+	"General_Category M*": 0x08,
 }
 
 data = []
@@ -39,6 +40,8 @@ for l in open('data/UnicodeData.txt'):
 	data[cp]['gc'] = pretty_gencat(f[2])
 	if f[2] == "Zs":
 		data[cp]["bits"] |= BITS["General_Category Zs"]
+	if f[2][0] == "M":
+		data[cp]["bits"] |= BITS["General_Category M*"]
 
 print 'Processing Blocks.txt ...'
 

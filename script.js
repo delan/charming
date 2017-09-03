@@ -94,6 +94,9 @@ function cp_display(cp) {
 	if (like_space(cp)) {
 		return "]" + cp_char(cp) + "[";
 	}
+	if (like_mark(cp)) {
+		return "\u25CC" + cp_char(cp);
+	}
 	return cp_char(cp);
 }
 
@@ -282,12 +285,72 @@ function is_space(cp) {
 	return !!(get_data(cp, "bits") & 0x04);
 }
 
+function is_mark(cp) {
+	// gendata.py: General_Category M*
+	return !!(get_data(cp, "bits") & 0x08);
+}
+
 function like_emoji(cp) {
 	return is_emoji(cp);
 }
 
 function like_space(cp) {
 	return is_space(cp);
+}
+
+function like_mark(cp) {
+	if (is_mark(cp)) {
+		switch (cp & 0xFFFFFFF0) {
+		case 0x0300: // Combining Diacritical Marks
+		case 0x0310:
+		case 0x0320:
+		case 0x0330:
+		case 0x0340:
+		case 0x0350:
+		case 0x0360:
+		case 0x0480: // Cyrillic
+		case 0x1DC0: // Combining Diacritical Marks Supplement
+		case 0x1DD0:
+		case 0x1DE0:
+		case 0x1DF0:
+		case 0x20D0: // Combining Diacritical Marks for Symbols
+		case 0x20E0:
+		case 0x20F0:
+		case 0x2CE0: // Coptic
+		case 0x2CF0:
+		case 0x2DE0: // Cyrillic Extended-A
+		case 0x2DF0:
+		case 0xA660: // Cyrillic Extended-B
+		case 0xA670:
+		case 0xA690:
+		case 0xFE00: // Variation Selectors
+		case 0xFE20: // Combining Half Marks
+		case 0x101F0: // Phaistos Disc
+		case 0x102E0: // Coptic Epact Numbers
+		case 0x1D160: // Musical Symbols
+		case 0x1D170:
+		case 0x1D180:
+		case 0x1D1A0:
+		case 0x1D240: // Ancient Greek Musical Notation
+		case 0xE0100: // Variation Selectors Supplement
+		case 0xE0110:
+		case 0xE0120:
+		case 0xE0130:
+		case 0xE0140:
+		case 0xE0150:
+		case 0xE0160:
+		case 0xE0170:
+		case 0xE0180:
+		case 0xE0190:
+		case 0xE01A0:
+		case 0xE01B0:
+		case 0xE01C0:
+		case 0xE01D0:
+		case 0xE01E0:
+			return true;
+		}
+	}
+	return false;
 }
 
 function is_C0(cp) {
