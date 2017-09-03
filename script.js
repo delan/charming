@@ -88,11 +88,11 @@ function cp_display(cp) {
 	if (is_C0(cp)) {
 		return cp_char(cp + 0x2400);
 	}
-	if (cp == 0x0020) {
-		return cp_char(0x2420);
-	}
 	if (cp == 0x007F) {
 		return cp_char(0x2421);
+	}
+	if (like_space(cp)) {
+		return "]" + cp_char(cp) + "[";
 	}
 	return cp_char(cp);
 }
@@ -103,10 +103,13 @@ function update_grid() {
 		e.text(cp_display(cp));
 		e.removeClass("like_emoji");
 		e.removeClass("like_C0");
+		e.removeClass("like_space");
 		if (like_emoji(cp))
 			e.addClass("like_emoji");
 		if (like_C0(cp))
 			e.addClass("like_C0");
+		if (like_space(cp))
+			e.addClass("like_space");
 	});
 }
 
@@ -116,10 +119,13 @@ function update_info() {
 	$('#big').val(cp_display(cp));
 	$("#big, #goto_char").removeClass("like_emoji");
 	$("#big, #goto_char").removeClass("like_C0");
+	$("#big, #goto_char").removeClass("like_space");
 	if (like_emoji(cp))
 		$("#big, #goto_char").addClass("like_emoji");
 	if (like_C0(cp))
 		$("#big, #goto_char").addClass("like_C0");
+	if (like_space(cp))
+		$("#big, #goto_char").addClass("like_space");
 	if (!data_ready)
 		return;
 	document.title = cp_string(cp) + ' ' + get_data(cp, 'name');
@@ -271,8 +277,17 @@ function is_emoji(cp) {
 	return !!(get_data(cp, "bits") & 0x02);
 }
 
+function is_space(cp) {
+	// gendata.py: General_Category Zs
+	return !!(get_data(cp, "bits") & 0x04);
+}
+
 function like_emoji(cp) {
 	return is_emoji(cp);
+}
+
+function like_space(cp) {
+	return is_space(cp);
 }
 
 function is_C0(cp) {
@@ -280,7 +295,8 @@ function is_C0(cp) {
 }
 
 function like_C0(cp) {
-	return is_C0(cp) || cp == 0x0020 || cp == 0x007F;
+	return is_C0(cp)
+		|| cp == 0x007F;
 }
 
 init_grid();

@@ -6,6 +6,7 @@ from operator import itemgetter
 BITS = {
 	"kDefinition exists": 0x01,
 	"Emoji_Presentation": 0x02,
+	"General_Category Zs": 0x04,
 }
 
 data = []
@@ -36,6 +37,8 @@ for l in open('data/UnicodeData.txt'):
 	cp = int(f[0], 16)
 	data[cp]['name'] = f[1]
 	data[cp]['gc'] = pretty_gencat(f[2])
+	if f[2] == "Zs":
+		data[cp]["bits"] |= BITS["General_Category Zs"]
 
 print 'Processing Blocks.txt ...'
 
@@ -91,7 +94,7 @@ for l in open('data/Unihan_Readings.txt'):
 		data[cp]['mpy'] = m.group(3)
 	elif m.group(2) == 'kDefinition':
 		data[cp]['name'] = m.group(3)
-		data[cp]['bits'] = BITS["kDefinition exists"]
+		data[cp]['bits'] |= BITS["kDefinition exists"]
 
 print 'Processing emoji-data.txt ...'
 
