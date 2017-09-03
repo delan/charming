@@ -91,6 +91,27 @@ function cp_display(cp) {
 	if (cp == 0x007F) {
 		return cp_char(0x2421);
 	}
+	if (cp == 0x2061) {
+		return "f\u2061()";
+	}
+	if (cp == 0x2062) {
+		return "13\u2062x";
+	}
+	if (cp == 0x2063) {
+		return "Mᵢ\u2063ⱼ";
+	}
+	if (cp == 0x2064) {
+		return "9\u2064¾";
+	}
+	if (cp == 0xE0020) {
+		return "\u2420" + "ₜ";
+	}
+	if (cp >= 0xE0021 && cp < 0xE007F) {
+		return cp_char(cp - 0xE0000) + "ₜ";
+	}
+	if (like_C1(cp)) {
+		return cp_diagonal(cp);
+	}
 	if (like_space(cp)) {
 		return "]" + cp_char(cp) + "[";
 	}
@@ -100,17 +121,92 @@ function cp_display(cp) {
 	return cp_char(cp);
 }
 
+function cp_diagonal(cp) {
+	if (cp >= 0xE0100)
+		return "VS" + (cp - 0xE0100 + 17);
+	if (cp >= 0xE007F)
+		return "CT";
+	if (cp >= 0xE0000)
+		return "LT";
+	if (cp >= 0xFFF9)
+		return ["IAA", "IAS", "IAT", "OBJ"][cp - 0xFFF9];
+	if (cp >= 0xFFA0)
+		return ["HHF"][cp - 0xFFA0];
+	if (cp >= 0xFEFF)
+		return ["BOM"][cp - 0xFEFF];
+	if (cp >= 0xFE00)
+		return "VS" + (cp - 0xFE00 + 1);
+	if (cp >= 0x3164)
+		return ["HF"][cp - 0x3164];
+	if (cp >= 0x2066)
+		return ["LRI", "RLI", "FSI", "PDI", "ISS", "ASS", "IAFS", "AAFS", "NAT", "NOM"][cp - 0x2066];
+	if (cp >= 0x2060)
+		return ["WJ"][cp - 0x2060];
+	if (cp >= 0x2028)
+		return ["LS", "PS", "LRE", "RLE", "PDF", "LRO", "RLO"][cp - 0x2028];
+	if (cp >= 0x200B)
+		return ["ZWSP", "ZWNJ", "ZWJ", "LRM", "RLM"][cp - 0x200B];
+	if (cp >= 0x180E)
+		return ["MVS"][cp - 0x180E];
+	if (cp >= 0x180B)
+		return "FVS" + (cp - 0x180B + 1);
+	if (cp == 0x061C)
+		return "ALM";
+	if (cp == 0x034F)
+		return "CGJ";
+	if (cp == 0x00AD)
+		return "SHY";
+	var w = [
+		"PAD",
+		"HOP",
+		"BPH",
+		"NBH",
+		"IND",
+		"NEL",
+		"SSA",
+		"ESA",
+		"HTS",
+		"HTJ",
+		"VTS",
+		"PLD",
+		"PLU",
+		"RI",
+		"SS2",
+		"SS3",
+		"DCS",
+		"PU1",
+		"PU2",
+		"STS",
+		"CCH",
+		"MW",
+		"SPA",
+		"EPA",
+		"SOS",
+		"SGCI",
+		"SCI",
+		"CSI",
+		"ST",
+		"OSC",
+		"PM",
+		"APC",
+	];
+	return w[cp - 0x80];
+}
+
 function update_grid() {
 	grid_elements.forEach(function(e, i) {
 		var cp = grid_base + i;
 		e.text(cp_display(cp));
 		e.removeClass("like_emoji");
 		e.removeClass("like_C0");
+		e.removeClass("like_C1");
 		e.removeClass("like_space");
 		if (like_emoji(cp))
 			e.addClass("like_emoji");
 		if (like_C0(cp))
 			e.addClass("like_C0");
+		if (like_C1(cp))
+			e.addClass("like_C1");
 		if (like_space(cp))
 			e.addClass("like_space");
 	});
@@ -122,11 +218,14 @@ function update_info() {
 	$('#big').val(cp_display(cp));
 	$("#big, #goto_char").removeClass("like_emoji");
 	$("#big, #goto_char").removeClass("like_C0");
+	$("#big, #goto_char").removeClass("like_C1");
 	$("#big, #goto_char").removeClass("like_space");
 	if (like_emoji(cp))
 		$("#big, #goto_char").addClass("like_emoji");
 	if (like_C0(cp))
 		$("#big, #goto_char").addClass("like_C0");
+	if (like_C1(cp))
+		$("#big, #goto_char").addClass("like_C1");
 	if (like_space(cp))
 		$("#big, #goto_char").addClass("like_space");
 	if (!data_ready)
@@ -359,7 +458,36 @@ function is_C0(cp) {
 
 function like_C0(cp) {
 	return is_C0(cp)
-		|| cp == 0x007F;
+		|| cp == 0x007F
+		|| cp == 0x2061
+		|| cp == 0x2062
+		|| cp == 0x2063
+		|| cp == 0x2064
+		|| cp >= 0xE0020 && cp < 0xE007F;
+}
+
+function is_C1(cp) {
+	return cp >= 0x0080 && cp < 0x00A0;
+}
+
+function like_C1(cp) {
+	return is_C1(cp)
+		|| cp == 0x00AD
+		|| cp == 0x034F
+		|| cp == 0x061C
+		|| cp >= 0x180B && cp < 0x180F
+		|| cp >= 0x200B && cp < 0x2010
+		|| cp >= 0x2028 && cp < 0x202F
+		|| cp >= 0x2060 && cp < 0x2061
+		|| cp >= 0x2066 && cp < 0x2070
+		|| cp >= 0x3164 && cp < 0x3165
+		|| cp >= 0xFFA0 && cp < 0xFFA1
+		|| cp >= 0xFFF9 && cp < 0xFFFD
+		|| cp >= 0xFE00 && cp < 0xFE10
+		|| cp >= 0xFEFF && cp < 0xFF00
+		|| cp >= 0xE0001 && cp < 0xE0002
+		|| cp >= 0xE007F && cp < 0xE0080
+		|| cp >= 0xE0100 && cp < 0xE01F0;
 }
 
 init_grid();

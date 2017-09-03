@@ -39,17 +39,27 @@ th {
 	font-family: "TwitterColorEmoji-SVGinOT.ttf", "Symbola.ttf";
 }
 #grid div.like_space:not(#specificity):not(#specificity),
+#grid div.like_C1:not(#specificity):not(#specificity),
 #grid div.like_C0:not(#specificity):not(#specificity),
 #grid div.like:not(#specificity):not(#specificity) {
 	color: #A0A0A0;
 }
 #grid td.selected div.like_space:not(#specificity):not(#specificity),
+#grid td.selected div.like_C1:not(#specificity):not(#specificity),
 #grid td.selected div.like_C0:not(#specificity):not(#specificity),
 #grid td.selected div.like:not(#specificity):not(#specificity),
 #big.like_space:not(#specificity):not(#specificity),
+#big.like_C1:not(#specificity):not(#specificity),
 #big.like_C0:not(#specificity):not(#specificity),
 #big.like:not(#specificity):not(#specificity) {
 	color: #606060;
+}
+#grid div.like_C1:not(#specificity):not(#specificity) {
+	transform: rotate(30deg) scale(0.5);
+	width: 3em;
+	position: absolute;
+	left: -0.75em;
+	font-family: monospace, monospace;
 }
 #grid div, #cp, #big {
 	height: 1.5em;
