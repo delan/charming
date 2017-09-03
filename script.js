@@ -24,7 +24,7 @@ var	ucd_version = '10.0.0',
 		age: '(unknown)',
 		gc: 'Unassigned (Cn)',
 		mpy: '(not applicable)',
-		emoji: 0x00,
+		bits: 0x00,
 	};
 
 function hex(cp) {
@@ -130,30 +130,56 @@ function click_handler() {
 function load_data() {
 	$('#loading_noscript').hide();
 	$('#loading_files').show();
-	$.get('data.json.lzo.64', function(base64) {
-		var lzo = atob(base64);
-		var json = lzo1x.decompress(lzo);
-		data = JSON.parse(json);
-		data.forEach(function(o, i) {
-			o.cp = i;
-		});
-		data_ready = true;
-		$('#loading').hide();
-		$('#ui').show();
-		update_grid();
-		update_info();
+	var names = "string name gc block age mpy bits";
+	data = {};
+	load_next(names.split(" "));
+}
+
+function load_next(names) {
+	var name = names.shift();
+	var file = "data." + name + ".json.lzo.64";
+	$("#loading_files").text("loading " + file);
+	$.get(file, function(base64) {
+		if (names.length)
+			load_next(names);
+		data[name] = JSON.parse(lzo1x.decompress(atob(base64)));
+		if (!names.length) {
+			data_ready = true;
+			$('#loading').hide();
+			$('#ui').show();
+			update_grid();
+			update_info();
+		}
 	});
 }
 
 function get_data(cp, prop) {
-	if (!data || !data[cp] || !data[cp][prop]) {
-		var def = data_defaults[prop];
-		if (def instanceof Function)
-			return def(cp);
-		else
-			return def;
+	if (!data || !(prop in data)) {
+		var substitute = data_defaults[prop];
+		if (typeof substitute == "function")
+			return substitute(cp);
+		return substitute;
 	}
-	return data[cp][prop];
+	if (
+		prop == "name"
+		|| prop == "gc"
+		|| prop == "block"
+		|| prop == "age"
+		|| prop == "mpy"
+	) {
+		var index = data[prop].charCodeAt(cp);
+		if (index == 0xFFFF) {
+			var substitute = data_defaults[prop];
+			if (typeof substitute == "function")
+				return substitute(cp);
+			return substitute;
+		}
+		return data.string[index];
+	}
+	if (prop == "bits")
+		return data.bits.charCodeAt(cp / 2 | 0)
+			>> cp % 2 * 8 & 0xFF;
+	throw 13;
 }
 
 function set_data(cp, prop, value) {
@@ -162,9 +188,14 @@ function set_data(cp, prop, value) {
 	data[cp][prop] = value;
 }
 
+function is_han(cp) {
+	// gendata.py: kDefinition exists
+	return !!(get_data(cp, "bits") & 0x01);
+}
+
 function is_emoji(cp) {
-	var Emoji_Presentation = 0x02;
-	return !!(get_data(cp, "emoji") & Emoji_Presentation);
+	// gendata.py: Emoji_Presentation
+	return !!(get_data(cp, "bits") & 0x02);
 }
 
 init_grid();
@@ -213,28 +244,27 @@ $('#ui_tabs a').click(function(e) {
 	e.preventDefault();
 });
 $('#ucd_version').text(ucd_version);
-$('#search_form, #search_han').on('submit change', function(e) {
-	var q = $('#search_query').val();
+$('#search_form, #search_han').on('change keydown paste input submit', function(e) {
+	var q = $('#search_query').val().toUpperCase();
 	var sr = $('#search_results');
 	if (!q.length)
 		return;
 	sr.empty();
-	data.filter(function(o) {
-		return (o.name || '').toLowerCase().indexOf(
-			q.toLowerCase()) != -1;
-	}).filter(function(o) {
-		if (!$('#search_han').is(':checked') && o.han)
-			return false;
-		return true;
-	}).slice(0, 50).forEach(function(o) {
-		sr.append(
-			$('<div>').
-			text(cp_string(o.cp) + '\u2001' + o.name).
-			click(function() {
-				set_hash(o.cp);
-			})
-		);
-	});
+	var han = $("#search_han").is(":checked");
+	for (var n = 0, i = 0; n < 50 && i < data.name.length; i++) {
+		if (!han && is_han(i))
+			continue;
+		var index = data.name.charCodeAt(i);
+		if (!(index in data.string))
+			continue;
+		var name = data.string[index];
+		if (name.toUpperCase().indexOf(q) > -1) {
+			n++;
+			sr.append($("<div>")
+			.text(cp_string(i) + "\u2001" + name)
+			.click(set_hash.bind(null, i)));
+		}
+	}
 	e.preventDefault();
 });
 $('#goto_hex').on('change keydown paste input', function() {
