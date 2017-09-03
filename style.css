@@ -152,3 +152,11 @@ th {
 #goto_hex, #goto_dec {
 	font-family: monospace;
 }
+@media (max-width: 1020px) {
+	#grid {
+		display: none;
+	}
+	#info {
+		border-left: 1px solid #c0c0c0;
+	}
+}
