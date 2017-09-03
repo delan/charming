@@ -25,12 +25,25 @@ th {
 #grid td {
 	padding: 0;
 	border: 1px solid #c0c0c0;
+	font-size: 1.5em;
+	width: 1.5em;
+	height: 1.5em;
+	line-height: 1.5em;
+	vertical-align: top;
+	position: relative;
 }
 #grid div, #big, #goto_char {
 	font-family: "Symbola.ttf";
 }
-.emoji:not(#specificity):not(#specificity) {
+.like_emoji:not(#specificity):not(#specificity) {
 	font-family: "TwitterColorEmoji-SVGinOT.ttf", "Symbola.ttf";
+}
+#grid div.like:not(#specificity):not(#specificity) {
+	color: #A0A0A0;
+}
+#grid td.selected div.like:not(#specificity):not(#specificity),
+#big.like:not(#specificity):not(#specificity) {
+	color: #606060;
 }
 #grid div, #cp, #big {
 	height: 1.5em;
@@ -39,11 +52,10 @@ th {
 	overflow: hidden;
 }
 #grid div {
-	font-size: 1.5em;
 	width: 1.5em;
 	cursor: default;
 }
-#grid div.selected, #infotop {
+#grid td.selected, #infotop {
 	background: #c0c0c0;
 }
 #info {

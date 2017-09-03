@@ -63,6 +63,20 @@ function cp_char(cp) {
 	return String.fromCharCode(0xD800 + (cp >> 10), 0xDC00 + (cp & 0x3FF));
 }
 
+function char_cp(text) {
+	var unit = text.charCodeAt(0);
+	if (is_surrogate(unit)) {
+		var high = unit;
+		var low = text.charCodeAt(1);
+		return (
+			0x10000
+			+ ((high - 0xD800) << 10)
+			+ (low - 0xDC00)
+		);
+	}
+	return unit;
+}
+
 function cp_string(cp) {
 	var s = hex(cp);
 	if (s.length < 5)
@@ -70,23 +84,28 @@ function cp_string(cp) {
 	return 'U+' + s;
 }
 
+function cp_display(cp) {
+	// “pretty” display rules
+	return cp_char(cp);
+}
+
 function update_grid() {
 	grid_elements.forEach(function(e, i) {
 		var cp = grid_base + i;
-		e.text(cp_char(cp));
-		e.removeClass("emoji");
-		if (is_emoji(cp))
-			e.addClass("emoji");
+		e.text(cp_display(cp));
+		e.removeClass("like_emoji");
+		if (like_emoji(cp))
+			e.addClass("like_emoji");
 	});
 }
 
 function update_info() {
 	var cp = current_cp;
 	$('#cp').text(cp_string(cp));
-	$('#big').val(cp_char(cp));
-	$("#big, #goto_char").removeClass("emoji");
-	if (is_emoji(cp))
-		$("#big, #goto_char").addClass("emoji");
+	$('#big').val(cp_display(cp));
+	$("#big, #goto_char").removeClass("like_emoji");
+	if (like_emoji(cp))
+		$("#big, #goto_char").addClass("like_emoji");
 	if (!data_ready)
 		return;
 	document.title = cp_string(cp) + ' ' + get_data(cp, 'name');
@@ -96,6 +115,26 @@ function update_info() {
 
 function set_hash(cp) {
 	location.hash = hex(cp);
+}
+
+function set_hash_text(text, field) {
+	if (text.length == 0)
+		return;
+	else
+		var cp = char_cp(text);
+	if (field !== void 0) {
+		$(field).val(cp_display(cp));
+		yield_then_select(field);
+	}
+	set_hash(cp);
+}
+
+function yield_then_select(field) {
+	if (!$(field).data("composing")) {
+		setTimeout(function() {
+			$(field).select();
+		}, 0);
+	}
 }
 
 function replace(cp) {
@@ -119,9 +158,9 @@ function hashchange_handler() {
 	}
 	$('#goto_hex').val(hex(cp));
 	$('#goto_dec').val(cp);
-	$('#goto_char').val(cp_char(cp));
-	$('#grid div').removeClass('selected');
-	grid_elements[cp % 256].addClass('selected');
+	$('#goto_char').val(cp_display(cp));
+	$('#grid td').removeClass('selected');
+	grid_elements[cp % 256].parent().addClass('selected');
 	update_info();
 }
 
@@ -191,6 +230,19 @@ function set_data(cp, prop, value) {
 	data[cp][prop] = value;
 }
 
+function get_clipboard(event) {
+	if ("clipboardData" in event) {
+		return event.clipboardData;
+	}
+	if ("originalEvent" in event) {
+		return get_clipboard(event.originalEvent);
+	}
+	if ("clipboardData" in window) {
+		return window.clipboardData;
+	}
+	return null;
+}
+
 function is_surrogate(cp) {
 	return (cp & 0xFFFFF800) == 0xD800;
 }
@@ -203,6 +255,10 @@ function is_han(cp) {
 function is_emoji(cp) {
 	// gendata.py: Emoji_Presentation
 	return !!(get_data(cp, "bits") & 0x02);
+}
+
+function like_emoji(cp) {
+	return is_emoji(cp);
 }
 
 init_grid();
@@ -284,20 +340,28 @@ $('#goto_dec').on('change keydown paste input', function() {
 		return;
 	set_hash(parseInt(this.value, 10));
 });
-$('#big, #goto_char').on('change keydown paste input', function() {
-	if (this.value.length == 0)
-		return;
-	else if (this.value.length == 1)
-		set_hash(this.value.charCodeAt(0));
-	else
-		set_hash(
-			0x10000 +
-			((this.value.charCodeAt(0) - 0xd800) << 10) +
-			(this.value.charCodeAt(1) - 0xdc00)
-		);
-});
-$('#big, #goto_char').on('change keydown paste input focus click', function() {
-	// select entire box, even when there is only an invisible character
-	// this prevents confusion when inputing in a seemingly empty box fails
-	$(this).select();
-});
+
+$("#big, #goto_char")
+	.on("cut copy", function(event) {
+		event.preventDefault();
+		var text = cp_char(current_cp);
+		get_clipboard(event).setData("text", text);
+	})
+	.on("paste", function(event) {
+		event.preventDefault();
+		var text = get_clipboard(event).getData("text");
+		set_hash_text(text, this);
+	})
+	.on("compositionstart", function() {
+		$(this).data("composing", true);
+	})
+	.on("compositionend", function() {
+		$(this).data("composing", false);
+		yield_then_select(this);
+	})
+	.on("input", function(event) {
+		set_hash_text(this.value, this);
+	})
+	.on("focus", function(event) {
+		$(this).select();
+	});
