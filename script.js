@@ -6,11 +6,15 @@ var	ucd_version = '10.0.0',
 	data = null,
 	data_defaults = {
 		u16: function(cp) {
+			if (is_surrogate(cp))
+				return "(none)";
 			return cp_char(cp).split('').map(function(x) {
 				return ('0000' + hex(x.charCodeAt(0))).slice(-4);
 			}).join(' ');
 		},
 		u8: function(cp) {
+			if (is_surrogate(cp))
+				return "(none)";
 			return unescape(encodeURIComponent(cp_char(cp))).
 				split('').map(function(x) {
 					return ('00' + hex(x.charCodeAt(0))).slice(-2);
@@ -49,15 +53,14 @@ function init_grid() {
 }
 
 function cp_char(cp) {
-	if (cp > 0xffff) {
-		cp -= 0x10000;
-		return String.fromCharCode(
-			0xd800 + (cp >> 10),
-			0xdc00 + (cp & 0x3ff)
-		);
-	} else {
+	if (is_surrogate(cp)) {
+		return "\uFFFD";
+	}
+	if (cp < 0x10000) {
 		return String.fromCharCode(cp);
 	}
+	cp -= 0x10000;
+	return String.fromCharCode(0xD800 + (cp >> 10), 0xDC00 + (cp & 0x3FF));
 }
 
 function cp_string(cp) {
@@ -186,6 +189,10 @@ function set_data(cp, prop, value) {
 	if (!data[cp])
 		data[cp] = {};
 	data[cp][prop] = value;
+}
+
+function is_surrogate(cp) {
+	return (cp & 0xFFFFF800) == 0xD800;
 }
 
 function is_han(cp) {
