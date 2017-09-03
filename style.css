@@ -38,10 +38,13 @@ th {
 .like_emoji:not(#specificity):not(#specificity) {
 	font-family: "TwitterColorEmoji-SVGinOT.ttf", "Symbola.ttf";
 }
+#grid div.like_C0:not(#specificity):not(#specificity),
 #grid div.like:not(#specificity):not(#specificity) {
 	color: #A0A0A0;
 }
+#grid td.selected div.like_C0:not(#specificity):not(#specificity),
 #grid td.selected div.like:not(#specificity):not(#specificity),
+#big.like_C0:not(#specificity):not(#specificity),
 #big.like:not(#specificity):not(#specificity) {
 	color: #606060;
 }
