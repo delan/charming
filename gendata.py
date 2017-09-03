@@ -82,7 +82,7 @@ for l in open('data/NameAliases.txt'):
 	l = l.rstrip('\r\n')
 	f = l.split(';')
 	cp = int(f[0], 16)
-	if f[2] in ['control', 'correction']:
+	if f[2] in ['figment', 'control', 'correction']:
 		data[cp]['name'] = f[1]
 
 print 'Processing Unihan_Readings.txt ...'
