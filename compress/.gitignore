@@ -1,0 +1,8 @@
+compress
+compress.exe
+compress.o
+lzoconf.h
+lzodefs.h
+minilzo.c
+minilzo.h
+minilzo.o

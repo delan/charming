@@ -301,7 +301,7 @@ function load_data() {
 
 function load_next(names) {
 	var name = names.shift();
-	var file = "data." + name + ".json.lzo.64";
+	var file = "data." + name + ".64";
 	$("#loading_files").text("loading " + file);
 	$.get(file, function(base64) {
 		if (names.length)

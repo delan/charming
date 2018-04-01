@@ -119,6 +119,9 @@ for l in open('data/emoji-data.txt'):
 		if property == "Emoji_Presentation":
 			data[i]["bits"] |= BITS[property]
 
+with open("data.json", "w") as file:
+	pass
+
 with open("data.string.json", "w") as file:
 	print "Writing data.string.json ..."
 	hash = {}

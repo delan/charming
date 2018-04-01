@@ -1,22 +1,31 @@
-data.json.lzo.64: data.json.lzo
-	openssl base64 < data.string.json.lzo | tr -d '\n' > data.string.json.lzo.64
-	openssl base64 < data.name.json.lzo | tr -d '\n' > data.name.json.lzo.64
-	openssl base64 < data.gc.json.lzo | tr -d '\n' > data.gc.json.lzo.64
-	openssl base64 < data.block.json.lzo | tr -d '\n' > data.block.json.lzo.64
-	openssl base64 < data.age.json.lzo | tr -d '\n' > data.age.json.lzo.64
-	openssl base64 < data.mpy.json.lzo | tr -d '\n' > data.mpy.json.lzo.64
-	openssl base64 < data.bits.json.lzo | tr -d '\n' > data.bits.json.lzo.64
+.POSIX:
+.SUFFIXES:
+.SUFFIXES: .json .lzo .64
+.PHONY: all clean
 
-data.json.lzo: data.json compress/compress
-	compress/compress data.string.json data.string.json.lzo
-	compress/compress data.name.json data.name.json.lzo
-	compress/compress data.gc.json data.gc.json.lzo
-	compress/compress data.block.json data.block.json.lzo
-	compress/compress data.age.json data.age.json.lzo
-	compress/compress data.mpy.json data.mpy.json.lzo
-	compress/compress data.bits.json data.bits.json.lzo
+all: data.string.64
+all: data.bits.64
+all: data.age.64
+all: data.block.64
+all: data.gc.64
+all: data.mpy.64
+all: data.name.64
 
-data.json: data/UnicodeData.txt
+.lzo.64:
+	< $< openssl base64 | tr -d \\n > $@
+
+.json.lzo:
+	compress/compress $< $@
+
+data.string.json: data.json
+data.bits.json: data.json
+data.age.json: data.json
+data.block.json: data.json
+data.gc.json: data.json
+data.mpy.json: data.json
+data.name.json: data.json
+
+data.json: data/UnicodeData.txt compress/compress
 	python gendata.py
 
 compress/compress:
@@ -24,4 +33,4 @@ compress/compress:
 
 clean:
 	$(MAKE) -C compress clean
-	rm -f data.*
+	rm -f data.json data.*.json data.*.lzo data.*.64
