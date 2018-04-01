@@ -26,7 +26,7 @@ data.mpy.json: data.json
 data.name.json: data.json
 
 data.json: data/UnicodeData.txt compress/compress
-	python gendata.py
+	./gendata.py
 
 compress/compress:
 	$(MAKE) -C compress
