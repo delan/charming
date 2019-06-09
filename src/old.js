@@ -1,27 +1,15 @@
+import { pointToString, stringToPoint } from "./encoding";
+import { toHexadecimal, pointToYouPlus, pointToString16, pointToString8, pointToEntity10 } from "./formatting";
+
 var	ucd_version = '10.0.0',
 	grid_elements = [],
 	grid_base,
 	current_cp,
 	data_ready = false,
 	data_defaults = {
-		u16: function(cp) {
-			if (is_surrogate(cp))
-				return "(none)";
-			return cp_char(cp).split('').map(function(x) {
-				return ('0000' + hex(x.charCodeAt(0))).slice(-4);
-			}).join(' ');
-		},
-		u8: function(cp) {
-			if (is_surrogate(cp))
-				return "(none)";
-			return unescape(encodeURIComponent(cp_char(cp))).
-				split('').map(function(x) {
-					return ('00' + hex(x.charCodeAt(0))).slice(-2);
-				}).join(' ');
-		},
-		ent: function(cp) {
-			return '&#' + cp + ';';
-		},
+		u16: cp => pointToString16(cp) || "(none)",
+		u8: cp => pointToString8(cp) || "(none)",
+		ent: cp => pointToEntity10(cp) || "(none)",
 		name: '(unknown or unassigned)',
 		block: '(unknown)',
 		age: '(unknown)',
@@ -29,10 +17,6 @@ var	ucd_version = '10.0.0',
 		mpy: '(not applicable)',
 		bits: 0x00,
 	};
-
-function hex(cp) {
-	return cp.toString(16).toUpperCase();
-}
 
 function init_grid() {
 	var row, cell, div;
@@ -51,44 +35,12 @@ function init_grid() {
 	}
 }
 
-function cp_char(cp) {
-	if (is_surrogate(cp)) {
-		return "\uFFFD";
-	}
-	if (cp < 0x10000) {
-		return String.fromCharCode(cp);
-	}
-	cp -= 0x10000;
-	return String.fromCharCode(0xD800 + (cp >> 10), 0xDC00 + (cp & 0x3FF));
-}
-
-function char_cp(text) {
-	var unit = text.charCodeAt(0);
-	if (is_surrogate(unit)) {
-		var high = unit;
-		var low = text.charCodeAt(1);
-		return (
-			0x10000
-			+ ((high - 0xD800) << 10)
-			+ (low - 0xDC00)
-		);
-	}
-	return unit;
-}
-
-function cp_string(cp) {
-	var s = hex(cp);
-	if (s.length < 5)
-		s = ('000' + s).slice(-4);
-	return 'U+' + s;
-}
-
 function cp_display(cp) {
 	if (is_C0(cp)) {
-		return cp_char(cp + 0x2400);
+		return pointToString(cp + 0x2400);
 	}
 	if (cp == 0x007F) {
-		return cp_char(0x2421);
+		return pointToString(0x2421);
 	}
 	if (cp == 0x2061) {
 		return "f\u2061()";
@@ -106,18 +58,18 @@ function cp_display(cp) {
 		return "\u2420" + "ₜ";
 	}
 	if (cp >= 0xE0021 && cp < 0xE007F) {
-		return cp_char(cp - 0xE0000) + "ₜ";
+		return pointToString(cp - 0xE0000) + "ₜ";
 	}
 	if (like_C1(cp)) {
 		return cp_diagonal(cp);
 	}
 	if (like_space(cp)) {
-		return "]" + cp_char(cp) + "[";
+		return "]" + pointToString(cp) + "[";
 	}
 	if (like_mark(cp)) {
-		return "\u25CC" + cp_char(cp);
+		return "\u25CC" + pointToString(cp);
 	}
-	return cp_char(cp);
+	return pointToString(cp);
 }
 
 function cp_diagonal(cp) {
@@ -213,7 +165,7 @@ function update_grid() {
 
 export default function update_info() {
 	var cp = current_cp;
-	$('#cp').text(cp_string(cp));
+	$('#cp').text(pointToYouPlus(cp));
 	$('#big').val(cp_display(cp));
 	$("#big, #goto_char").removeClass("like_emoji");
 	$("#big, #goto_char").removeClass("like_C0");
@@ -229,20 +181,20 @@ export default function update_info() {
 		$("#big, #goto_char").addClass("like_space");
 	if (!data_ready)
 		return;
-	document.title = cp_string(cp) + ' ' + get_data(cp, 'name');
+	document.title = pointToYouPlus(cp) + ' ' + get_data(cp, 'name');
 	for (var x in data_defaults)
 		$('#data_' + x).text(get_data(cp, x));
 }
 
 function set_hash(cp) {
-	location.hash = hex(cp);
+	location.hash = toHexadecimal(cp);
 }
 
 function set_hash_text(text, field) {
 	if (text.length == 0)
 		return;
 	else
-		var cp = char_cp(text);
+		var cp = stringToPoint(text);
 	if (field !== void 0) {
 		$(field).val(cp_display(cp));
 		yield_then_select(field);
@@ -259,7 +211,7 @@ function yield_then_select(field) {
 }
 
 function replace(cp) {
-	location.replace("#" + hex(cp));
+	location.replace("#" + toHexadecimal(cp));
 }
 
 function hashchange_handler() {
@@ -269,7 +221,7 @@ function hashchange_handler() {
 			return replace(0);
 		else
 			return replace(current_cp);
-	if (location.hash.slice(1) != hex(cp))
+	if (location.hash.slice(1) != toHexadecimal(cp))
 		return replace(cp);
 	current_cp = cp;
 	var new_grid_base = cp - cp % 256;
@@ -277,7 +229,7 @@ function hashchange_handler() {
 		grid_base = new_grid_base;
 		update_grid();
 	}
-	$('#goto_hex').val(hex(cp));
+	$('#goto_hex').val(toHexadecimal(cp));
 	$('#goto_dec').val(cp);
 	$('#goto_char').val(cp_display(cp));
 	$('#grid td').removeClass('selected');
@@ -328,12 +280,6 @@ function get_data(cp, prop) {
 	throw 13;
 }
 
-function set_data(cp, prop, value) {
-	if (!data[cp])
-		data[cp] = {};
-	data[cp][prop] = value;
-}
-
 function get_clipboard(event) {
 	if ("clipboardData" in event) {
 		return event.clipboardData;
@@ -345,10 +291,6 @@ function get_clipboard(event) {
 		return window.clipboardData;
 	}
 	return null;
-}
-
-function is_surrogate(cp) {
-	return (cp & 0xFFFFF800) == 0xD800;
 }
 
 function is_han(cp) {
@@ -535,7 +477,7 @@ $('#search_form, #search_han').on('change keydown paste input submit', function(
 		if (name.toUpperCase().indexOf(q) > -1) {
 			n++;
 			sr.append($("<div>")
-			.text(cp_string(i) + "\u2001" + name)
+			.text(pointToYouPlus(i) + "\u2001" + name)
 			.click(set_hash.bind(null, i)));
 		}
 	}
@@ -555,7 +497,7 @@ $('#goto_dec').on('change keydown paste input', function() {
 $("#big, #goto_char")
 	.on("cut copy", function(event) {
 		event.preventDefault();
-		var text = cp_char(current_cp);
+		var text = pointToString(current_cp);
 		get_clipboard(event).setData("text", text);
 	})
 	.on("paste", function(event) {
