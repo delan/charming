@@ -1,0 +1,31 @@
+{
+  "name": "charming",
+  "version": "0.0.0",
+  "description": "",
+  "private": true,
+  "scripts": {
+    "build": "webpack",
+    "start": "webpack-dev-server",
+    "open": "webpack-dev-server --open",
+    "test": ":"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/delan/charming.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/delan/charming/issues"
+  },
+  "homepage": "https://github.com/delan/charming#readme",
+  "devDependencies": {
+    "css-loader": "2.1.1",
+    "file-loader": "4.0.0",
+    "html-loader": "0.5.5",
+    "style-loader": "0.23.1",
+    "webpack": "4.33.0",
+    "webpack-cli": "3.3.3",
+    "webpack-dev-server": "3.7.1"
+  }
+}
