@@ -7,7 +7,7 @@
     "build": "webpack",
     "start": "webpack-dev-server",
     "open": "webpack-dev-server --open",
-    "test": ":"
+    "check": "tsc"
   },
   "repository": {
     "type": "git",
