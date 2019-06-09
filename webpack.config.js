@@ -1,4 +1,5 @@
 const path = require("path");
+const CompressionPlugin = require("compression-webpack-plugin");
 
 module.exports = {
     entry: "./src/index.ts",
@@ -9,6 +10,9 @@ module.exports = {
     mode: "development",
     devServer: {
         contentBase: "./dist",
+    },
+    resolve: {
+        extensions: [".js", ".ts"],
     },
     module: {
         rules: [
@@ -22,6 +26,19 @@ module.exports = {
                 exclude: /[/]node_modules[/]/,
                 loader: "babel-loader",
             },
+            {
+                test: /[.]bin$/,
+                exclude: /[/]node_modules[/]/,
+                loader: "file-loader",
+            },
         ],
     },
+    plugins: [
+        new CompressionPlugin({
+            filename: '[path].br[query]',
+            algorithm: 'brotliCompress',
+            test: /[.](js|bin)$/,
+            cache: true,
+        }),
+    ],
 };

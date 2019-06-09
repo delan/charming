@@ -3,7 +3,6 @@ var	ucd_version = '10.0.0',
 	grid_base,
 	current_cp,
 	data_ready = false,
-	data = null,
 	data_defaults = {
 		u16: function(cp) {
 			if (is_surrogate(cp))
@@ -212,7 +211,7 @@ function update_grid() {
 	});
 }
 
-function update_info() {
+export default function update_info() {
 	var cp = current_cp;
 	$('#cp').text(cp_string(cp));
 	$('#big').val(cp_display(cp));
@@ -294,27 +293,11 @@ function click_handler() {
 function load_data() {
 	$('#loading_noscript').hide();
 	$('#loading_files').show();
-	var names = "string name gc block age mpy bits";
-	data = {};
-	load_next(names.split(" "));
-}
-
-function load_next(names) {
-	var name = names.shift();
-	var file = "data." + name + ".64";
-	$("#loading_files").text("loading " + file);
-	$.get(file, function(base64) {
-		if (names.length)
-			load_next(names);
-		data[name] = JSON.parse(lzo1x.decompress(atob(base64)));
-		if (!names.length) {
-			data_ready = true;
-			$('#loading').hide();
-			$('#ui').show();
-			update_grid();
-			update_info();
-		}
-	});
+	data_ready = true;
+	$('#loading').hide();
+	$('#ui').show();
+	update_grid();
+	update_info();
 }
 
 function get_data(cp, prop) {
@@ -331,7 +314,7 @@ function get_data(cp, prop) {
 		|| prop == "age"
 		|| prop == "mpy"
 	) {
-		var index = data[prop].charCodeAt(cp);
+		var index = data[prop].getUint16(cp * 2);
 		if (index == 0xFFFF) {
 			var substitute = data_defaults[prop];
 			if (typeof substitute == "function")
@@ -341,8 +324,7 @@ function get_data(cp, prop) {
 		return data.string[index];
 	}
 	if (prop == "bits")
-		return data.bits.charCodeAt(cp / 2 | 0)
-			>> cp % 2 * 8 & 0xFF;
+		return data.bits.getUint8(cp);
 	throw 13;
 }
 
