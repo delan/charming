@@ -12,17 +12,12 @@ module.exports = {
         contentBase: "./dist",
     },
     resolve: {
-        extensions: [".js", ".ts"],
+        extensions: [".js", ".ts", ".jsx", ".tsx"],
     },
     module: {
         rules: [
             {
-                test: /[.]js$/,
-                exclude: /[/]node_modules[/]/,
-                loader: "babel-loader",
-            },
-            {
-                test: /[.]ts$/,
+                test: /[.](js|ts)x?$/,
                 exclude: /[/]node_modules[/]/,
                 loader: "babel-loader",
             },
