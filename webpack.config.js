@@ -17,6 +17,20 @@ const config = {
     module: {
         rules: [
             {
+                test: /[.]sass$/,
+                exclude: /[/]node_modules[/]/,
+                use: [
+                    "style-loader",
+                    "css-loader",
+                    {
+                        loader: "sass-loader",
+                        options: {
+                            implementation: require("sass"),
+                        },
+                    },
+                ],
+            },
+            {
                 test: /[.](js|ts)x?$/,
                 exclude: /[/]node_modules[/]/,
                 loader: "babel-loader",
