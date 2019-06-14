@@ -4,9 +4,9 @@
   "description": "",
   "private": true,
   "scripts": {
-    "build": "webpack",
-    "start": "webpack-dev-server",
-    "open": "webpack-dev-server --open",
+    "build": "webpack --mode production",
+    "start": "webpack-dev-server --mode development",
+    "open": "webpack-dev-server --mode development --open",
     "check": "tsc"
   },
   "repository": {
