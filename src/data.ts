@@ -1,10 +1,10 @@
-import string from "./data.string.json";
-import bits from "./data.bits.bin";
-import name from "./data.name.bin";
-import gc from "./data.gc.bin";
-import block from "./data.block.bin";
-import age from "./data.age.bin";
-import mpy from "./data.mpy.bin";
+import string from "../data.string.json";
+import bits from "../data.bits.bin";
+import name from "../data.name.bin";
+import gc from "../data.gc.bin";
+import block from "../data.block.bin";
+import age from "../data.age.bin";
+import mpy from "../data.mpy.bin";
 
 export interface Data {
     string: string[],
