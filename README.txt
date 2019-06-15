@@ -15,3 +15,6 @@ npm run start
 
 # start and open
 npm run open
+
+# format code
+npm run prettier [-- additional options]

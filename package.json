@@ -7,6 +7,7 @@
     "build": "webpack --mode production",
     "start": "webpack-dev-server --mode development",
     "open": "webpack-dev-server --mode development --open",
+    "prettier": "prettier '**/*.{json,css,js,ts,jsx,tsx}'",
     "check": "tsc"
   },
   "repository": {
@@ -32,6 +33,7 @@
     "css-loader": "2.1.1",
     "file-loader": "4.0.0",
     "html-loader": "0.5.5",
+    "prettier": "1.18.2",
     "react": "16.8.6",
     "react-dom": "16.8.6",
     "regenerator-runtime": "0.13.2",
