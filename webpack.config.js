@@ -5,6 +5,7 @@ const CompressionPlugin = require("compression-webpack-plugin");
 const config = {
   entry: {
     old: "./src/old.js",
+    new: "./src/new.tsx",
   },
   output: {
     filename: "[name].js",

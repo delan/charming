@@ -1,0 +1,33 @@
+body
+  margin: 0
+
+main
+  display: grid
+  grid-template-columns: 24em 1fr
+  grid-auto-rows: 100vh
+
+.detail
+
+.map
+  $cell-size: 2.5em
+
+  display: grid
+  grid-template-columns: repeat(auto-fill, $cell-size)
+  grid-auto-rows: $cell-size
+
+  > a
+    $glyph-size: 1.5em
+    $outline-size: 1px
+
+    font-size: $glyph-size
+    line-height: $cell-size/$glyph-size
+    text-align: center
+    text-decoration: none
+    color: black
+
+    outline: $outline-size solid #C0C0C0
+    outline-offset: -$outline-size/2
+    overflow: hidden // Firefox
+
+    &.active
+      background: #C0C0C0

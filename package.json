@@ -36,6 +36,7 @@
     "prettier": "1.18.2",
     "react": "16.8.6",
     "react-dom": "16.8.6",
+    "react-use": "9.4.1",
     "regenerator-runtime": "0.13.2",
     "sass": "1.21.0",
     "sass-loader": "7.1.0",
