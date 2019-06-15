@@ -475,10 +475,10 @@ $('#search_form, #search_han').on('change keydown paste input submit', function(
 		return;
 	sr.empty();
 	var han = $("#search_han").is(":checked");
-	for (var n = 0, i = 0; n < 50 && i < data.name.length; i++) {
+	for (var n = 0, i = 0; n < 50 && i < 0x110000; i++) {
 		if (!han && is_han(i))
 			continue;
-		var index = data.name.charCodeAt(i);
+		var index = data.name.getUint16(i * 2);
 		if (!(index in data.string))
 			continue;
 		var name = data.string[index];
