@@ -3,9 +3,11 @@ const webpack = require("webpack");
 const CompressionPlugin = require("compression-webpack-plugin");
 
 const config = {
-    entry: "./src/old.js",
+    entry: {
+        old: "./src/old.js",
+    },
     output: {
-        filename: "script.js",
+        filename: "[name].js",
         path: path.resolve(__dirname, "dist"),
     },
     devServer: {
