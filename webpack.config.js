@@ -3,7 +3,7 @@ const webpack = require("webpack");
 const CompressionPlugin = require("compression-webpack-plugin");
 
 const config = {
-    entry: "./src/index.ts",
+    entry: "./src/old.js",
     output: {
         filename: "script.js",
         path: path.resolve(__dirname, "dist"),

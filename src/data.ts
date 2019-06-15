@@ -1,3 +1,4 @@
+import string from "./data.string.json";
 import bits from "./data.bits.bin";
 import name from "./data.name.bin";
 import gc from "./data.gc.bin";
@@ -5,10 +6,8 @@ import block from "./data.block.bin";
 import age from "./data.age.bin";
 import mpy from "./data.mpy.bin";
 
-const paths = [bits, name, gc, block, age, mpy];
-
-export default interface Data {
-    string?: Array<string>,
+export interface Data {
+    string: string[],
     bits: DataView,
     name: DataView,
     gc: DataView,
@@ -17,11 +16,15 @@ export default interface Data {
     mpy: DataView,
 }
 
-export async function fetchAllData(): Promise<Data> {
+export function fetchAllData(): Promise<Data> {
+    return fetchData(bits, name, gc, block, age, mpy);
+}
+
+async function fetchData(...paths: string[]): Promise<Data> {
     const [bits, name, gc, block, age, mpy] =
         await Promise.all(paths.map(fetchDataView));
 
-    return { bits, name, gc, block, age, mpy };
+    return { string, bits, name, gc, block, age, mpy };
 }
 
 async function fetchDataView(path: string): Promise<DataView> {

@@ -1,3 +1,7 @@
+import "core-js/stable";
+import "regenerator-runtime/runtime";
+
+import { fetchAllData } from "./data";
 import { pointToString, stringToPoint } from "./encoding";
 import { toHexadecimal, pointToYouPlus, pointToString16, pointToString8, pointToEntity10 } from "./formatting";
 
@@ -6,6 +10,7 @@ var	ucd_version = '10.0.0',
 	grid_base,
 	current_cp,
 	data_ready = false,
+	data = null,
 	data_defaults = {
 		u16: cp => pointToString16(cp) || "(none)",
 		u8: cp => pointToString8(cp) || "(none)",
@@ -163,7 +168,7 @@ function update_grid() {
 	});
 }
 
-export default function update_info() {
+function update_info() {
 	var cp = current_cp;
 	$('#cp').text(pointToYouPlus(cp));
 	$('#big').val(cp_display(cp));
@@ -245,11 +250,14 @@ function click_handler() {
 function load_data() {
 	$('#loading_noscript').hide();
 	$('#loading_files').show();
-	data_ready = true;
-	$('#loading').hide();
-	$('#ui').show();
-	update_grid();
-	update_info();
+	fetchAllData().then(result => {
+		data = result;
+		data_ready = true;
+		$('#loading').hide();
+		$('#ui').show();
+		update_grid();
+		update_info();
+	});
 }
 
 function get_data(cp, prop) {
