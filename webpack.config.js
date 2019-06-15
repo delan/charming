@@ -48,12 +48,16 @@ const config = {
 module.exports = (env, argv) => {
     switch (argv.mode) {
         case "production":
+            config.devtool = "source-map";
             config.plugins.push(new CompressionPlugin({
                 filename: '[path].br[query]',
                 algorithm: 'brotliCompress',
                 test: /[.](js|bin)$/,
                 cache: true,
             }));
+            break;
+        case "development":
+            config.devtool = "cheap-module-eval-source-map";
             break;
         default:
             // breaks webpack-dev-server
