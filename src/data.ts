@@ -34,6 +34,10 @@ async function fetchDataView(path: string): Promise<DataView> {
   return new DataView(buffer);
 }
 
+function getFlag(data: Data, shift: number, point: number): boolean {
+  return !!((data.bits.getUint8(point) >> shift) & 1);
+}
+
 export function getString(
   data: Data,
   field: "name" | "gc" | "block" | "age" | "mpy",
@@ -46,4 +50,20 @@ export function getString(
   }
 
   return data.string[index];
+}
+
+export function kDefinitionExists(data: Data, point: number): boolean {
+  return getFlag(data, 0, point);
+}
+
+export function isEmojiPresentation(data: Data, point: number): boolean {
+  return getFlag(data, 1, point);
+}
+
+export function isSpaceSeparator(data: Data, point: number): boolean {
+  return getFlag(data, 2, point);
+}
+
+export function isAnyMark(data: Data, point: number): boolean {
+  return getFlag(data, 3, point);
 }

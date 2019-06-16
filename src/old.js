@@ -1,7 +1,7 @@
 import "core-js/stable";
 import "regenerator-runtime/runtime";
 
-import { fetchAllData, getString } from "./data";
+import { fetchAllData, getString, kDefinitionExists, isEmojiPresentation, isSpaceSeparator, isAnyMark } from "./data";
 import { pointToString, stringToPoint } from "./encoding";
 import { toHexadecimal, pointToYouPlus, pointToString16, pointToString8, pointToEntity10 } from "./formatting";
 
@@ -284,8 +284,6 @@ function get_data(cp, prop) {
 			return substitute(cp);
 		return substitute;
 	}
-	if (prop == "bits")
-		return data.bits.getUint8(cp);
 	throw 13;
 }
 
@@ -302,36 +300,16 @@ function get_clipboard(event) {
 	return null;
 }
 
-function is_han(cp) {
-	// gendata.py: kDefinition exists
-	return !!(get_data(cp, "bits") & 0x01);
-}
-
-function is_emoji(cp) {
-	// gendata.py: Emoji_Presentation
-	return !!(get_data(cp, "bits") & 0x02);
-}
-
-function is_space(cp) {
-	// gendata.py: General_Category Zs
-	return !!(get_data(cp, "bits") & 0x04);
-}
-
-function is_mark(cp) {
-	// gendata.py: General_Category M*
-	return !!(get_data(cp, "bits") & 0x08);
-}
-
 function like_emoji(cp) {
-	return is_emoji(cp);
+	return data ? isEmojiPresentation(data, cp) : false;
 }
 
 function like_space(cp) {
-	return is_space(cp);
+	return data ? isSpaceSeparator(data, cp) : false;
 }
 
 function like_mark(cp) {
-	if (is_mark(cp)) {
+	if (data ? isAnyMark(data, cp) : false) {
 		switch (cp & 0xFFFFFFF0) {
 		case 0x0300: // Combining Diacritical Marks
 		case 0x0310:
@@ -477,7 +455,7 @@ $('#search_form, #search_han').on('change keydown paste input submit', function(
 	sr.empty();
 	var han = $("#search_han").is(":checked");
 	for (var n = 0, i = 0; n < 50 && i < 0x110000; i++) {
-		if (!han && is_han(i))
+		if (!han && kDefinitionExists(data, i))
 			continue;
 		var name = getString(data, "name", i);
 		if (name == null)
