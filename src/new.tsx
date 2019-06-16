@@ -42,11 +42,15 @@ function Detail() {
   const data = useContext(DataContext);
   const point = useContext(PointContext);
 
-  return (
-    <div className="detail">
-      {data ? getString(data, "name", point) : "null"}
-    </div>
-  );
+  if (data == null) {
+    return (
+      <div className="detail">
+        <div className="loading">…</div>
+      </div>
+    );
+  }
+
+  return <div className="detail">{getString(data, "name", point)}</div>;
 }
 
 function Map({ start = 0, stop = 384 }: { start?: number; stop?: number }) {
