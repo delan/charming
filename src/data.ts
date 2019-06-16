@@ -33,3 +33,17 @@ async function fetchDataView(path: string): Promise<DataView> {
   const buffer = await response.arrayBuffer();
   return new DataView(buffer);
 }
+
+export function getString(
+  data: Data,
+  field: "name" | "gc" | "block" | "age" | "mpy",
+  point: number,
+): string | null {
+  const index = data[field].getUint16(point * 2);
+
+  if (index == 0xffff || index >= data.string.length) {
+    return null;
+  }
+
+  return data.string[index];
+}

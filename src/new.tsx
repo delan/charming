@@ -14,7 +14,7 @@ import {
   getHashPoint,
   fixHashPoint,
 } from "./state";
-import { Data, fetchAllData } from "./data";
+import { Data, fetchAllData, getString } from "./data";
 
 history.scrollRestoration = "manual";
 
@@ -44,7 +44,7 @@ function Detail() {
 
   return (
     <div className="detail">
-      {data ? data.string[data.name.getUint16(point * 2)] : "null"}
+      {data ? getString(data, "name", point) : "null"}
     </div>
   );
 }

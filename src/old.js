@@ -1,7 +1,7 @@
 import "core-js/stable";
 import "regenerator-runtime/runtime";
 
-import { fetchAllData } from "./data";
+import { fetchAllData, getString } from "./data";
 import { pointToString, stringToPoint } from "./encoding";
 import { toHexadecimal, pointToYouPlus, pointToString16, pointToString8, pointToEntity10 } from "./formatting";
 
@@ -274,14 +274,15 @@ function get_data(cp, prop) {
 		|| prop == "age"
 		|| prop == "mpy"
 	) {
-		var index = data[prop].getUint16(cp * 2);
-		if (index == 0xFFFF) {
-			var substitute = data_defaults[prop];
-			if (typeof substitute == "function")
-				return substitute(cp);
-			return substitute;
+		var result = getString(data, prop, cp);
+		if (result != null) {
+			return result;
 		}
-		return data.string[index];
+
+		var substitute = data_defaults[prop];
+		if (typeof substitute == "function")
+			return substitute(cp);
+		return substitute;
 	}
 	if (prop == "bits")
 		return data.bits.getUint8(cp);
@@ -478,10 +479,9 @@ $('#search_form, #search_han').on('change keydown paste input submit', function(
 	for (var n = 0, i = 0; n < 50 && i < 0x110000; i++) {
 		if (!han && is_han(i))
 			continue;
-		var index = data.name.getUint16(i * 2);
-		if (!(index in data.string))
+		var name = getString(data, "name", i);
+		if (name == null)
 			continue;
-		var name = data.string[index];
 		if (name.toUpperCase().indexOf(q) > -1) {
 			n++;
 			sr.append($("<div>")
