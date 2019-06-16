@@ -2,9 +2,10 @@ import "core-js/stable";
 import "regenerator-runtime/runtime";
 import "./new.sass";
 
-import React, { useState, useEffect, useContext } from "react";
+import React, { CSSProperties, useState, useEffect, useContext } from "react";
 import ReactDOM from "react-dom";
 import useLocation from "react-use/lib/useLocation";
+import { FixedSizeGrid, GridChildComponentProps } from "react-window";
 
 import { pointToString } from "./encoding";
 import {
@@ -93,23 +94,42 @@ function Pair({ label, value }: { label: string; value: string | null }) {
   );
 }
 
-function Map({ start = 0, stop = 384 }: { start?: number; stop?: number }) {
-  const point = useContext(PointContext);
-
+function Map() {
   return (
-    <div className="map">
-      {range(start, stop).map(i => (
-        <Cell key={i} point={i} active={i == point} />
-      ))}
-    </div>
+    <FixedSizeGrid
+      className="map"
+      width={670}
+      height={640}
+      columnWidth={40}
+      rowHeight={40}
+      columnCount={16}
+      rowCount={1114112 / 16}
+      overscanRowsCount={16}
+    >
+      {MapCell}
+    </FixedSizeGrid>
   );
 }
 
-function Cell({ point, active = false }: { point: number; active?: boolean }) {
+function MapCell({ rowIndex, columnIndex, style }: GridChildComponentProps) {
+  const i = rowIndex * 16 + columnIndex;
+  const point = useContext(PointContext);
+  return <Cell point={i} active={i == point} style={style} />;
+}
+
+function Cell({
+  point,
+  active = false,
+  style,
+}: {
+  point: number;
+  active?: boolean;
+  style: CSSProperties;
+}) {
   const className = active ? "active" : undefined;
 
   return (
-    <a href={toFragment(point)} className={className}>
+    <a href={toFragment(point)} className={className} style={style}>
       {pointToString(point)}
     </a>
   );

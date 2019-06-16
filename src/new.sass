@@ -14,15 +14,16 @@ main
 .detail
 
 .map
-  $cell-size: 2.5em
+  $cell-size: 2.5rem
 
-  display: grid
-  grid-template-columns: repeat(auto-fill, $cell-size)
-  grid-auto-rows: $cell-size
-
-  > a
-    $glyph-size: 1.5em
+  a
+    $glyph-size: 1.5rem
     $outline-size: 1px
+
+    display: inline-block
+    vertical-align: top
+    width: $cell-size
+    height: $cell-size
 
     font-size: $glyph-size
     line-height: $cell-size/$glyph-size
