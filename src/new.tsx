@@ -50,7 +50,47 @@ function Detail() {
     );
   }
 
-  return <div className="detail">{getString(data, "name", point)}</div>;
+  return (
+    <div className="detail">
+      <h1>{getString(data, "name", point)}</h1>
+      <dl>
+        <StringPair field="gc" label="General category" />
+        <StringPair field="block" label="Block" />
+        <StringPair field="age" label="Introduced in" />
+        <StringPair field="mpy" label="Unihan kMandarin" />
+      </dl>
+    </div>
+  );
+}
+
+function StringPair({
+  label,
+  field,
+}: {
+  field: "gc" | "block" | "age" | "mpy";
+  label: string;
+}) {
+  const data = useContext(DataContext);
+  const point = useContext(PointContext);
+
+  if (data == null) {
+    return null;
+  }
+
+  return <Pair label={label} value={getString(data, field, point)} />;
+}
+
+function Pair({ label, value }: { label: string; value: string | null }) {
+  if (value == null) {
+    return null;
+  }
+
+  return (
+    <>
+      <dt>{label}</dt>
+      <dd>{value}</dd>
+    </>
+  );
 }
 
 function Map({ start = 0, stop = 384 }: { start?: number; stop?: number }) {
