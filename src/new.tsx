@@ -6,6 +6,8 @@ import React, { CSSProperties, useState, useEffect, useContext } from "react";
 import ReactDOM from "react-dom";
 import useLocation from "react-use/lib/useLocation";
 import { FixedSizeGrid, GridChildComponentProps } from "react-window";
+import AutoSizer from "react-virtualized-auto-sizer"; // FIXME type definitions
+import Div100vh from "react-div-100vh"; // FIXME type definitions
 
 import { pointToString } from "./encoding";
 import {
@@ -30,12 +32,14 @@ function Charming() {
   useEffect(() => void fixHashPoint(point));
 
   return (
-    <DataContext.Provider value={data}>
-      <PointContext.Provider value={point}>
-        <Detail />
-        <Map />
-      </PointContext.Provider>
-    </DataContext.Provider>
+    <Div100vh className="Charming">
+      <DataContext.Provider value={data}>
+        <PointContext.Provider value={point}>
+          <Detail />
+          <Map />
+        </PointContext.Provider>
+      </DataContext.Provider>
+    </Div100vh>
   );
 }
 
@@ -45,14 +49,14 @@ function Detail() {
 
   if (data == null) {
     return (
-      <div className="detail">
+      <div className="Detail">
         <div className="loading">…</div>
       </div>
     );
   }
 
   return (
-    <div className="detail">
+    <div className="Detail">
       <h1>{getString(data, "name", point)}</h1>
       <dl>
         <StringPair field="gc" label="General category" />
@@ -96,25 +100,47 @@ function Pair({ label, value }: { label: string; value: string | null }) {
 
 function Map() {
   return (
-    <FixedSizeGrid
-      className="map"
-      width={670}
-      height={640}
-      columnWidth={40}
-      rowHeight={40}
-      columnCount={16}
-      rowCount={1114112 / 16}
-      overscanRowsCount={16}
-    >
-      {MapCell}
-    </FixedSizeGrid>
+    <div className="Map">
+      <AutoSizer>
+        {({ width, height }: { width: number; height: number }) => {
+          const scrollbar = 20; // FIXME this is a crude guess
+          const columnCount = Math.floor((width - scrollbar) / 40);
+          const rowCount = Math.ceil(1114112 / columnCount);
+
+          return (
+            <FixedSizeGrid
+              width={width}
+              height={height}
+              columnWidth={40}
+              rowHeight={40}
+              columnCount={columnCount}
+              rowCount={rowCount}
+              overscanRowsCount={16}
+              itemData={columnCount}
+            >
+              {MapCell}
+            </FixedSizeGrid>
+          );
+        }}
+      </AutoSizer>
+    </div>
   );
 }
 
-function MapCell({ rowIndex, columnIndex, style }: GridChildComponentProps) {
-  const i = rowIndex * 16 + columnIndex;
-  const point = useContext(PointContext);
-  return <Cell point={i} active={i == point} style={style} />;
+function MapCell({
+  rowIndex,
+  columnIndex,
+  style,
+  data: columnCount,
+}: GridChildComponentProps) {
+  const point = rowIndex * columnCount + columnIndex;
+  const selectedPoint = useContext(PointContext);
+
+  if (point >= 0x110000) {
+    return null;
+  }
+
+  return <Cell point={point} active={point == selectedPoint} style={style} />;
 }
 
 function Cell({
@@ -133,8 +159,4 @@ function Cell({
       {pointToString(point)}
     </a>
   );
-}
-
-function range(start: number, stop: number): number[] {
-  return [...Array(stop - start)].map((_, i) => i + start);
 }
