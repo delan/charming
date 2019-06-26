@@ -13,7 +13,6 @@ import ReactDOM from "react-dom";
 import useLocation from "react-use/lib/useLocation";
 import { FixedSizeGrid, GridChildComponentProps } from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer"; // FIXME type definitions
-import Div100vh from "react-div-100vh"; // FIXME type definitions
 
 import { pointToString } from "./encoding";
 import {
@@ -39,14 +38,14 @@ function Charming() {
   useEffect(() => void fixHashPoint(point));
 
   return (
-    <Div100vh className="Charming">
+    <div className="Charming">
       <DataContext.Provider value={data}>
         <PointContext.Provider value={point}>
           <Detail />
           <Map />
         </PointContext.Provider>
       </DataContext.Provider>
-    </Div100vh>
+    </div>
   );
 }
 
