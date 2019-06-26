@@ -12,7 +12,7 @@ import React, {
 } from "react";
 import ReactDOM from "react-dom";
 import useLocation from "react-use/lib/useLocation";
-import { FixedSizeGrid, GridChildComponentProps } from "react-window";
+import { FixedSizeGrid, GridChildComponentProps, areEqual } from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer"; // FIXME type definitions
 
 import { pointToString } from "./encoding";
@@ -200,7 +200,7 @@ const GridCell = React.memo(
   },
 );
 
-function Cell({
+const Cell = React.memo(function Cell({
   point,
   active = false,
   style,
@@ -216,7 +216,8 @@ function Cell({
       {pointToString(point)}
     </a>
   );
-}
+},
+areEqual);
 
 history.scrollRestoration = "manual";
 
