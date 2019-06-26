@@ -7,5 +7,9 @@ module.exports = api => {
     "@babel/preset-react",
   ];
 
+  const parserOpts = {
+    strictMode: true,
+  };
+
   return { presets };
 };
