@@ -18,6 +18,7 @@ import {
   fixHashPoint,
 } from "./state";
 import { Data, fetchAllData, getString } from "./data";
+import { pointToYouPlus } from "./formatting";
 
 history.scrollRestoration = "manual";
 
@@ -57,7 +58,9 @@ function Detail() {
 
   return (
     <div className="Detail">
-      <h1>{getString(data, "name", point)}</h1>
+      <h1>
+        {pointToYouPlus(point)} {getString(data, "name", point)}
+      </h1>
       <dl>
         <StringPair field="gc" label="General category" />
         <StringPair field="block" label="Block" />
