@@ -132,6 +132,9 @@ function Map() {
           const columnCount = Math.floor((width - scrollbar) / 40);
           const rowCount = Math.ceil(1114112 / columnCount);
 
+          const visibleRows = Math.floor(height / 40);
+          const rowIndex = Math.floor(point / columnCount) - visibleRows / 2;
+
           return (
             <FixedSizeGrid
               ref={grid}
@@ -143,6 +146,7 @@ function Map() {
               rowCount={rowCount}
               overscanRowsCount={16}
               itemData={columnCount}
+              initialScrollTop={40 * rowIndex}
             >
               {MapCell}
             </FixedSizeGrid>
