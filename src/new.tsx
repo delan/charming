@@ -30,7 +30,8 @@ const {
   clientWidth: mapContentWidth,
   offsetWidth: mapWidth,
   offsetHeight: mapHeight,
-} = document.querySelector(".measurer");
+} = document.querySelector("div.Map.measurer") as HTMLElement;
+
 const scrollbar = mapWidth - mapContentWidth;
 
 function Charming() {
