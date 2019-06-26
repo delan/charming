@@ -8,6 +8,7 @@ import React, {
   useEffect,
   useContext,
   useRef,
+  useMemo,
 } from "react";
 import ReactDOM from "react-dom";
 import useLocation from "react-use/lib/useLocation";
@@ -31,10 +32,6 @@ const {
   offsetHeight: mapHeight,
 } = document.querySelector(".measurer");
 const scrollbar = mapWidth - mapContentWidth;
-
-history.scrollRestoration = "manual";
-
-ReactDOM.render(<Charming />, document.querySelector("main"));
 
 function Charming() {
   const [data, setData] = useState<Data | null>(null);
@@ -115,63 +112,93 @@ function Pair({ label, value }: { label: string; value: string | null }) {
 
 function Map() {
   const point = useContext(PointContext);
+
+  return (
+    <div className="Map">
+      <AutoSizer defaultWidth={mapWidth} defaultHeight={mapHeight}>
+        {({ width, height }: { width: number; height: number }) => (
+          <MapGrid width={width} height={height} point={point} />
+        )}
+      </AutoSizer>
+    </div>
+  );
+}
+
+function MapGrid({
+  width,
+  height,
+  point,
+}: {
+  width: number;
+  height: number;
+  point: number;
+}) {
+  const columnCount = Math.floor((width - scrollbar) / 40);
+  const rowCount = Math.ceil(1114112 / columnCount);
+
+  const visibleRows = Math.floor(height / 40);
+  const rowIndex = Math.floor(point / columnCount) - visibleRows / 2;
+
+  const itemData = useMemo(() => ({ columnCount, point }), [
+    columnCount,
+    point,
+  ]);
   const grid = useRef<FixedSizeGrid | null>(null);
 
   useEffect(() => {
     if (grid.current != null) {
-      const columnCount = grid.current.props.itemData;
       const rowIndex = Math.floor(point / columnCount);
       grid.current.scrollToItem({ rowIndex });
     }
   }, [point]);
 
   return (
-    <div className="Map">
-      <AutoSizer defaultWidth={mapWidth} defaultHeight={mapHeight}>
-        {({ width, height }: { width: number; height: number }) => {
-          const columnCount = Math.floor((width - scrollbar) / 40);
-          const rowCount = Math.ceil(1114112 / columnCount);
-
-          const visibleRows = Math.floor(height / 40);
-          const rowIndex = Math.floor(point / columnCount) - visibleRows / 2;
-
-          return (
-            <FixedSizeGrid
-              ref={grid}
-              width={width}
-              height={height}
-              columnWidth={40}
-              rowHeight={40}
-              columnCount={columnCount}
-              rowCount={rowCount}
-              overscanRowsCount={16}
-              itemData={columnCount}
-              initialScrollTop={40 * rowIndex}
-            >
-              {MapCell}
-            </FixedSizeGrid>
-          );
-        }}
-      </AutoSizer>
-    </div>
+    <FixedSizeGrid
+      ref={grid}
+      width={width}
+      height={height}
+      columnWidth={40}
+      rowHeight={40}
+      columnCount={columnCount}
+      rowCount={rowCount}
+      overscanRowsCount={16}
+      itemData={itemData}
+      initialScrollTop={40 * rowIndex}
+    >
+      {GridCell}
+    </FixedSizeGrid>
   );
 }
 
-function MapCell({
-  rowIndex,
-  columnIndex,
-  style,
-  data: columnCount,
-}: GridChildComponentProps) {
-  const point = rowIndex * columnCount + columnIndex;
-  const selectedPoint = useContext(PointContext);
+const GridCell = React.memo(
+  function GridCell({
+    rowIndex,
+    columnIndex,
+    style,
+    data: { columnCount, point: selectedPoint },
+  }: GridChildComponentProps) {
+    const point = rowIndex * columnCount + columnIndex;
 
-  if (point >= 0x110000) {
-    return null;
-  }
+    if (point >= 0x110000) {
+      return null;
+    }
 
-  return <Cell point={point} active={point == selectedPoint} style={style} />;
-}
+    return <Cell point={point} active={point == selectedPoint} style={style} />;
+  },
+  (p, q) => {
+    if (
+      p.rowIndex != q.rowIndex ||
+      p.columnIndex != q.columnIndex ||
+      p.data.columnCount != q.data.columnCount
+    ) {
+      return false;
+    }
+
+    const point = p.rowIndex * p.data.columnCount + p.columnIndex;
+
+    return p.data.point != point && q.data.point != point;
+  },
+);
 
 function Cell({
   point,
@@ -190,3 +217,7 @@ function Cell({
     </a>
   );
 }
+
+history.scrollRestoration = "manual";
+
+ReactDOM.render(<Charming />, document.querySelector("main"));
