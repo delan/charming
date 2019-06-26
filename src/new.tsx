@@ -2,7 +2,13 @@ import "core-js/stable";
 import "regenerator-runtime/runtime";
 import "./new.sass";
 
-import React, { CSSProperties, useState, useEffect, useContext } from "react";
+import React, {
+  CSSProperties,
+  useState,
+  useEffect,
+  useContext,
+  useRef,
+} from "react";
 import ReactDOM from "react-dom";
 import useLocation from "react-use/lib/useLocation";
 import { FixedSizeGrid, GridChildComponentProps } from "react-window";
@@ -102,6 +108,17 @@ function Pair({ label, value }: { label: string; value: string | null }) {
 }
 
 function Map() {
+  const point = useContext(PointContext);
+  const grid = useRef<FixedSizeGrid | null>(null);
+
+  useEffect(() => {
+    if (grid.current != null) {
+      const columnCount = grid.current.props.itemData;
+      const rowIndex = Math.floor(point / columnCount);
+      grid.current.scrollToItem({ rowIndex });
+    }
+  }, [point]);
+
   return (
     <div className="Map">
       <AutoSizer>
@@ -112,6 +129,7 @@ function Map() {
 
           return (
             <FixedSizeGrid
+              ref={grid}
               width={width}
               height={height}
               columnWidth={40}
