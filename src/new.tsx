@@ -25,6 +25,13 @@ import {
 import { Data, fetchAllData, getString } from "./data";
 import { pointToYouPlus } from "./formatting";
 
+const {
+  clientWidth: mapContentWidth,
+  offsetWidth: mapWidth,
+  offsetHeight: mapHeight,
+} = document.querySelector(".measurer");
+const scrollbar = mapWidth - mapContentWidth;
+
 history.scrollRestoration = "manual";
 
 ReactDOM.render(<Charming />, document.querySelector("main"));
@@ -120,9 +127,8 @@ function Map() {
 
   return (
     <div className="Map">
-      <AutoSizer>
+      <AutoSizer defaultWidth={mapWidth} defaultHeight={mapHeight}>
         {({ width, height }: { width: number; height: number }) => {
-          const scrollbar = 20; // FIXME this is a crude guess
           const columnCount = Math.floor((width - scrollbar) / 40);
           const rowCount = Math.ceil(1114112 / columnCount);
 
