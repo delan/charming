@@ -13,6 +13,7 @@
     "noUnusedLocals": true,
 
     "noEmit": true,
+    "target": "ES2018",
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "jsx": "preserve"

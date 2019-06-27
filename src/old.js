@@ -1,9 +1,10 @@
 import "core-js/stable";
 import "regenerator-runtime/runtime";
 
-import { fetchAllData, getString, kDefinitionExists, isEmojiPresentation, isSpaceSeparator, isAnyMark } from "./data";
+import { fetchAllData, getString, kDefinitionExists, isEmojiPresentation, isSpaceSeparator } from "./data";
 import { pointToString, stringToPoint } from "./encoding";
 import { toHexadecimal, pointToYouPlus, pointToString16, pointToString8, pointToEntity10 } from "./formatting";
+import { pointToDiagonal, pointToSubstitute } from "./Display";
 
 var	ucd_version = '10.0.0',
 	grid_elements = [],
@@ -41,112 +42,19 @@ function init_grid() {
 }
 
 function cp_display(cp) {
-	if (is_C0(cp)) {
-		return pointToString(cp + 0x2400);
-	}
-	if (cp == 0x007F) {
-		return pointToString(0x2421);
-	}
-	if (cp == 0x2061) {
-		return "f\u2061()";
-	}
-	if (cp == 0x2062) {
-		return "13\u2062x";
-	}
-	if (cp == 0x2063) {
-		return "Mᵢ\u2063ⱼ";
-	}
-	if (cp == 0x2064) {
-		return "9\u2064¾";
-	}
-	if (cp == 0xE0020) {
-		return "\u2420" + "ₜ";
-	}
-	if (cp >= 0xE0021 && cp < 0xE007F) {
-		return pointToString(cp - 0xE0000) + "ₜ";
-	}
-	if (like_C1(cp)) {
-		return cp_diagonal(cp);
-	}
-	if (like_space(cp)) {
-		return "]" + pointToString(cp) + "[";
-	}
-	if (like_mark(cp)) {
-		return "\u25CC" + pointToString(cp);
-	}
-	return pointToString(cp);
-}
+	var diagonal = pointToDiagonal(cp);
 
-function cp_diagonal(cp) {
-	if (cp >= 0xE0100)
-		return "VS" + (cp - 0xE0100 + 17);
-	if (cp >= 0xE007F)
-		return "CT";
-	if (cp >= 0xE0000)
-		return "LT";
-	if (cp >= 0xFFF9)
-		return ["IAA", "IAS", "IAT", "OBJ"][cp - 0xFFF9];
-	if (cp >= 0xFFA0)
-		return ["HHF"][cp - 0xFFA0];
-	if (cp >= 0xFEFF)
-		return ["BOM"][cp - 0xFEFF];
-	if (cp >= 0xFE00)
-		return "VS" + (cp - 0xFE00 + 1);
-	if (cp >= 0x3164)
-		return ["HF"][cp - 0x3164];
-	if (cp >= 0x2066)
-		return ["LRI", "RLI", "FSI", "PDI", "ISS", "ASS", "IAFS", "AAFS", "NAT", "NOM"][cp - 0x2066];
-	if (cp >= 0x2060)
-		return ["WJ"][cp - 0x2060];
-	if (cp >= 0x2028)
-		return ["LS", "PS", "LRE", "RLE", "PDF", "LRO", "RLO"][cp - 0x2028];
-	if (cp >= 0x200B)
-		return ["ZWSP", "ZWNJ", "ZWJ", "LRM", "RLM"][cp - 0x200B];
-	if (cp >= 0x180E)
-		return ["MVS"][cp - 0x180E];
-	if (cp >= 0x180B)
-		return "FVS" + (cp - 0x180B + 1);
-	if (cp == 0x061C)
-		return "ALM";
-	if (cp == 0x034F)
-		return "CGJ";
-	if (cp == 0x00AD)
-		return "SHY";
-	var w = [
-		"PAD",
-		"HOP",
-		"BPH",
-		"NBH",
-		"IND",
-		"NEL",
-		"SSA",
-		"ESA",
-		"HTS",
-		"HTJ",
-		"VTS",
-		"PLD",
-		"PLU",
-		"RI",
-		"SS2",
-		"SS3",
-		"DCS",
-		"PU1",
-		"PU2",
-		"STS",
-		"CCH",
-		"MW",
-		"SPA",
-		"EPA",
-		"SOS",
-		"SGCI",
-		"SCI",
-		"CSI",
-		"ST",
-		"OSC",
-		"PM",
-		"APC",
-	];
-	return w[cp - 0x80];
+	if (diagonal != null) {
+		return diagonal;
+	}
+
+	var substitute = pointToSubstitute(data, cp);
+
+	if (substitute != null) {
+		return substitute;
+	}
+
+	return pointToString(cp);
 }
 
 function update_grid() {
@@ -306,61 +214,6 @@ function like_emoji(cp) {
 
 function like_space(cp) {
 	return data ? isSpaceSeparator(data, cp) : false;
-}
-
-function like_mark(cp) {
-	if (data ? isAnyMark(data, cp) : false) {
-		switch (cp & 0xFFFFFFF0) {
-		case 0x0300: // Combining Diacritical Marks
-		case 0x0310:
-		case 0x0320:
-		case 0x0330:
-		case 0x0340:
-		case 0x0350:
-		case 0x0360:
-		case 0x0480: // Cyrillic
-		case 0x1DC0: // Combining Diacritical Marks Supplement
-		case 0x1DD0:
-		case 0x1DE0:
-		case 0x1DF0:
-		case 0x20D0: // Combining Diacritical Marks for Symbols
-		case 0x20E0:
-		case 0x20F0:
-		case 0x2CE0: // Coptic
-		case 0x2CF0:
-		case 0x2DE0: // Cyrillic Extended-A
-		case 0x2DF0:
-		case 0xA660: // Cyrillic Extended-B
-		case 0xA670:
-		case 0xA690:
-		case 0xFE00: // Variation Selectors
-		case 0xFE20: // Combining Half Marks
-		case 0x101F0: // Phaistos Disc
-		case 0x102E0: // Coptic Epact Numbers
-		case 0x1D160: // Musical Symbols
-		case 0x1D170:
-		case 0x1D180:
-		case 0x1D1A0:
-		case 0x1D240: // Ancient Greek Musical Notation
-		case 0xE0100: // Variation Selectors Supplement
-		case 0xE0110:
-		case 0xE0120:
-		case 0xE0130:
-		case 0xE0140:
-		case 0xE0150:
-		case 0xE0160:
-		case 0xE0170:
-		case 0xE0180:
-		case 0xE0190:
-		case 0xE01A0:
-		case 0xE01B0:
-		case 0xE01C0:
-		case 0xE01D0:
-		case 0xE01E0:
-			return true;
-		}
-	}
-	return false;
 }
 
 function is_C0(cp) {

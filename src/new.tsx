@@ -25,6 +25,7 @@ import {
 } from "./state";
 import { Data, fetchAllData, getString } from "./data";
 import { pointToYouPlus } from "./formatting";
+import { Display } from "./Display";
 
 const {
   clientWidth: mapContentWidth,
@@ -214,7 +215,7 @@ const Cell = React.memo(function Cell({
 
   return (
     <a href={toFragment(point)} className={className} style={style}>
-      {pointToString(point)}
+      <Display point={point} />
     </a>
   );
 },
