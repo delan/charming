@@ -15,7 +15,6 @@ import useLocation from "react-use/lib/useLocation";
 import { FixedSizeGrid, GridChildComponentProps, areEqual } from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer"; // FIXME type definitions
 
-import { pointToString } from "./encoding";
 import {
   DataContext,
   PointContext,
