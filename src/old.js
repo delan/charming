@@ -21,7 +21,6 @@ var	ucd_version = '10.0.0',
 		age: '(unknown)',
 		gc: 'Unassigned (Cn)',
 		mpy: '(not applicable)',
-		bits: 0x00,
 	};
 
 function init_grid() {
@@ -192,7 +191,7 @@ function get_data(cp, prop) {
 			return substitute(cp);
 		return substitute;
 	}
-	throw 13;
+	throw new Error;
 }
 
 function get_clipboard(event) {
