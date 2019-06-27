@@ -11,8 +11,8 @@ export function Display({ point }: { point: number }) {
   if (diagonal != null) {
     return (
       <span className="synthetic diagonal">
-        {[...diagonal].map(x => (
-          <span>{x}</span>
+        {[...diagonal].map((x, i) => (
+          <span key={i}>{x}</span>
         ))}
       </span>
     );
