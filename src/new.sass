@@ -23,6 +23,19 @@ body
   .Detail
     flex: 1 0 10em
 
+    > div
+      $glyph-size: 4rem
+      $box-size: 6rem
+
+      font-size: $glyph-size
+      line-height: $box-size/$glyph-size
+
+    > p
+      font-size: 1.5em
+
+    > dl
+      display: none
+
   .Map
     flex: 1 0 10em
 
@@ -36,6 +49,16 @@ body
 
     .Detail
       flex: 1 0 16em
+
+      > div
+        $glyph-size: 8rem
+        $box-size: 12rem
+
+        font-size: $glyph-size
+        line-height: $box-size/$glyph-size
+
+      > dl
+        display: block
 
     .Map
       flex: 3 0 16em
@@ -51,10 +74,18 @@ body
   * + *
     margin-top: 0.5em
 
-  h1
+  > h1
     font-size: 1.5em
+    text-align: center
 
-  .loading
+  > div
+    margin: 0
+    text-align: center
+
+  > p
+    text-align: center
+
+  > .loading
     font-size: 13em
     text-align: center
     color: #C0C0C0
@@ -87,51 +118,51 @@ body
       > .synthetic
         color: #606060
 
-    > .synthetic
-      color: #A0A0A0
+.synthetic
+  color: #A0A0A0
 
-      &.diagonal
-        font-size: 0.75rem
-        font-family: monospace, monospace
+  &.diagonal
+    font-size: 0.5em
+    font-family: monospace, monospace
 
-        > span:first-child:nth-last-child(2)
-          vertical-align: 0.25rem
+    > span:first-child:nth-last-child(2)
+      vertical-align: (2em/12)
+
+      + span
+        vertical-align: (-1em/12)
+
+    > span:first-child:nth-last-child(3)
+      vertical-align: (4em/12)
+
+      + span
+        vertical-align: (1em/12)
+
+        + span
+          vertical-align: (-2em/12)
+
+    > span:first-child:nth-last-child(4)
+      vertical-align: (5em/12)
+
+      + span
+        vertical-align: (2em/12)
+
+        + span
+          vertical-align: (-1em/12)
 
           + span
-            vertical-align: -0.25rem
+            vertical-align: (-4em/12)
 
-        > span:first-child:nth-last-child(3)
-          vertical-align: 0.5rem
+    > span:first-child:nth-last-child(5)
+      vertical-align: (5em/12)
+
+      + span
+        vertical-align: (3em/12)
+
+        + span
+          vertical-align: (1em/12)
 
           + span
-            vertical-align: 0.125rem
+            vertical-align: (-1em/12)
 
             + span
-              vertical-align: -0.25rem
-
-        > span:first-child:nth-last-child(4)
-          vertical-align: 0.625rem
-
-          + span
-            vertical-align: 0.25rem
-
-            + span
-              vertical-align: -0.125rem
-
-              + span
-                vertical-align: -0.5rem
-
-        > span:first-child:nth-last-child(5)
-          vertical-align: 0.625rem
-
-          + span
-            vertical-align: 0.375rem
-
-            + span
-              vertical-align: 0.125rem
-
-              + span
-                vertical-align: -0.125rem
-
-                + span
-                  vertical-align: -0.375rem
+              vertical-align: (-3em/12)

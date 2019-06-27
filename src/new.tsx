@@ -69,9 +69,11 @@ function Detail() {
 
   return (
     <div className="Detail">
-      <h1>
-        {pointToYouPlus(point)} {getString(data, "name", point)}
-      </h1>
+      <h1>{pointToYouPlus(point)}</h1>
+      <div>
+        <Display point={point} />
+      </div>
+      <p>{getString(data, "name", point)}</p>
       <dl>
         <StringPair field="gc" label="General category" />
         <StringPair field="block" label="Block" />
