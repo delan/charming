@@ -11,5 +11,5 @@ module.exports = api => {
     strictMode: true,
   };
 
-  return { presets };
+  return { presets, parserOpts };
 };
