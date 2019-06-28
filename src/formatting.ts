@@ -16,6 +16,14 @@ export function pointToYouPlus(point: number): string {
   return `U+${toHexadecimal(point, 4)}`;
 }
 
+export function pointToTofu(point: number): string {
+  if (0x10000 <= point) {
+    return toHexadecimal(point, 6);
+  }
+
+  return toHexadecimal(point, 4);
+}
+
 export function pointToString16(point: number): string | null {
   if (isSurrogate(point)) {
     return null;

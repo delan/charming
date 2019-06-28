@@ -1,11 +1,25 @@
 import React, { useContext } from "react";
 
-import { pointToString } from "./encoding";
+import { pointToString, isSurrogate } from "./encoding";
+import { pointToTofu } from "./formatting";
 import { DataContext } from "./state";
 import { Data, isSpaceSeparator, isAnyMark } from "./data";
 
 export function Display({ point }: { point: number }) {
   const data = useContext(DataContext);
+
+  const tofu = pointToSyntheticTofu(point);
+
+  if (tofu != null) {
+    return (
+      <span className="synthetic tofu">
+        {[...tofu].map((x, i) => (
+          <span key={i}>{x}</span>
+        ))}
+      </span>
+    );
+  }
+
   const diagonal = pointToDiagonal(point);
 
   if (diagonal != null) {
@@ -25,6 +39,15 @@ export function Display({ point }: { point: number }) {
   }
 
   return <>{pointToString(point)}</>;
+}
+
+// see dist/scratch/edge-points.html
+export function pointToSyntheticTofu(point: number): string | null {
+  if (isSurrogate(point) || (0xfdd0 <= point && point < 0xfdf0)) {
+    return pointToTofu(point);
+  }
+
+  return null;
 }
 
 export function pointToDiagonal(point: number): string | null {

@@ -1,0 +1,45 @@
+<!DOCTYPE HTML>
+<meta charset="UTF-8">
+<style>
+@font-face { font-family: LastResort; src: url(LastResort-6.0d1e3.ttf); }
+div { font-family: LastResort; font-size: 3em; }
+span { font-family: system-ui; }
+</style>
+<p><script>document.write(navigator.userAgent);</script></p>
+<div><script>
+  function w(point) {
+    document.write(`${String.fromCodePoint(point)}<span>\u200C</span>`);
+  }
+
+  function n() {
+    document.write("<br>");
+  }
+
+  function wn(points) {
+    points.forEach(w);
+    n();
+  }
+
+  function range(start, stop) {
+    return [...Array(stop - start)].map((_, i) => i + start);
+  }
+
+  function chunks(iterable, size) {
+    const result = [];
+
+    for (let i = 0; i < iterable.length; i += size) {
+      result.push(iterable.slice(i, i + size));
+    }
+
+    return result;
+  }
+
+  [0xFFFD, 0xD800, 0xDBFF, 0xDC00, 0xDFFF].forEach(w); n();
+  chunks(range(0xFDD0, 0xFDF0), 8).forEach(wn);
+
+  const tails = range(0, 17)
+    .map(plane => plane << 16)
+    .reduce((p,q) => [...p, q | 0xFFFE, q | 0xFFFF], []);
+
+  chunks(tails, 12).forEach(wn);
+</script></div>

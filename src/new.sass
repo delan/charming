@@ -134,6 +134,53 @@ body
 .synthetic
   color: #A0A0A0
 
+  &.tofu
+    font-size: 0.5em
+    font-family: monospace, monospace
+
+    > span
+      position: relative
+
+    > span:first-child:nth-last-child(4)
+      top: (-7em/12)
+      left: 1ch
+
+      + span
+        top: (-7em/12)
+        left: 1ch
+
+        + span
+          top: (3em/12)
+          left: -1ch
+
+          + span
+            top: (3em/12)
+            left: -1ch
+
+    > span:first-child:nth-last-child(6)
+      top: (-7em/12)
+      left: 1.5ch
+
+      + span
+        top: (-7em/12)
+        left: 1.5ch
+
+        + span
+          top: (-7em/12)
+          left: 1.5ch
+
+          + span
+            top: (3em/12)
+            left: -1.5ch
+
+            + span
+              top: (3em/12)
+              left: -1.5ch
+
+              + span
+                top: (3em/12)
+                left: -1.5ch
+
   &.diagonal
     font-size: 0.5em
     font-family: monospace, monospace
