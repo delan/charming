@@ -3,6 +3,7 @@ import SearchWorker from "./search.worker";
 
 let worker = new SearchWorker();
 let listener: ((event: MessageEvent) => void) | null = null;
+let cache: Data | null = null;
 
 export function search(data: Data, query: string) {
   if (listener != null) {
@@ -13,16 +14,23 @@ export function search(data: Data, query: string) {
 
     worker = new SearchWorker();
     listener = null;
+    cache = null;
   }
 
   return new Promise<MessageEvent>(resolve => {
     listener = (event: MessageEvent) => {
       worker.removeEventListener("message", listener!);
       listener = null;
+      cache = data;
       resolve(event);
     };
 
     worker.addEventListener("message", listener);
-    worker.postMessage({ data, query });
+
+    if (cache == data) {
+      worker.postMessage({ query });
+    } else {
+      worker.postMessage({ data, query });
+    }
   });
 }

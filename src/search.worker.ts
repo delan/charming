@@ -1,11 +1,13 @@
-import { getString } from "./data";
+import { Data, getString } from "./data";
 
 // https://github.com/webpack-contrib/worker-loader/issues/94#issuecomment-449861198
 export default {} as typeof Worker & { new (): Worker };
 
 declare function postMessage(message: any): void;
 
-addEventListener("message", ({ data: { data, query } }) => {
+let cache: Data | null = null;
+
+addEventListener("message", ({ data: { data = cache, query } }) => {
   const upper = query.toUpperCase();
   const result = [];
 
@@ -17,5 +19,6 @@ addEventListener("message", ({ data: { data, query } }) => {
     }
   }
 
+  cache = data;
   postMessage(result);
 });
