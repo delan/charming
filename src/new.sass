@@ -1,3 +1,14 @@
+@font-face
+  font-family: LastResort
+  src: url("LastResort-6.0d1e3.ttf")
+
+@font-face
+  font-family: AdobeBlank
+  src: url("AdobeBlank-1.045.otf.woff")
+
+$interface-font: system-ui, -apple-system, Segoe UI, Roboto, Helvetica Neue LT Std, Helvetica Neue, Helvetica, sans-serif
+$display-font: LastResort, AdobeBlank
+
 *
   box-sizing: border-box
 
@@ -18,7 +29,7 @@ body
 
   display: flex
   flex-direction: column
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica Neue LT Std, Helvetica Neue, Helvetica, sans-serif
+  font-family: $interface-font
 
   .Detail
     flex: 1 0 10em
@@ -80,6 +91,7 @@ body
 
   > div
     margin: 0
+    font-family: $display-font
     text-align: center
 
   > p
@@ -104,6 +116,7 @@ body
 
     font-size: $glyph-size
     line-height: $cell-size/$glyph-size
+    font-family: $display-font
     text-align: center
     text-decoration: none
     color: black

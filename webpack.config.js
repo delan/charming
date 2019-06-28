@@ -51,6 +51,11 @@ const config = {
         loader: "babel-loader",
       },
       {
+        test: /[.](woff|ttf)$/,
+        exclude: /[/]node_modules[/]/,
+        loader: "file-loader",
+      },
+      {
         test: /[.]bin$/,
         exclude: /[/]node_modules[/]/,
         loader: "file-loader",
