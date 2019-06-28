@@ -34,6 +34,18 @@ const config = {
         ],
       },
       {
+        test: /[.]worker[.](js|ts)x?$/,
+        exclude: /[/]node_modules[/]/,
+        use: [
+          {
+            loader: "worker-loader",
+            options: {
+              inline: true,
+            },
+          },
+        ],
+      },
+      {
         test: /[.](js|ts)x?$/,
         exclude: /[/]node_modules[/]/,
         loader: "babel-loader",

@@ -25,6 +25,7 @@ import {
 import { Data, fetchAllData, getString } from "./data";
 import { pointToYouPlus } from "./formatting";
 import { Display } from "./Display";
+import { search } from "./search";
 
 const {
   clientWidth: mapContentWidth,
@@ -48,6 +49,9 @@ function Charming() {
         <PointContext.Provider value={point}>
           <Detail />
           <Map />
+          <div style={{ position: "absolute", top: "0", left: "0" }}>
+            <Search />
+          </div>
         </PointContext.Provider>
       </DataContext.Provider>
     </div>
@@ -80,6 +84,35 @@ function Detail() {
         <StringPair field="mpy" label="Unihan kMandarin" />
       </dl>
     </div>
+  );
+}
+
+function Search() {
+  const data = useContext(DataContext);
+
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState([]);
+
+  useEffect(() => {
+    if (data != null) {
+      search(data, query).then(({ data: results }) => void setResults(results));
+    }
+  }, [data, query]);
+
+  return (
+    <>
+      <input value={query} onChange={event => setQuery(event.target.value)} />
+
+      <ul>
+        {results.slice(0, 9).map(([point, name]) => (
+          <li key={point}>
+            <a href={toFragment(point)}>
+              {pointToYouPlus(point)} {name}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </>
   );
 }
 
