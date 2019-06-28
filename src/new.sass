@@ -9,6 +9,9 @@
 $interface-font: system-ui, -apple-system, Segoe UI, Roboto, Helvetica Neue LT Std, Helvetica Neue, Helvetica, sans-serif
 $display-font: LastResort, AdobeBlank
 
+$choice-cell-size: 2.5rem
+$choice-glyph-size: 1.5rem
+
 *
   box-sizing: border-box
 
@@ -35,11 +38,11 @@ body
     flex: 1 0 10em
 
     > div
-      $glyph-size: 4rem
+      $choice-glyph-size: 4rem
       $box-size: 6rem
 
-      font-size: $glyph-size
-      line-height: $box-size/$glyph-size
+      font-size: $choice-glyph-size
+      line-height: $box-size/$choice-glyph-size
 
     > p
       font-size: 1.5em
@@ -52,6 +55,39 @@ body
 
     &.measurer
       overflow-y: scroll
+
+  .Search
+    position: absolute
+    top: 0
+    bottom: 0
+    left: 0
+    right: 0
+    background: #FFFFFF
+
+    > input
+      width: 100%
+
+    > ul
+      list-style-type: none
+      padding: 0
+
+      > li
+
+        > a
+          $font-size: 1rem
+
+          display: block
+          height: $choice-cell-size
+          font-size: $font-size
+          line-height: $choice-cell-size/$font-size
+          text-decoration: none
+
+          overflow: hidden
+          white-space: nowrap
+          text-overflow: ellipsis
+
+          .choice
+            vertical-align: middle
 
 
 @media (min-width: 512px)
@@ -97,39 +133,41 @@ body
   > p
     text-align: center
 
+    > a
+      text-decoration: none
+      color: #0000FF
+
   > .loading
     font-size: 13em
     text-align: center
     color: #C0C0C0
 
 .Map
-  $cell-size: 2.5rem
 
-  a
-    $glyph-size: 1.5rem
-    $outline-size: 1px
+.choice
+  $outline-size: 1px
 
-    display: inline-block
-    vertical-align: top
-    width: $cell-size
-    height: $cell-size
+  display: inline-block
+  vertical-align: top
+  width: $choice-cell-size
+  height: $choice-cell-size
 
-    font-size: $glyph-size
-    line-height: $cell-size/$glyph-size
-    font-family: $display-font
-    text-align: center
-    text-decoration: none
-    color: black
+  font-size: $choice-glyph-size
+  line-height: $choice-cell-size/$choice-glyph-size
+  font-family: $display-font
+  text-align: center
+  text-decoration: none
+  color: black
 
-    outline: $outline-size solid #C0C0C0
-    outline-offset: -$outline-size/2
-    overflow: hidden // Firefox
+  outline: $outline-size solid #C0C0C0
+  outline-offset: -$outline-size/2
+  overflow: hidden // Firefox
 
-    &.active
-      background: #C0C0C0
+  &.active
+    background: #C0C0C0
 
-      > .synthetic
-        color: #606060
+    > .synthetic
+      color: #606060
 
 .synthetic
   color: #A0A0A0

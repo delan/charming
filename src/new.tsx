@@ -37,6 +37,8 @@ const scrollbar = mapWidth - mapContentWidth;
 
 function Charming() {
   const [data, setData] = useState<Data | null>(null);
+  const [searching, setSearching] = useState(false);
+
   const location = useLocation();
   const point = getHashPoint(location.hash, 0);
 
@@ -47,18 +49,16 @@ function Charming() {
     <div className="Charming">
       <DataContext.Provider value={data}>
         <PointContext.Provider value={point}>
-          <Detail />
+          <Detail startSearch={() => void setSearching(true)} />
           <Map />
-          <div style={{ position: "absolute", top: "0", left: "0" }}>
-            <Search />
-          </div>
+          {searching && <Search stopSearch={() => void setSearching(false)} />}
         </PointContext.Provider>
       </DataContext.Provider>
     </div>
   );
 }
 
-function Detail() {
+function Detail({ startSearch }: { startSearch: () => void }) {
   const data = useContext(DataContext);
   const point = useContext(PointContext);
 
@@ -76,7 +76,11 @@ function Detail() {
       <div>
         <Display point={point} />
       </div>
-      <p>{getString(data, "name", point)}</p>
+      <p>
+        <a href={toFragment(point)} onClick={startSearch}>
+          {getString(data, "name", point)}
+        </a>
+      </p>
       <dl>
         <StringPair field="gc" label="General category" />
         <StringPair field="block" label="Block" />
@@ -87,7 +91,7 @@ function Detail() {
   );
 }
 
-function Search() {
+function Search({ stopSearch }: { stopSearch: () => void }) {
   const data = useContext(DataContext);
 
   const [query, setQuery] = useState("");
@@ -100,19 +104,26 @@ function Search() {
   }, [data, query]);
 
   return (
-    <>
-      <input value={query} onChange={event => setQuery(event.target.value)} />
+    <div className="Search">
+      <input
+        autoFocus={true}
+        value={query}
+        onChange={event => setQuery(event.target.value)}
+      />
 
       <ul>
-        {results.slice(0, 9).map(([point, name]) => (
+        {results.slice(0, 42).map(([point, name]) => (
           <li key={point}>
-            <a href={toFragment(point)}>
-              {pointToYouPlus(point)} {name}
+            <a href={toFragment(point)} onClick={stopSearch}>
+              <span className="choice">
+                <Display point={point} />
+              </span>
+               {pointToYouPlus(point)} {name}
             </a>
           </li>
         ))}
       </ul>
-    </>
+    </div>
   );
 }
 
@@ -245,10 +256,14 @@ const Cell = React.memo(function Cell({
   active?: boolean;
   style: CSSProperties;
 }) {
-  const className = active ? "active" : undefined;
+  const classes = ["choice"];
+
+  if (active) {
+    classes.push("active");
+  }
 
   return (
-    <a href={toFragment(point)} className={className} style={style}>
+    <a href={toFragment(point)} className={classes.join(" ")} style={style}>
       <Display point={point} />
     </a>
   );
