@@ -4,6 +4,8 @@ import "./new.sass";
 
 import React, {
   CSSProperties,
+  Dispatch,
+  SetStateAction,
   useState,
   useEffect,
   useContext,
@@ -38,7 +40,9 @@ const scrollbar = mapWidth - mapContentWidth;
 
 function Charming() {
   const [data, setData] = useState<Data | null>(null);
-  const [searching, setSearching] = useState(false);
+
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const location = useLocation();
   const point = getHashPoint(location.hash, 0);
@@ -50,16 +54,22 @@ function Charming() {
     <div className="Charming">
       <DataContext.Provider value={data}>
         <PointContext.Provider value={point}>
-          <Detail startSearch={() => void setSearching(true)} />
+          <Detail search={() => void setSearchOpen(true)} />
           <Map />
-          {searching && <Search stopSearch={() => void setSearching(false)} />}
+          {searchOpen && (
+            <Search
+              query={searchQuery}
+              setQuery={setSearchQuery}
+              close={() => void setSearchOpen(false)}
+            />
+          )}
         </PointContext.Provider>
       </DataContext.Provider>
     </div>
   );
 }
 
-function Detail({ startSearch }: { startSearch: () => void }) {
+function Detail({ search }: { search: () => void }) {
   const data = useContext(DataContext);
   const point = useContext(PointContext);
 
@@ -78,7 +88,7 @@ function Detail({ startSearch }: { startSearch: () => void }) {
         <Display point={point} />
       </div>
       <p>
-        <a href={toFragment(point)} onClick={startSearch}>
+        <a href={toFragment(point)} onClick={search}>
           {nullToDefault(getString(data, "name", point), "<FIXME>")}
         </a>
       </p>
@@ -92,10 +102,17 @@ function Detail({ startSearch }: { startSearch: () => void }) {
   );
 }
 
-function Search({ stopSearch }: { stopSearch: () => void }) {
+function Search({
+  query,
+  setQuery,
+  close,
+}: {
+  query: string;
+  setQuery: Dispatch<SetStateAction<string>>;
+  close: () => void;
+}) {
   const data = useContext(DataContext);
 
-  const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
 
   useEffect(() => {
@@ -115,7 +132,7 @@ function Search({ stopSearch }: { stopSearch: () => void }) {
       <ul>
         {results.slice(0, 42).map(([point, name]) => (
           <li key={point}>
-            <a href={toFragment(point)} onClick={stopSearch}>
+            <a href={toFragment(point)} onClick={close}>
               <span className="choice">
                 <Display point={point} />
               </span>
