@@ -1,4 +1,9 @@
-import { pointToSyntheticTofu, pointToDiagonal } from "./Display";
+import {
+  pointToSyntheticTofu,
+  pointToDiagonal,
+  pointToSubstitute,
+} from "./Display";
+import { getData } from "./testing";
 
 test("pointToSyntheticTofu returns correct value", () => {
   expect(pointToSyntheticTofu(0xd7ff)).toBe(null);
@@ -25,4 +30,17 @@ test("pointToDiagonal returns correct value", () => {
   expect(pointToDiagonal(0xe0100)).toBe("VS17");
   expect(pointToDiagonal(0xe01ef)).toBe("VS256");
   expect(pointToDiagonal(0xe01f0)).toBe(null);
+});
+
+test("pointToSubstitute returns correct value", () => {
+  const data = getData();
+  expect(pointToSubstitute(data, 0x007f)).toBe("␡");
+  expect(pointToSubstitute(data, 0x0000)).toBe("␀");
+  expect(pointToSubstitute(data, 0x001f)).toBe("␟");
+  expect(pointToSubstitute(null, 0x0020)).toBe(null);
+  expect(pointToSubstitute(null, 0xe001f)).toBe(null);
+  expect(pointToSubstitute(data, 0xe0020)).toBe("␠ₜ");
+  expect(pointToSubstitute(data, 0xe0021)).toBe("!ₜ");
+  expect(pointToSubstitute(data, 0xe007e)).toBe("~ₜ");
+  expect(pointToSubstitute(null, 0xe007f)).toBe(null);
 });
