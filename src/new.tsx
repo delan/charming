@@ -26,6 +26,7 @@ import { Data, fetchAllData, getString } from "./data";
 import { pointToYouPlus } from "./formatting";
 import { Display } from "./Display";
 import { search } from "./search";
+import { nullToDefault } from "./default";
 
 const {
   clientWidth: mapContentWidth,
@@ -78,7 +79,7 @@ function Detail({ startSearch }: { startSearch: () => void }) {
       </div>
       <p>
         <a href={toFragment(point)} onClick={startSearch}>
-          {getString(data, "name", point)}
+          {nullToDefault(getString(data, "name", point), "<FIXME>")}
         </a>
       </p>
       <dl>
