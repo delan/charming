@@ -1,8 +1,10 @@
 module.exports = api => {
-  api.cache(true);
+  const envPresetOptions = api.env("test")
+    ? { targets: { node: "current" } }
+    : { useBuiltIns: "entry", corejs: 3 };
 
   const presets = [
-    ["@babel/preset-env", { useBuiltIns: "entry", corejs: 3 }],
+    ["@babel/preset-env", envPresetOptions],
     "@babel/preset-typescript",
     "@babel/preset-react",
   ];
