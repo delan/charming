@@ -52,7 +52,7 @@ export function pointToEntity10(point: number): string | null {
     (point >= 0x000d && point < 0x0020) ||
     (point >= 0x007f && point < 0x00a0) ||
     (point >= 0xfdd0 && point < 0xfdf0) ||
-    (point & 0xffff) == 0xfffe
+    (point & 0xfffe) == 0xfffe
   ) {
     return null;
   }

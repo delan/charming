@@ -3,6 +3,7 @@ import {
   stringToPoint,
   stringToUnits16,
   stringToUnits8,
+  isSurrogate,
 } from "./encoding";
 
 test("pointToString returns correct string for BMP point", () => {
@@ -13,14 +14,8 @@ test("pointToString returns correct string for BMP point", () => {
 test("pointToString returns correct string for astral point", () =>
   void expect(pointToString(0x1f496)).toBe("💖"));
 
-test("pointToString returns U+FFFD when point is surrogate", () => {
-  expect(pointToString(0xd7ff)).toBe("\uD7FF");
-  expect(pointToString(0xd800)).toBe("\uFFFD");
-  expect(pointToString(0xdbff)).toBe("\uFFFD");
-  expect(pointToString(0xdc00)).toBe("\uFFFD");
-  expect(pointToString(0xdfff)).toBe("\uFFFD");
-  expect(pointToString(0xe000)).toBe("\uE000");
-});
+test("pointToString returns U+FFFD when point is surrogate", () =>
+  void expect(pointToString(0xd800)).toBe("�"));
 
 test("stringToPoint returns correct point for BMP string", () =>
   void expect(stringToPoint("⏿")).toBe(0x23ff));
@@ -42,3 +37,12 @@ test("stringToUnits8 returns correct value for BMP string", () =>
 
 test("stringToUnits8 returns correct value for astral string", () =>
   void expect(stringToUnits8("💖")).toEqual([0xf0, 0x9f, 0x92, 0x96]));
+
+test("isSurrogate returns correct value", () => {
+  expect(isSurrogate(0xd7ff)).toEqual(false);
+  expect(isSurrogate(0xd800)).toEqual(true);
+  expect(isSurrogate(0xdbff)).toEqual(true);
+  expect(isSurrogate(0xdc00)).toEqual(true);
+  expect(isSurrogate(0xdfff)).toEqual(true);
+  expect(isSurrogate(0xe000)).toEqual(false);
+});
