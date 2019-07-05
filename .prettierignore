@@ -1,0 +1,7 @@
+/package.json
+/package-lock.json
+/dist/
+
+/data.string.json
+/src/old.js
+/minilzo-js/

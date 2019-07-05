@@ -1,4 +1,4 @@
-data.json
-data.*.json
-data.*.lzo
-data.*.64
+/node_modules/
+/data.json
+/data.string.json
+/data.*.bin

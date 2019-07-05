@@ -1,0 +1,280 @@
+@font-face
+  font-family: Twitter Color Emoji
+  src: url("TwitterColorEmoji-SVGinOT-12.0.1.ttf")
+
+@font-face
+  font-family: Symbola
+  src: url("Symbola-12.00.ttf")
+
+@font-face
+  font-family: LastResort
+  src: url("LastResort-6.0d1e3.ttf")
+
+@font-face
+  font-family: AdobeBlank
+  src: url("AdobeBlank-1.045.otf.woff")
+
+$interface-font: system-ui, -apple-system, Segoe UI, Roboto, Helvetica Neue LT Std, Helvetica Neue, Helvetica, sans-serif
+$display-font: Symbola // FIXME Symbola, <any local font>, LastResort, AdobeBlank
+
+$choice-cell-size: 2.5rem
+$choice-glyph-size: 1.5rem
+
+*
+  box-sizing: border-box
+
+:root
+  // prevent scrollbar flapping when zoomed
+  overflow: hidden
+
+body
+  margin: 0
+
+.Charming
+  // better than 100vh on iOS
+  position: absolute
+  top: 0
+  bottom: 0
+  left: 0
+  right: 0
+
+  display: flex
+  flex-direction: column
+  font-family: $interface-font
+
+  .Detail
+    flex: 1 0 10em
+
+    > a
+      $choice-glyph-size: 4rem
+      $box-size: 6rem
+
+      font-size: $choice-glyph-size
+      line-height: $box-size/$choice-glyph-size
+
+    > dl
+      display: none
+
+  .Map
+    flex: 1 0 10em
+
+    &.measurer
+      overflow-y: scroll
+
+@media (min-width: 512px)
+  .Charming
+    flex-direction: row
+
+    .Detail
+      flex: 1 0 16em
+
+      > a
+        $glyph-size: 8rem
+        $box-size: 12rem
+
+        font-size: $glyph-size
+        line-height: $box-size/$glyph-size
+
+      > dl
+        display: block
+
+    .Map
+      flex: 3 0 16em
+
+.Detail
+  padding: 1em
+  overflow: auto
+
+  *
+    margin-top: 0
+    margin-bottom: 0
+
+  * + *
+    margin-top: 0.5em
+
+  > h1
+    font-size: 1.5em
+    text-align: center
+
+  > a
+    display: block
+    margin: 0
+    font-family: $display-font
+    text-align: center
+    text-decoration: none
+    color: inherit
+
+  > p
+    font-size: 1.5em
+    text-align: center
+
+    > a
+      text-decoration: none
+      color: #0000FF
+
+  > .loading
+    font-size: 13em
+    text-align: center
+    color: #C0C0C0
+
+.Map
+
+.Search
+  position: absolute
+  top: 0
+  bottom: 0
+  left: 0
+  right: 0
+  background: #FFFFFF
+
+  > input
+    width: 100%
+    height: $choice-glyph-size * 2
+    font-size: $choice-glyph-size
+
+  > ul
+    list-style-type: none
+    padding: 0
+
+    > li
+
+      > a
+        $font-size: 1rem
+
+        display: block
+        height: $choice-cell-size
+        font-size: $font-size
+        line-height: $choice-cell-size/$font-size
+        text-decoration: none
+
+        overflow: hidden
+        white-space: nowrap
+        text-overflow: ellipsis
+
+        .choice
+          vertical-align: middle
+
+.choice
+  $outline-size: 1px
+
+  display: inline-block
+  vertical-align: top
+  width: $choice-cell-size
+  height: $choice-cell-size
+
+  font-size: $choice-glyph-size
+  line-height: $choice-cell-size/$choice-glyph-size
+  font-family: $display-font
+  text-align: center
+  text-decoration: none
+  color: black
+
+  outline: $outline-size solid #C0C0C0
+  outline-offset: -$outline-size/2
+  overflow: hidden // Firefox
+
+  &.active
+    background: #C0C0C0
+
+    > .synthetic
+      color: #606060
+
+.synthetic
+  color: #A0A0A0
+
+  &.tofu
+    font-size: 0.5em
+    font-family: monospace, monospace
+
+    > span
+      position: relative
+
+    > span:first-child:nth-last-child(4)
+      top: (-7em/12)
+      left: 1ch
+
+      + span
+        top: (-7em/12)
+        left: 1ch
+
+        + span
+          top: (3em/12)
+          left: -1ch
+
+          + span
+            top: (3em/12)
+            left: -1ch
+
+    > span:first-child:nth-last-child(6)
+      top: (-7em/12)
+      left: 1.5ch
+
+      + span
+        top: (-7em/12)
+        left: 1.5ch
+
+        + span
+          top: (-7em/12)
+          left: 1.5ch
+
+          + span
+            top: (3em/12)
+            left: -1.5ch
+
+            + span
+              top: (3em/12)
+              left: -1.5ch
+
+              + span
+                top: (3em/12)
+                left: -1.5ch
+
+  &.diagonal
+    font-size: 0.5em
+    font-family: monospace, monospace
+
+    > span:first-child:nth-last-child(2)
+      vertical-align: (2em/12)
+
+      + span
+        vertical-align: (-1em/12)
+
+    > span:first-child:nth-last-child(3)
+      vertical-align: (4em/12)
+
+      + span
+        vertical-align: (1em/12)
+
+        + span
+          vertical-align: (-2em/12)
+
+    > span:first-child:nth-last-child(4)
+      vertical-align: (5em/12)
+
+      + span
+        vertical-align: (2em/12)
+
+        + span
+          vertical-align: (-1em/12)
+
+          + span
+            vertical-align: (-4em/12)
+
+    > span:first-child:nth-last-child(5)
+      vertical-align: (5em/12)
+
+      + span
+        vertical-align: (3em/12)
+
+        + span
+          vertical-align: (1em/12)
+
+          + span
+            vertical-align: (-1em/12)
+
+            + span
+              vertical-align: (-3em/12)
+
+.emoji
+  // FIXME eosrei/twemoji-color-font#39
+  font-family: Twitter Color Emoji, $display-font

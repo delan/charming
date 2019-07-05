@@ -142,7 +142,7 @@ with open("data.string.json", "w") as file:
 		hash[string] = len(blob)
 		blob.append(string)
 	def use(string):
-		return "\\u%04X" % hash.get(string, 0xFFFF)
+		return hash.get(string, 0xFFFF)
 	file.write("[")
 	for index in xrange(len(blob)):
 		file.write(dumps(blob[index]))
@@ -151,20 +151,16 @@ with open("data.string.json", "w") as file:
 	file.write("]")
 
 for key in ("name","gc","block","age","mpy",):
-	with open("data.%s.json" % key, "w") as file:
-		print "Writing data.%s.json ..." % key
-		file.write('"')
+	with open("data.%s.bin" % key, "w") as file:
+		print "Writing data.%s.bin ..." % key
 		for cp in xrange(len(data)):
 			value = data[cp].get(key)
-			file.write(use(value))
-		file.write('"')
+			file.write(chr(use(value) >> 8))
+			file.write(chr(use(value) & 0xFF))
 
 for key in ("bits",):
-	with open("data.%s.json" % key, "w") as file:
-		print "Writing data.%s.json ..." % key
-		file.write('"')
-		for pair in xrange(len(data) / 2):
-			low = data[pair * 2 + 0].get(key, 0)
-			high = data[pair * 2 + 1].get(key, 0)
-			file.write("\\u%02X%02X" % (high, low))
-		file.write('"')
+	with open("data.%s.bin" % key, "w") as file:
+		print "Writing data.%s.bin ..." % key
+		for cp in xrange(len(data)):
+			octet = data[cp].get(key, 0)
+			file.write(chr(octet))
