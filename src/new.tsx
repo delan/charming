@@ -99,7 +99,10 @@ function Detail({ search }: { search: () => void }) {
       </a>
       <p>
         <a href={toFragment(point)} onClick={search}>
-          {nullToDefault(getString(data, "name", point), "<FIXME>")}
+          {nullToDefault(
+            getString(data, "name", point),
+            "(unknown or unassigned)",
+          )}
         </a>
       </p>
       <dl>
