@@ -12,6 +12,10 @@ export function toHexadecimal(value: number, length = 0): string {
     .padStart(length, "0");
 }
 
+export function toDecimal(value: number, length = 0): string {
+  return value.toString(10).padStart(length, "0");
+}
+
 export function pointToYouPlus(point: number): string {
   return `U+${toHexadecimal(point, 4)}`;
 }
