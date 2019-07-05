@@ -6,7 +6,7 @@ import { pointToString, stringToPoint } from "./encoding";
 import { toHexadecimal, pointToYouPlus, pointToString16, pointToString8, pointToEntity10 } from "./formatting";
 import { pointToDiagonal, pointToSubstitute } from "./Display";
 
-var	ucd_version = '10.0.0',
+var	ucd_version = '12.1.0',
 	grid_elements = [],
 	grid_base,
 	current_cp,
