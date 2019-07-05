@@ -7,9 +7,6 @@ make
 # build client
 npm run build
 
-# check TypeScript
-npm run check
-
 # start dev server
 npm run start
 
@@ -17,4 +14,16 @@ npm run start
 npm run open
 
 # format code
-npm run prettier [-- additional options]
+npm run prettier:write
+
+# check TypeScript
+npm run check
+
+# run unit tests
+npm run test
+
+# do all three
+npm run dwim
+
+# test coverage
+npm run test:coverage
