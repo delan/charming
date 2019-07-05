@@ -57,6 +57,12 @@ function Charming() {
   useEffect(() => void fetchAllData().then(setData), []);
   useEffect(() => void fixHashPoint(point));
 
+  useEffect(() => {
+    if (data != null) {
+      document.title = `${pointToYouPlus(point)} ${pointToName(data, point)}`;
+    }
+  }, [data, point]);
+
   return (
     <div className="Charming">
       <DataContext.Provider value={data}>
@@ -99,10 +105,7 @@ function Detail({ search }: { search: () => void }) {
       </a>
       <p>
         <a href={toFragment(point)} onClick={search}>
-          {nullToDefault(
-            getString(data, "name", point),
-            "(unknown or unassigned)",
-          )}
+          {pointToName(data, point)}
         </a>
       </p>
       <dl>
@@ -303,6 +306,13 @@ const Cell = React.memo(function Cell({
   );
 },
 areEqual);
+
+function pointToName(data: Data, point: number) {
+  return nullToDefault(
+    getString(data, "name", point),
+    "(unknown or unassigned)",
+  );
+}
 
 history.scrollRestoration = "manual";
 
