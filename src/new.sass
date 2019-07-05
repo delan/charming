@@ -52,9 +52,6 @@ body
       font-size: $choice-glyph-size
       line-height: $box-size/$choice-glyph-size
 
-    > p
-      font-size: 1.5em
-
     > dl
       display: none
 
@@ -63,42 +60,6 @@ body
 
     &.measurer
       overflow-y: scroll
-
-  .Search
-    position: absolute
-    top: 0
-    bottom: 0
-    left: 0
-    right: 0
-    background: #FFFFFF
-
-    > input
-      width: 100%
-      height: $choice-glyph-size * 2
-      font-size: $choice-glyph-size
-
-    > ul
-      list-style-type: none
-      padding: 0
-
-      > li
-
-        > a
-          $font-size: 1rem
-
-          display: block
-          height: $choice-cell-size
-          font-size: $font-size
-          line-height: $choice-cell-size/$font-size
-          text-decoration: none
-
-          overflow: hidden
-          white-space: nowrap
-          text-overflow: ellipsis
-
-          .choice
-            vertical-align: middle
-
 
 @media (min-width: 512px)
   .Charming
@@ -141,6 +102,7 @@ body
     text-align: center
 
   > p
+    font-size: 1.5em
     text-align: center
 
     > a
@@ -153,6 +115,41 @@ body
     color: #C0C0C0
 
 .Map
+
+.Search
+  position: absolute
+  top: 0
+  bottom: 0
+  left: 0
+  right: 0
+  background: #FFFFFF
+
+  > input
+    width: 100%
+    height: $choice-glyph-size * 2
+    font-size: $choice-glyph-size
+
+  > ul
+    list-style-type: none
+    padding: 0
+
+    > li
+
+      > a
+        $font-size: 1rem
+
+        display: block
+        height: $choice-cell-size
+        font-size: $font-size
+        line-height: $choice-cell-size/$font-size
+        text-decoration: none
+
+        overflow: hidden
+        white-space: nowrap
+        text-overflow: ellipsis
+
+        .choice
+          vertical-align: middle
 
 .choice
   $outline-size: 1px
