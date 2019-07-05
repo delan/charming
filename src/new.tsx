@@ -27,7 +27,7 @@ import {
 import { Data, fetchAllData, getString } from "./data";
 import { pointToYouPlus } from "./formatting";
 import { Display } from "./Display";
-import { search } from "./search";
+import { SearchResult, search } from "./search";
 import { nullToDefault } from "./default";
 
 const {
@@ -130,8 +130,8 @@ function Search({
       />
 
       <ul>
-        {results.slice(0, 42).map(([point, name]) => (
-          <li key={point}>
+        {results.slice(0, 42).map(({ key, point, name }: SearchResult) => (
+          <li key={key}>
             <a href={toFragment(point)} onClick={close}>
               <span className="choice">
                 <Display point={point} />
