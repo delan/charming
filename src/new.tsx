@@ -16,6 +16,7 @@ import ReactDOM from "react-dom";
 import useLocation from "react-use/lib/useLocation";
 import { FixedSizeGrid, GridChildComponentProps, areEqual } from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer"; // FIXME type definitions
+import { writeText } from "clipboard-polyfill";
 
 import {
   DataContext,
@@ -25,6 +26,7 @@ import {
   fixHashPoint,
 } from "./state";
 import { Data, fetchAllData, getString } from "./data";
+import { pointToString } from "./encoding";
 import { pointToYouPlus } from "./formatting";
 import { Display } from "./Display";
 import { SearchResult, search } from "./search";
@@ -84,9 +86,12 @@ function Detail({ search }: { search: () => void }) {
   return (
     <div className="Detail">
       <h1>{pointToYouPlus(point)}</h1>
-      <div>
+      <a
+        href={toFragment(point)}
+        onClick={() => void writeText(pointToString(point))}
+      >
         <Display point={point} />
-      </div>
+      </a>
       <p>
         <a href={toFragment(point)} onClick={search}>
           {nullToDefault(getString(data, "name", point), "<FIXME>")}
