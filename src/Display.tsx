@@ -3,7 +3,7 @@ import React, { useContext } from "react";
 import { pointToString, isSurrogate } from "./encoding";
 import { pointToTofu } from "./formatting";
 import { DataContext } from "./state";
-import { Data, isSpaceSeparator, isAnyMark } from "./data";
+import { Data, isSpaceSeparator, isAnyMark, isEmojiPresentation } from "./data";
 
 export function Display({ point }: { point: number }) {
   const data = useContext(DataContext);
@@ -36,6 +36,13 @@ export function Display({ point }: { point: number }) {
 
   if (substitute != null) {
     return <span className="synthetic substitute">{substitute}</span>;
+  }
+
+  if (data != null) {
+    // FIXME eosrei/twemoji-color-font#39
+    if (isEmojiPresentation(data, point)) {
+      return <span className="emoji">{pointToString(point)}</span>;
+    }
   }
 
   return <>{pointToString(point)}</>;
