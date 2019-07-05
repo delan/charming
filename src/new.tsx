@@ -27,7 +27,12 @@ import {
 } from "./state";
 import { Data, fetchAllData, getString } from "./data";
 import { pointToString } from "./encoding";
-import { pointToYouPlus } from "./formatting";
+import {
+  pointToYouPlus,
+  pointToString16,
+  pointToString8,
+  pointToEntity10,
+} from "./formatting";
 import { Display } from "./Display";
 import { SearchResult, search } from "./search";
 import { nullToDefault } from "./default";
@@ -98,6 +103,9 @@ function Detail({ search }: { search: () => void }) {
         </a>
       </p>
       <dl>
+        <Pair value={pointToString8(point)} label="UTF-8" />
+        <Pair value={pointToString16(point)} label="UTF-16" />
+        <Pair value={pointToEntity10(point)} label="HTML" />
         <StringPair field="gc" label="General category" />
         <StringPair field="block" label="Block" />
         <StringPair field="age" label="Introduced in" />
