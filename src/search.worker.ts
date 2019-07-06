@@ -27,6 +27,10 @@ function* searchByHexadecimal(data: Data, query: string) {
     return;
   }
 
+  if (point >= 0x110000) {
+    return;
+  }
+
   const name = getString(data, "name", point);
   yield { point, name };
 }
@@ -39,6 +43,10 @@ function* searchByDecimal(data: Data, query: string) {
   }
 
   if (toDecimal(point).length != query.length) {
+    return;
+  }
+
+  if (point >= 0x110000) {
     return;
   }
 
