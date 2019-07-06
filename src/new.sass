@@ -1,3 +1,7 @@
+$fa-font-path: "~@fortawesome/fontawesome-free/webfonts"
+@import "~@fortawesome/fontawesome-free/scss/fontawesome"
+@import "~@fortawesome/fontawesome-free/scss/brands"
+
 @font-face
   font-family: Twitter Color Emoji
   src: url("TwitterColorEmoji-SVGinOT-12.0.1.ttf")
@@ -67,6 +71,13 @@ body
 
   .Search
     padding: 0
+
+  > a
+    position: absolute
+    top: 1rem
+    left: 1rem
+
+    font-size: 1.5rem
 
 @media (min-width: 384px)
   .Charming

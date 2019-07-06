@@ -60,6 +60,11 @@ const config = {
         exclude: /[/]node_modules[/]/,
         loader: "file-loader",
       },
+      {
+        test: /[.](eot|svg|ttf|woff|woff2)$/,
+        include: /[/]node_modules[/]@fortawesome[/]fontawesome-free[/]/,
+        loader: "file-loader",
+      },
     ],
   },
   plugins: [],

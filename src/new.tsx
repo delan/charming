@@ -69,6 +69,11 @@ function Charming() {
         <PointContext.Provider value={point}>
           <Detail search={() => void setSearchOpen(true)} />
           <Map />
+
+          <a href="https://github.com/delan/charming" aria-label="source">
+            <i className="fab fa-github" aria-hidden="true"></i>
+          </a>
+
           {searchOpen && (
             <Search
               query={searchQuery}
