@@ -146,6 +146,7 @@ function Search({
         autoFocus={true}
         value={query}
         onChange={event => setQuery(event.target.value)}
+        placeholder="try “em dash” or “69” or “🏳️‍🌈”"
       />
 
       <ul>
