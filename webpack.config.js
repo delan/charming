@@ -78,7 +78,7 @@ module.exports = (env, argv) => {
         new CompressionPlugin({
           filename: "[path].br[query]",
           algorithm: "brotliCompress",
-          test: /[.](js|woff|ttf|bin)$/,
+          test: /[.](js|eot|svg|ttf|woff|woff2|bin)$/,
           cache: true,
         }),
       );
