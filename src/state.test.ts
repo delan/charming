@@ -20,6 +20,9 @@ test("getHashPoint returns or when hash is invalid", () =>
 test("getHashPoint returns or when hash has trailing rubbish", () =>
   void expect(getHashPoint("#FG", null)).toBe(null));
 
+test("getHashPoint returns or when point ≥ 0x110000", () =>
+  void expect(getHashPoint("#110000", null)).toBe(null));
+
 test("fixHashPoint calls History#replaceState iff it needs fixing", () => {
   const replaceState = jest.spyOn(history, "replaceState");
   location.hash = "#f";

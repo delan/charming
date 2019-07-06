@@ -27,6 +27,10 @@ export function getHashPoint(hash: string | undefined, or: any) {
     return or;
   }
 
+  if (point >= 0x110000) {
+    return or;
+  }
+
   return point;
 }
 
