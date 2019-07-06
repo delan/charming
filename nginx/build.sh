@@ -6,7 +6,7 @@ cat << end
 		}
 		location / {
 			rewrite ^($(
-				ls dist/*.br \
+				ls dist/*/*.br \
 				| sed -E 's/^dist|[.]br$//g' \
 				| sed 's/[.]/[&]/g' \
 				| tr \\n \| \

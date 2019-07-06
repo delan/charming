@@ -2,5 +2,5 @@
 .SUFFIXES:
 .PHONY: clean
 
-nginx/charming.conf: nginx/Makefile dist
+nginx/charming.conf: nginx/Makefile nginx/build.sh dist
 	nginx/build.sh > $@

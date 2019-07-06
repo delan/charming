@@ -1,6 +1,7 @@
 const path = require("path");
 const webpack = require("webpack");
 const CompressionPlugin = require("compression-webpack-plugin");
+const HtmlPlugin = require("html-webpack-plugin");
 
 const config = {
   entry: {
@@ -8,7 +9,7 @@ const config = {
     new: "./src/new.tsx",
   },
   output: {
-    filename: "[name].js",
+    filename: "[contenthash]/[name].js",
     path: path.resolve(__dirname, "dist"),
   },
   devServer: {
@@ -19,6 +20,10 @@ const config = {
   },
   module: {
     rules: [
+      {
+        test: /[.]html$/,
+        loader: "html-loader",
+      },
       {
         test: /[.]sass$/,
         exclude: /[/]node_modules[/]/,
@@ -41,6 +46,8 @@ const config = {
             loader: "worker-loader",
             options: {
               inline: true,
+              fallback: false,
+              name: "[hash:20]/[name].js",
             },
           },
         ],
@@ -54,20 +61,40 @@ const config = {
         test: /[.](woff|ttf)$/,
         exclude: /[/]node_modules[/]/,
         loader: "file-loader",
+        options: {
+          name: "[hash:20]/[name].[ext]",
+        },
       },
       {
         test: /[.]bin$/,
         exclude: /[/]node_modules[/]/,
         loader: "file-loader",
+        options: {
+          name: "[hash:20]/[name].[ext]",
+        },
       },
       {
         test: /[.](eot|svg|ttf|woff|woff2)$/,
         include: /[/]node_modules[/]@fortawesome[/]fontawesome-free[/]/,
         loader: "file-loader",
+        options: {
+          name: "[hash:20]/[name].[ext]",
+        },
       },
     ],
   },
-  plugins: [],
+  plugins: [
+    new HtmlPlugin({
+      filename: "old.html",
+      template: "src/old.html",
+      chunks: ["old"],
+    }),
+    new HtmlPlugin({
+      filename: "index.html",
+      template: "src/new.html",
+      chunks: ["new"],
+    }),
+  ],
 };
 
 module.exports = (env, argv) => {
