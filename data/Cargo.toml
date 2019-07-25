@@ -1,0 +1,9 @@
+[package]
+name = "data"
+version = "0.0.0"
+authors = ["Delan Azabani <delan@azabani.com>"]
+edition = "2018"
+
+[dependencies]
+failure = "0.1.5"
+regex = "1.2.0"
