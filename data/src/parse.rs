@@ -4,9 +4,9 @@ use std::io::{BufRead, BufReader};
 use failure::Error;
 use regex::{Captures, Regex};
 
-pub(crate) fn parse<R>(
+pub(crate) fn parse<R, H: FnMut(&mut R, Captures) -> Result<(), Error>>(
     sink: &mut R,
-    handler: fn(&mut R, Captures) -> Result<(), Error>,
+    mut handler: H,
     path: &str,
     pattern: &str,
 ) -> Result<(), Error> {

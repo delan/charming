@@ -2,6 +2,7 @@ mod captures;
 mod gc;
 mod parse;
 mod range;
+mod ud;
 
 use std::collections::HashMap;
 
@@ -10,18 +11,30 @@ use failure::Error;
 use crate::gc::gc_handler;
 use crate::parse::parse;
 use crate::range::range_handler;
+use crate::ud::ud_handler;
 
 fn main() -> Result<(), Error> {
-    let mut gc = HashMap::default();
+    let mut gc_labels = HashMap::default();
 
     parse(
-        &mut gc,
+        &mut gc_labels,
         gc_handler,
         "PropertyValueAliases.txt",
         r"^gc *; *(?P<key>[^ ]+) *; *(?P<value>([^ ]+))",
     )?;
 
-    dbg!(gc);
+    dbg!(&gc_labels);
+
+    let mut ud = points();
+
+    parse(
+        &mut ud,
+        |sink, captures| ud_handler(&gc_labels, sink, captures),
+        "UnicodeData.txt",
+        r"^(?P<point>[0-9A-F]+);(?P<name>[^;]+);(?P<gc>[^;]+)",
+    )?;
+
+    dbg!(&ud[0x20]);
 
     let mut block = points();
 
