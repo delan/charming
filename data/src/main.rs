@@ -6,6 +6,7 @@ mod ed;
 mod gc;
 mod na;
 mod parse;
+mod pool;
 mod range;
 mod ud;
 mod ur;
@@ -16,10 +17,12 @@ use failure::Error;
 
 use crate::age::age_handler;
 use crate::block::block_handler;
+use crate::details::Details;
 use crate::ed::ed_handler;
 use crate::gc::gc_handler;
 use crate::na::na_handler;
 use crate::parse::parse;
+use crate::pool::Popularity;
 use crate::ud::ud_handler;
 use crate::ur::ur_handler;
 
@@ -77,6 +80,16 @@ fn main() -> Result<(), Error> {
         r"^(?P<first>[0-9A-F]+)(?:[.][.](?P<last>[0-9A-F]+))?\s*;\s*(?P<value>[^ ]+)",
     )?;
 
+    let mut popularity = Popularity::default();
+
+    vote(&mut popularity, &ud, |x| x.name.as_ref());
+    vote(&mut popularity, &ud, |x| x.gc.as_ref());
+    vote(&mut popularity, &ud, |x| x.block.as_ref());
+    vote(&mut popularity, &ud, |x| x.age.as_ref());
+    vote(&mut popularity, &ud, |x| x.mpy.as_ref());
+
+    dbg!(popularity.report());
+
     Ok(())
 }
 
@@ -85,4 +98,16 @@ fn points<T: Default>() -> Vec<T> {
     result.resize_with(0x110000, Default::default);
 
     result
+}
+
+fn vote<G: FnMut(&Details) -> Option<&String>>(
+    sink: &mut Popularity,
+    source: &Vec<Details>,
+    mut getter: G,
+) {
+    for details in source {
+        if let Some(string) = getter(details) {
+            sink.vote(string);
+        }
+    }
 }
