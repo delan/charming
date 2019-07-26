@@ -12,6 +12,8 @@ mod ud;
 mod ur;
 
 use std::collections::HashMap;
+use std::fs::File;
+use std::io::Write;
 
 use failure::Error;
 
@@ -88,7 +90,11 @@ fn main() -> Result<(), Error> {
     vote(&mut popularity, &ud, |x| x.age.as_ref());
     vote(&mut popularity, &ud, |x| x.mpy.as_ref());
 
-    dbg!(popularity.report());
+    write("../data.string.json", |mut sink| {
+        write!(sink, "{}", serde_json::to_string(&popularity.report())?)?;
+
+        Ok(())
+    })?;
 
     Ok(())
 }
@@ -110,4 +116,10 @@ fn vote<G: FnMut(&Details) -> Option<&String>>(
             sink.vote(string);
         }
     }
+}
+
+fn write<W: FnOnce(File) -> Result<(), Error>>(path: &str, writer: W) -> Result<(), Error> {
+    println!("Writing {} ...", path);
+
+    writer(File::create(path)?)
 }
