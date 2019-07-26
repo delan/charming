@@ -111,6 +111,14 @@ fn main() -> Result<(), Error> {
     write_pool_indices(&ud, &mut pool, "../data.age.bin", |x| x.age.as_ref())?;
     write_pool_indices(&ud, &mut pool, "../data.mpy.bin", |x| x.mpy.as_ref())?;
 
+    write("../data.bits.bin", |mut sink| {
+        for details in ud {
+            sink.write_u8(details.bits)?;
+        }
+
+        Ok(())
+    })?;
+
     Ok(())
 }
 
