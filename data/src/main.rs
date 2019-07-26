@@ -1,3 +1,5 @@
+mod age;
+mod block;
 mod captures;
 mod details;
 mod ed;
@@ -12,11 +14,12 @@ use std::collections::HashMap;
 
 use failure::Error;
 
+use crate::age::age_handler;
+use crate::block::block_handler;
 use crate::ed::ed_handler;
 use crate::gc::gc_handler;
 use crate::na::na_handler;
 use crate::parse::parse;
-use crate::range::range_handler;
 use crate::ud::ud_handler;
 use crate::ur::ur_handler;
 
@@ -39,20 +42,16 @@ fn main() -> Result<(), Error> {
         r"^(?P<point>[0-9A-F]+);(?P<name>[^;]+);(?P<gc>[^;]+)",
     )?;
 
-    let mut block = points();
-
     parse(
-        &mut block,
-        range_handler,
+        &mut ud,
+        block_handler,
         "Blocks.txt",
         r"^(?P<first>[0-9A-F]+)[.][.](?P<last>[0-9A-F]+); (?P<value>.+)",
     )?;
 
-    let mut age = points();
-
     parse(
-        &mut age,
-        range_handler,
+        &mut ud,
+        age_handler,
         "DerivedAge.txt",
         r"^(?P<first>[0-9A-F]+)(?:[.][.](?P<last>[0-9A-F]+))?\s*;\s*(?P<value>[^ ]+)",
     )?;

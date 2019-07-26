@@ -3,6 +3,8 @@ pub(crate) struct Details {
     pub bits: u8,
     pub name: Option<String>,
     pub gc: Option<String>,
+    pub block: Option<String>,
+    pub age: Option<String>,
     pub mpy: Option<String>,
 }
 
