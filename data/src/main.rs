@@ -80,7 +80,7 @@ fn main() -> Result<(), Error> {
         &mut ud,
         ed_handler,
         "emoji-data.txt",
-        r"^(?P<first>[0-9A-F]+)(?:[.][.](?P<last>[0-9A-F]+))?\s*;\s*(?P<value>[^ ]+)",
+        r"^(?P<first>[0-9A-F]+)(?:[.][.](?P<last>[0-9A-F]+))?\s*;\s*Emoji_Presentation(\s|#|$)",
     )?;
 
     let mut popularity = Popularity::default();
