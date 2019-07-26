@@ -1,5 +1,6 @@
 mod captures;
 mod details;
+mod ed;
 mod gc;
 mod na;
 mod parse;
@@ -11,6 +12,7 @@ use std::collections::HashMap;
 
 use failure::Error;
 
+use crate::ed::ed_handler;
 use crate::gc::gc_handler;
 use crate::na::na_handler;
 use crate::parse::parse;
@@ -82,6 +84,15 @@ fn main() -> Result<(), Error> {
     )?;
 
     dbg!(&ud[0x8FEA]);
+
+    parse(
+        &mut ud,
+        ed_handler,
+        "emoji-data.txt",
+        r"^(?P<first>[0-9A-F]+)(?:[.][.](?P<last>[0-9A-F]+))?\s*;\s*(?P<value>[^ ]+)",
+    )?;
+
+    dbg!(&ud[0x1F496]);
 
     Ok(())
 }
