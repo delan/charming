@@ -1,5 +1,6 @@
 mod captures;
 mod gc;
+mod na;
 mod parse;
 mod range;
 mod ud;
@@ -9,6 +10,7 @@ use std::collections::HashMap;
 use failure::Error;
 
 use crate::gc::gc_handler;
+use crate::na::na_handler;
 use crate::parse::parse;
 use crate::range::range_handler;
 use crate::ud::ud_handler;
@@ -57,6 +59,17 @@ fn main() -> Result<(), Error> {
     )?;
 
     dbg!(&age[0]);
+
+    dbg!(&ud[0]);
+
+    parse(
+        &mut ud,
+        na_handler,
+        "NameAliases.txt",
+        r"^(?P<point>[0-9A-F]+);(?P<alias>[^;]+);(?P<type>[^;]+)",
+    )?;
+
+    dbg!(&ud[0]);
 
     Ok(())
 }
