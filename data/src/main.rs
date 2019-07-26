@@ -1,9 +1,11 @@
 mod captures;
+mod details;
 mod gc;
 mod na;
 mod parse;
 mod range;
 mod ud;
+mod ur;
 
 use std::collections::HashMap;
 
@@ -14,6 +16,7 @@ use crate::na::na_handler;
 use crate::parse::parse;
 use crate::range::range_handler;
 use crate::ud::ud_handler;
+use crate::ur::ur_handler;
 
 fn main() -> Result<(), Error> {
     let mut gc_labels = HashMap::default();
@@ -70,6 +73,15 @@ fn main() -> Result<(), Error> {
     )?;
 
     dbg!(&ud[0]);
+
+    parse(
+        &mut ud,
+        ur_handler,
+        "Unihan_Readings.txt",
+        r"^U[+](?P<point>[0-9A-F]+)\t(?P<key>kMandarin|kDefinition)\t(?P<value>.+)",
+    )?;
+
+    dbg!(&ud[0x8FEA]);
 
     Ok(())
 }

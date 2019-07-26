@@ -4,15 +4,11 @@ use failure::Error;
 use regex::Captures;
 
 use crate::captures::CapturesExt;
-
-pub(crate) enum Bits {
-    IsSpaceSeparator = 1 << 2,
-    IsAnyMark = 1 << 3,
-}
+use crate::details::{Bits, Details};
 
 pub(crate) fn ud_handler(
     gc_labels: &HashMap<String, String>,
-    sink: &mut Vec<Option<(u8, String, String)>>,
+    sink: &mut Vec<Details>,
     captures: Captures,
 ) -> Result<(), Error> {
     let point = usize::from_str_radix(captures.name_ok("point")?, 16)?;
@@ -27,7 +23,15 @@ pub(crate) fn ud_handler(
         0
     };
 
-    sink[point] = Some((bits, name.to_owned(), gc_labels.get(gc).unwrap().to_owned()));
+    let name = Some(name.to_owned());
+    let gc = Some(gc_labels.get(gc).unwrap().to_owned());
+
+    sink[point] = Details {
+        bits,
+        name,
+        gc,
+        ..Default::default()
+    };
 
     Ok(())
 }
