@@ -8,7 +8,7 @@ pub(crate) fn range_handler(
     captures: Captures,
 ) -> Result<(), Error> {
     let first = captures.name_ok("first")?;
-    let last = captures.name_ok("last")?;
+    let last = captures.name_or("last", first);
 
     let p = usize::from_str_radix(first, 16)?;
     let q = usize::from_str_radix(last, 16)? + 1;

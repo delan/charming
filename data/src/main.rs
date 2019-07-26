@@ -23,8 +23,7 @@ fn main() -> Result<(), Error> {
 
     dbg!(gc);
 
-    let mut block = Vec::with_capacity(0x110000);
-    block.resize_with(0x110000, Default::default);
+    let mut block = points();
 
     parse(
         &mut block,
@@ -35,5 +34,23 @@ fn main() -> Result<(), Error> {
 
     dbg!(&block[0]);
 
+    let mut age = points();
+
+    parse(
+        &mut age,
+        range_handler,
+        "DerivedAge.txt",
+        r"^(?P<first>[0-9A-F]+)(?:[.][.](?P<last>[0-9A-F]+))?\s*;\s*(?P<value>[^ ]+)",
+    )?;
+
+    dbg!(&age[0]);
+
     Ok(())
+}
+
+fn points<T: Default>() -> Vec<T> {
+    let mut result = Vec::with_capacity(0x110000);
+    result.resize_with(0x110000, Default::default);
+
+    result
 }
