@@ -10,6 +10,8 @@ pub(crate) fn parse<R, H: FnMut(&mut R, Captures) -> Result<(), Error>>(
     path: &str,
     pattern: &str,
 ) -> Result<(), Error> {
+    println!("Processing {} ...", path);
+
     let source = BufReader::new(File::open(path)?);
     let pattern = Regex::new(pattern)?;
 

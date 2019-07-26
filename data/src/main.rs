@@ -30,8 +30,6 @@ fn main() -> Result<(), Error> {
         r"^gc *; *(?P<key>[^ ]+) *; *(?P<value>([^ ]+))",
     )?;
 
-    dbg!(&gc_labels);
-
     let mut ud = points();
 
     parse(
@@ -40,8 +38,6 @@ fn main() -> Result<(), Error> {
         "UnicodeData.txt",
         r"^(?P<point>[0-9A-F]+);(?P<name>[^;]+);(?P<gc>[^;]+)",
     )?;
-
-    dbg!(&ud[0x20]);
 
     let mut block = points();
 
@@ -52,8 +48,6 @@ fn main() -> Result<(), Error> {
         r"^(?P<first>[0-9A-F]+)[.][.](?P<last>[0-9A-F]+); (?P<value>.+)",
     )?;
 
-    dbg!(&block[0]);
-
     let mut age = points();
 
     parse(
@@ -63,18 +57,12 @@ fn main() -> Result<(), Error> {
         r"^(?P<first>[0-9A-F]+)(?:[.][.](?P<last>[0-9A-F]+))?\s*;\s*(?P<value>[^ ]+)",
     )?;
 
-    dbg!(&age[0]);
-
-    dbg!(&ud[0]);
-
     parse(
         &mut ud,
         na_handler,
         "NameAliases.txt",
         r"^(?P<point>[0-9A-F]+);(?P<alias>[^;]+);(?P<type>[^;]+)",
     )?;
-
-    dbg!(&ud[0]);
 
     parse(
         &mut ud,
@@ -83,16 +71,12 @@ fn main() -> Result<(), Error> {
         r"^U[+](?P<point>[0-9A-F]+)\t(?P<key>kMandarin|kDefinition)\t(?P<value>.+)",
     )?;
 
-    dbg!(&ud[0x8FEA]);
-
     parse(
         &mut ud,
         ed_handler,
         "emoji-data.txt",
         r"^(?P<first>[0-9A-F]+)(?:[.][.](?P<last>[0-9A-F]+))?\s*;\s*(?P<value>[^ ]+)",
     )?;
-
-    dbg!(&ud[0x1F496]);
 
     Ok(())
 }
