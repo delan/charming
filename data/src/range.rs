@@ -4,7 +4,7 @@ use regex::Captures;
 use crate::captures::CapturesExt;
 use crate::details::Details;
 
-pub(crate) fn range_handler<S: FnMut(&mut Details, String)>(
+pub(crate) fn range_handler<S: FnMut(&mut Details, &str)>(
     mut setter: S,
     sink: &mut Vec<Details>,
     captures: Captures,
@@ -16,7 +16,7 @@ pub(crate) fn range_handler<S: FnMut(&mut Details, String)>(
     let q = usize::from_str_radix(last, 16)? + 1;
 
     for i in p..q {
-        setter(&mut sink[i], captures.name_ok("value")?.to_owned());
+        setter(&mut sink[i], captures.name_ok("value")?);
     }
 
     Ok(())

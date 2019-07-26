@@ -1,11 +1,13 @@
+use std::rc::Rc;
+
 #[derive(Debug, Default)]
 pub(crate) struct Details {
     pub bits: u8,
-    pub name: Option<String>,
-    pub gc: Option<String>,
-    pub block: Option<String>,
-    pub age: Option<String>,
-    pub mpy: Option<String>,
+    pub name: Option<Rc<str>>,
+    pub gc: Option<Rc<str>>,
+    pub block: Option<Rc<str>>,
+    pub age: Option<Rc<str>>,
+    pub mpy: Option<Rc<str>>,
 }
 
 pub(crate) enum Bits {

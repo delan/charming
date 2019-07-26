@@ -14,6 +14,7 @@ mod ur;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufWriter, Write};
+use std::rc::Rc;
 
 use byteorder::{BigEndian, WriteBytesExt};
 use failure::Error;
@@ -29,6 +30,16 @@ use crate::pool::{Pool, Popularity};
 use crate::ud::ud_handler;
 use crate::ur::ur_handler;
 
+trait OptionRcExt {
+    fn map_clone(&self) -> Self;
+}
+
+impl OptionRcExt for Option<Rc<str>> {
+    fn map_clone(&self) -> Self {
+        self.as_ref().map(|x| x.clone())
+    }
+}
+
 fn main() -> Result<(), Error> {
     let mut gc_labels = HashMap::default();
 
@@ -39,39 +50,40 @@ fn main() -> Result<(), Error> {
         r"^gc *; *(?P<key>[^ ]+) *; *(?P<value>([^ ]+))",
     )?;
 
+    let mut popularity = Popularity::default();
     let mut ud = points();
 
     parse(
         &mut ud,
-        |sink, captures| ud_handler(&gc_labels, sink, captures),
+        |sink, captures| ud_handler(&gc_labels, &mut popularity, sink, captures),
         "UnicodeData.txt",
         r"^(?P<point>[0-9A-F]+);(?P<name>[^;]+);(?P<gc>[^;]+)",
     )?;
 
     parse(
         &mut ud,
-        block_handler,
+        |sink, captures| block_handler(&mut popularity, sink, captures),
         "Blocks.txt",
         r"^(?P<first>[0-9A-F]+)[.][.](?P<last>[0-9A-F]+); (?P<value>.+)",
     )?;
 
     parse(
         &mut ud,
-        age_handler,
+        |sink, captures| age_handler(&mut popularity, sink, captures),
         "DerivedAge.txt",
         r"^(?P<first>[0-9A-F]+)(?:[.][.](?P<last>[0-9A-F]+))?\s*;\s*(?P<value>[^ ]+)",
     )?;
 
     parse(
         &mut ud,
-        na_handler,
+        |sink, captures| na_handler(&mut popularity, sink, captures),
         "NameAliases.txt",
         r"^(?P<point>[0-9A-F]+);(?P<alias>[^;]+);(?P<type>[^;]+)",
     )?;
 
     parse(
         &mut ud,
-        ur_handler,
+        |sink, captures| ur_handler(&mut popularity, sink, captures),
         "Unihan_Readings.txt",
         r"^U[+](?P<point>[0-9A-F]+)\t(?P<key>kMandarin|kDefinition)\t(?P<value>.+)",
     )?;
@@ -82,14 +94,6 @@ fn main() -> Result<(), Error> {
         "emoji-data.txt",
         r"^(?P<first>[0-9A-F]+)(?:[.][.](?P<last>[0-9A-F]+))?\s*;\s*Emoji_Presentation(\s|#|$)",
     )?;
-
-    let mut popularity = Popularity::default();
-
-    vote(&mut popularity, &ud, |x| x.name.as_ref());
-    vote(&mut popularity, &ud, |x| x.gc.as_ref());
-    vote(&mut popularity, &ud, |x| x.block.as_ref());
-    vote(&mut popularity, &ud, |x| x.age.as_ref());
-    vote(&mut popularity, &ud, |x| x.mpy.as_ref());
 
     let popularity = popularity.report();
 
@@ -105,11 +109,11 @@ fn main() -> Result<(), Error> {
         pool.r#use(&string);
     }
 
-    write_pool_indices(&ud, &mut pool, "../data.name.bin", |x| x.name.as_ref())?;
-    write_pool_indices(&ud, &mut pool, "../data.gc.bin", |x| x.gc.as_ref())?;
-    write_pool_indices(&ud, &mut pool, "../data.block.bin", |x| x.block.as_ref())?;
-    write_pool_indices(&ud, &mut pool, "../data.age.bin", |x| x.age.as_ref())?;
-    write_pool_indices(&ud, &mut pool, "../data.mpy.bin", |x| x.mpy.as_ref())?;
+    write_pool_indices(&ud, &mut pool, "../data.name.bin", |x| x.name.map_clone())?;
+    write_pool_indices(&ud, &mut pool, "../data.gc.bin", |x| x.gc.map_clone())?;
+    write_pool_indices(&ud, &mut pool, "../data.block.bin", |x| x.block.map_clone())?;
+    write_pool_indices(&ud, &mut pool, "../data.age.bin", |x| x.age.map_clone())?;
+    write_pool_indices(&ud, &mut pool, "../data.mpy.bin", |x| x.mpy.map_clone())?;
 
     write("../data.bits.bin", |mut sink| {
         for details in ud {
@@ -129,18 +133,6 @@ fn points<T: Default>() -> Vec<T> {
     result
 }
 
-fn vote<G: FnMut(&Details) -> Option<&String>>(
-    sink: &mut Popularity,
-    source: &Vec<Details>,
-    mut getter: G,
-) {
-    for details in source {
-        if let Some(string) = getter(details) {
-            sink.vote(string);
-        }
-    }
-}
-
 fn write<W: FnOnce(BufWriter<File>) -> Result<(), Error>>(
     path: &str,
     writer: W,
@@ -150,7 +142,7 @@ fn write<W: FnOnce(BufWriter<File>) -> Result<(), Error>>(
     writer(BufWriter::new(File::create(path)?))
 }
 
-fn write_pool_indices<G: FnMut(&Details) -> Option<&String>>(
+fn write_pool_indices<G: FnMut(&Details) -> Option<Rc<str>>>(
     source: &Vec<Details>,
     pool: &mut Pool,
     path: &str,

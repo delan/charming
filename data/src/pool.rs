@@ -1,9 +1,10 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::convert::TryInto;
+use std::rc::Rc;
 
 #[derive(Debug, Default)]
 pub(crate) struct Popularity {
-    inner: HashMap<String, usize>,
+    inner: HashSet<Rc<str>>,
 }
 
 #[derive(Debug, Default)]
@@ -12,20 +13,28 @@ pub(crate) struct Pool {
 }
 
 impl Popularity {
-    pub fn vote(&mut self, string: &str) {
-        self.inner
-            // FIXME avoid copy
-            .entry(string.to_owned())
-            .and_modify(|x| *x += 1)
-            .or_insert(1);
+    pub fn vote(&mut self, string: &str) -> Rc<str> {
+        if let Some(result) = self.inner.get(string) {
+            return result.clone();
+        }
+
+        let result: Rc<str> = string.to_owned().into();
+
+        self.inner.insert(result.clone());
+
+        result
     }
 
-    pub fn report(mut self) -> Vec<String> {
-        let mut result: Vec<_> = self.inner.drain().collect();
-        result.sort_by(|(x, m), (y, n)| m.cmp(n).reverse().then_with(|| x.cmp(y)));
+    pub fn report(&self) -> Vec<Rc<str>> {
+        let mut result: Vec<_> = self.inner.iter().map(|x| x.clone()).collect();
+        result.sort_by(|p, q| {
+            Rc::strong_count(p)
+                .cmp(&Rc::strong_count(q))
+                .reverse()
+                .then_with(|| p.cmp(q))
+        });
 
-        // FIXME avoid collect
-        result.drain(..).map(|(x, _)| x).collect()
+        result
     }
 }
 

@@ -5,9 +5,11 @@ use regex::Captures;
 
 use crate::captures::CapturesExt;
 use crate::details::{Bits, Details};
+use crate::pool::Popularity;
 
 pub(crate) fn ud_handler(
     gc_labels: &HashMap<String, String>,
+    popularity: &mut Popularity,
     sink: &mut Vec<Details>,
     captures: Captures,
 ) -> Result<(), Error> {
@@ -23,8 +25,8 @@ pub(crate) fn ud_handler(
         0
     };
 
-    let name = Some(name.to_owned());
-    let gc = Some(gc_labels.get(gc).unwrap().to_owned());
+    let name = Some(popularity.vote(name));
+    let gc = Some(popularity.vote(gc_labels.get(gc).unwrap()));
 
     sink[point] = Details {
         bits,
