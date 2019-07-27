@@ -133,7 +133,7 @@ fn write<W: FnOnce(BufWriter<File>) -> Result<(), Error>>(
     path: &str,
     writer: W,
 ) -> Result<(), Error> {
-    println!("Writing {} ...", path);
+    eprintln!("Writing {} ...", path);
 
     writer(BufWriter::new(File::create(path)?))
 }
