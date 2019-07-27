@@ -97,7 +97,7 @@ fn main() -> Result<(), Error> {
 
     let report = popularity.report();
 
-    write("../data.string.json", |mut sink| {
+    write("data.string.json", |mut sink| {
         write!(sink, "{}", serde_json::to_string(&report)?)?;
 
         Ok(())
@@ -105,13 +105,13 @@ fn main() -> Result<(), Error> {
 
     let mut pool = Pool::from(&report);
 
-    write_pool_indices(&ud, &mut pool, "../data.name.bin", |x| x.name.map_clone())?;
-    write_pool_indices(&ud, &mut pool, "../data.gc.bin", |x| x.gc.map_clone())?;
-    write_pool_indices(&ud, &mut pool, "../data.block.bin", |x| x.block.map_clone())?;
-    write_pool_indices(&ud, &mut pool, "../data.age.bin", |x| x.age.map_clone())?;
-    write_pool_indices(&ud, &mut pool, "../data.mpy.bin", |x| x.mpy.map_clone())?;
+    write_pool_indices(&ud, &mut pool, "data.name.bin", |x| x.name.map_clone())?;
+    write_pool_indices(&ud, &mut pool, "data.gc.bin", |x| x.gc.map_clone())?;
+    write_pool_indices(&ud, &mut pool, "data.block.bin", |x| x.block.map_clone())?;
+    write_pool_indices(&ud, &mut pool, "data.age.bin", |x| x.age.map_clone())?;
+    write_pool_indices(&ud, &mut pool, "data.mpy.bin", |x| x.mpy.map_clone())?;
 
-    write("../data.bits.bin", |mut sink| {
+    write("data.bits.bin", |mut sink| {
         for details in ud {
             sink.write_u8(details.bits)?;
         }

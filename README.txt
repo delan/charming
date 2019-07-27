@@ -2,7 +2,7 @@
 git submodule update --init --recursive
 
 # build data
-make
+make -C data
 
 # build client
 npm run build
