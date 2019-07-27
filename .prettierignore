@@ -2,6 +2,6 @@
 /package-lock.json
 /dist/
 
-/data.string.json
+/data/
 /src/old.js
 /minilzo-js/

@@ -43,13 +43,37 @@ export function getString(
   field: "name" | "gc" | "block" | "age" | "mpy",
   point: number,
 ): string | null {
-  const index = data[field].getUint16(point * 2);
+  const index = getPoolIndex(data[field], point)!;
 
   if (index == 0xffff || index >= data.string.length) {
     return null;
   }
 
   return data.string[index];
+}
+
+function getPoolIndex(field: DataView, point: number): number | null {
+  const runs = field.getUint16(0);
+  let currentPoint = 0;
+  let currentOffset = 2 + 2 * runs;
+
+  for (let i = 0; i < runs; i++) {
+    const code = field.getUint16(2 + 2 * i);
+    const isRepeat = !!((code >> 15) & 1);
+    const length = code & ((1 << 15) - 1);
+
+    if (point < currentPoint + length) {
+      const offset = isRepeat
+        ? currentOffset
+        : currentOffset + 2 * (point - currentPoint);
+      return field.getUint16(offset);
+    }
+
+    currentPoint += length;
+    currentOffset += isRepeat ? 2 : 2 * length;
+  }
+
+  return null;
 }
 
 export function kDefinitionExists(data: Data, point: number): boolean {
