@@ -8,10 +8,12 @@ mod na;
 mod parse;
 mod pool;
 mod range;
+mod rle;
 mod ud;
 mod ur;
 
 use std::collections::HashMap;
+use std::convert::TryInto;
 use std::fs::File;
 use std::io::{BufWriter, Write};
 use std::rc::Rc;
@@ -27,6 +29,7 @@ use crate::gc::gc_handler;
 use crate::na::na_handler;
 use crate::parse::parse;
 use crate::pool::{Pool, Popularity};
+use crate::rle::{pack, rle};
 use crate::ud::ud_handler;
 use crate::ur::ur_handler;
 
@@ -142,17 +145,21 @@ fn write_pool_indices<G: FnMut(&Details) -> Option<Rc<str>>>(
     source: &Vec<Details>,
     pool: &mut Pool,
     path: &str,
-    mut getter: G,
+    getter: G,
 ) -> Result<(), Error> {
     write(path, |mut sink| {
-        for details in source {
-            if let Some(string) = getter(details) {
-                let index = pool.r#use(&string);
-                assert!(index < 0xFFFF);
-                sink.write_u16::<BigEndian>(index as u16)?;
-            } else {
-                sink.write_u16::<BigEndian>(0xFFFF)?;
-            }
+        let indices = source.iter().map(getter).map(|x| {
+            x.as_ref()
+                .map(|x| pool.r#use(x).try_into().unwrap())
+                .unwrap_or(0xFFFF)
+        });
+
+        let runs = rle(indices);
+
+        println!("{}", path);
+
+        for word in pack(runs) {
+            sink.write_u16::<BigEndian>(word)?;
         }
 
         Ok(())
