@@ -24,8 +24,14 @@ impl Popularity {
         result
     }
 
-    pub fn report(&self) -> Vec<Rc<str>> {
-        let mut result: Vec<_> = self.inner.iter().map(|x| x.clone()).collect();
+    pub fn report(mut self) -> Vec<Rc<str>> {
+        let mut result: Vec<_> = self
+            .inner
+            .drain()
+            .filter(|x| Rc::strong_count(x) > 1)
+            .map(|x| x.clone())
+            .collect();
+
         result.sort_by(|p, q| {
             Rc::strong_count(p)
                 .cmp(&Rc::strong_count(q))
