@@ -95,19 +95,15 @@ fn main() -> Result<(), Error> {
         r"^(?P<first>[0-9A-F]+)(?:[.][.](?P<last>[0-9A-F]+))?\s*;\s*Emoji_Presentation(\s|#|$)",
     )?;
 
-    let popularity = popularity.report();
+    let report = popularity.report();
 
     write("../data.string.json", |mut sink| {
-        write!(sink, "{}", serde_json::to_string(&popularity)?)?;
+        write!(sink, "{}", serde_json::to_string(&report)?)?;
 
         Ok(())
     })?;
 
-    let mut pool = Pool::default();
-
-    for string in popularity {
-        pool.r#use(&string);
-    }
+    let mut pool = Pool::from(&report);
 
     write_pool_indices(&ud, &mut pool, "../data.name.bin", |x| x.name.map_clone())?;
     write_pool_indices(&ud, &mut pool, "../data.gc.bin", |x| x.gc.map_clone())?;
@@ -153,7 +149,7 @@ fn write_pool_indices<G: FnMut(&Details) -> Option<Rc<str>>>(
             if let Some(string) = getter(details) {
                 let index = pool.r#use(&string);
                 assert!(index < 0xFFFF);
-                sink.write_u16::<BigEndian>(index)?;
+                sink.write_u16::<BigEndian>(index as u16)?;
             } else {
                 sink.write_u16::<BigEndian>(0xFFFF)?;
             }

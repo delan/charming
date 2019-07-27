@@ -1,5 +1,4 @@
 use std::collections::{HashMap, HashSet};
-use std::convert::TryInto;
 use std::rc::Rc;
 
 #[derive(Debug, Default)]
@@ -9,7 +8,7 @@ pub(crate) struct Popularity {
 
 #[derive(Debug, Default)]
 pub(crate) struct Pool {
-    inner: HashMap<String, u16>,
+    inner: HashMap<Rc<str>, usize>,
 }
 
 impl Popularity {
@@ -39,15 +38,18 @@ impl Popularity {
 }
 
 impl Pool {
-    pub fn r#use(&mut self, string: &str) -> u16 {
-        if let Some(&result) = self.inner.get(string) {
-            return result;
-        }
+    pub fn r#use(&self, string: &str) -> usize {
+        self.inner[string]
+    }
+}
 
-        let result = self.inner.len().try_into().unwrap();
-        assert!(result < 0xFFFF);
-        // FIXME avoid copy
-        self.inner.insert(string.to_owned(), result);
+impl From<&Vec<Rc<str>>> for Pool {
+    fn from(report: &Vec<Rc<str>>) -> Self {
+        let mut result = Self::default();
+
+        for string in report {
+            result.inner.insert(string.clone(), result.inner.len());
+        }
 
         result
     }
