@@ -43,8 +43,30 @@ async function fetchDataView(path: string): Promise<DataView> {
   return new DataView(buffer);
 }
 
+// https://stackoverflow.com/q/51419176
+type KeyOfType<T, U> = { [P in keyof T]: T[P] extends U ? P : never }[keyof T];
+type SparseMemberType = {
+  method: KeyOfType<DataView, (_: number) => number>;
+  len: number;
+};
+const Uint8: SparseMemberType = { method: "getUint8", len: 1 };
+const Uint16: SparseMemberType = { method: "getUint16", len: 2 };
+
+function getSparse(
+  ty: SparseMemberType,
+  field: DataView,
+  def: number,
+  point: number,
+): number {
+  const page_offset = field.getUint16(Math.floor(point / 256) * 2);
+  if (page_offset == 0xffff) return def;
+
+  const offset = 8704 + (page_offset * 256 + (point % 256)) * ty.len;
+  return field[ty.method](offset);
+}
+
 function getFlag(data: Data, shift: number, point: number): boolean {
-  return !!((data.bits.getUint8(point) >> shift) & 1);
+  return !!((getSparse(Uint8, data.bits, 0, point) >> shift) & 1);
 }
 
 /**
@@ -67,7 +89,7 @@ function getString0(
   field: "name" | "dnrp" | "gc" | "block" | "age" | "hjsn" | "uhdef" | "uhman",
   point: number,
 ): string | null {
-  const index = data[field].getUint16(point * 2);
+  const index = getSparse(Uint16, data[field], 0xffff, point);
 
   if (index == 0xffff || index >= data.string.length) {
     return null;
@@ -146,7 +168,7 @@ export function getHangulSyllableName(
   const V_BASE = 0x1161;
   const T_BASE = 0x11a7;
 
-  const lvt = data.hlvt.getUint16(point * 2);
+  const lvt = getSparse(Uint16, data.hlvt, 0, point);
   const [present, l, v, t] = [
     (lvt >> 15) & 0b1,
     (lvt >> 10) & 0b11111,
