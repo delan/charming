@@ -16,7 +16,7 @@ pub(crate) fn ur_handler(
 
     match key {
         "kDefinition" => {
-            // FIXME assert!(sink[point].name.is_none());
+            assert!(sink[point].name.is_none());
             sink[point].uhdef = Some(popularity.vote(value));
             sink[point].bits |= Bits::KdefinitionExists as u8;
         }

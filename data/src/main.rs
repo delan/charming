@@ -2,6 +2,7 @@ mod age;
 mod block;
 mod captures;
 mod details;
+mod dynamic;
 mod ed;
 mod gc;
 mod na;
@@ -22,6 +23,7 @@ use failure::Error;
 use crate::age::age_handler;
 use crate::block::block_handler;
 use crate::details::{Bits, Details};
+use crate::dynamic::{NAME_RULES, NameRule};
 use crate::ed::ed_handler;
 use crate::gc::gc_handler;
 use crate::na::na_handler;
@@ -98,6 +100,23 @@ fn main() -> Result<(), Error> {
         r"^(?P<point>[0-9A-F]+);(?P<alias>[^;]+);(?P<type>[^;]+)",
     )?;
 
+    // Some characters have names that can be derived by algorithmic
+    // rules. UnicodeData.txt often uses ranges (see above) to define
+    // properties for these characters in bulk, but others are listed
+    // individually due to their unique properties.
+    for (first, last, _, _) in NAME_RULES {
+        for i in first..=last {
+            // Each character with a derived name should either have
+            // no explicit name (iff defined in bulk) or an explicit
+            // name that matches its derived name.
+            assert!(ud[i].name.as_deref().map_or(true, |x| Some(x) == derived_name(i).as_deref()));
+
+            // Strip out all derived names from output data, to avoid
+            // polluting string pool and client heap.
+            ud[i].name = None;
+        }
+    }
+
     parse(
         &mut ud,
         |sink, captures| ur_handler(&mut popularity, sink, captures),
@@ -112,8 +131,10 @@ fn main() -> Result<(), Error> {
         r"^(?P<first>[0-9A-F]+)(?:[.][.](?P<last>[0-9A-F]+))?\s*;\s*Emoji_Presentation(\s|#|$)",
     )?;
 
+    println!("Running tests ...");
     assert_eq!(ud[0x5170], Details::r#static(None, "Other Letter (Lo)", "CJK Unified Ideographs", "Unicode 1.1", "orchid; elegant, graceful", "lán", &[Bits::KdefinitionExists]));
     assert_eq!(ud[0x9FFF], Details::r#static(None, "Other Letter (Lo)", "CJK Unified Ideographs", "Unicode 14.0", None, None, &[]));
+    assert_eq!(ud[0xF900], Details::r#static(None, "Other Letter (Lo)", "CJK Compatibility Ideographs", "Unicode 1.1", "how? what?", None, &[Bits::KdefinitionExists]));
 
     let report = popularity.report();
 
@@ -178,4 +199,17 @@ fn write_pool_indices<G: FnMut(&Details) -> Option<Rc<str>>>(
 
         Ok(())
     })
+}
+
+fn derived_name(point: usize) -> Option<String> {
+    for (first, last, rule, prefix) in NAME_RULES {
+        if first <= point && point <= last {
+            return Some(match rule {
+                NameRule::NR1 => todo!(),
+                NameRule::NR2 => format!("{}{:04X}", prefix, point),
+            });
+        }
+    }
+
+    None
 }
