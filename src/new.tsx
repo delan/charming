@@ -150,7 +150,7 @@ function Search({
       <input
         autoFocus={true}
         value={query}
-        onChange={event => setQuery(event.target.value)}
+        onChange={(event) => setQuery(event.target.value)}
         placeholder="try “em dash” or “69” or “🏳️‍🌈”"
       />
 
@@ -229,10 +229,10 @@ function MapGrid({
   const visibleRows = Math.floor(height / 40);
   const rowIndex = Math.floor(point / columnCount) - visibleRows / 2;
 
-  const itemData = useMemo(() => ({ columnCount, point }), [
-    columnCount,
-    point,
-  ]);
+  const itemData = useMemo(
+    () => ({ columnCount, point }),
+    [columnCount, point],
+  );
   const grid = useRef<FixedSizeGrid | null>(null);
 
   useEffect(() => {
@@ -314,10 +314,7 @@ const Cell = React.memo(function Cell({
 areEqual);
 
 function pointToName(data: Data, point: number) {
-  return nullToDefault(
-    getString(data, "name", point),
-    "(no name)",
-  );
+  return nullToDefault(getString(data, "name", point), "(no name)");
 }
 
 history.scrollRestoration = "manual";

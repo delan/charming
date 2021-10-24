@@ -23,7 +23,7 @@ export function search(data: Data, query: string) {
     cache = null;
   }
 
-  return new Promise<MessageEvent>(resolve => {
+  return new Promise<MessageEvent>((resolve) => {
     listener = (event: MessageEvent) => {
       worker.removeEventListener("message", listener!);
       listener = null;

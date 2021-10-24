@@ -6,10 +6,7 @@ import {
 } from "./encoding";
 
 export function toHexadecimal(value: number, length = 0): string {
-  return value
-    .toString(16)
-    .toUpperCase()
-    .padStart(length, "0");
+  return value.toString(16).toUpperCase().padStart(length, "0");
 }
 
 export function toDecimal(value: number, length = 0): string {
@@ -34,7 +31,7 @@ export function pointToString16(point: number): string | null {
   }
 
   return stringToUnits16(pointToString(point))
-    .map(x => toHexadecimal(x, 4))
+    .map((x) => toHexadecimal(x, 4))
     .join(" ");
 }
 
@@ -44,7 +41,7 @@ export function pointToString8(point: number): string | null {
   }
 
   return stringToUnits8(pointToString(point))
-    .map(x => toHexadecimal(x, 2))
+    .map((x) => toHexadecimal(x, 2))
     .join(" ");
 }
 

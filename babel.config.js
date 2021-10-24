@@ -1,4 +1,4 @@
-module.exports = api => {
+module.exports = (api) => {
   const envPresetOptions = api.env("test")
     ? { targets: { node: "current" } }
     : { useBuiltIns: "entry", corejs: 3 };
