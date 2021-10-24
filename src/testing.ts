@@ -1,30 +1,56 @@
 export function getData() {
   //                  0123456789abc
   const string = [..."abcdefghixyz"];
-  const empty = new DataView(new ArrayBuffer(0));
-  const bits = new DataView(
-    Uint8Array.of(0b10101010, 0b01010101, 0b11001111).buffer,
-  );
-  const name = new DataView(Uint8Array.of(0, 1, 0, 2, 0, 6).buffer);
-  const dnrp = new DataView(Uint8Array.of(0, 8, 0, 7).buffer);
-  const gc = new DataView(Uint8Array.of(0, 3, 0, 4).buffer);
-  const block = new DataView(Uint8Array.of(0, 12, 255, 255).buffer);
+  const empty = makeSparseWithDonkeyVote(0, () => {});
+  const bits = makeSparseWithDonkeyVote(1 * 3, (result, start) => {
+    result.setUint8(start + 0, 0b10101010);
+    result.setUint8(start + 1, 0b01010101);
+    result.setUint8(start + 2, 0b11001111);
+  });
+  const name = makeSparseWithDonkeyVote(2 * 3, (result, start) => {
+    result.setUint16(start + 2 * 0, 1); // b
+    result.setUint16(start + 2 * 1, 2); // c
+    result.setUint16(start + 2 * 2, 6); // g
+  });
+  const dnrp = makeSparseWithDonkeyVote(2 * 2, (result, start) => {
+    result.setUint16(start + 2 * 0, 8); // i
+    result.setUint16(start + 2 * 1, 7); // h
+  });
+  const gc = makeSparseWithDonkeyVote(2 * 2, (result, start) => {
+    result.setUint16(start + 2 * 0, 3); // d
+    result.setUint16(start + 2 * 1, 4); // e
+  });
+  const block = makeSparseWithDonkeyVote(2 * 2, (result, start) => {
+    result.setUint16(start + 2 * 0, 12); // (out of bounds)
+    result.setUint16(start + 2 * 1, 0xffff); // (null)
+  });
   const age = empty;
-  const hlvt = (() => {
-    const result = new DataView(new ArrayBuffer(2 * 2));
-    result.setUint16(1 * 2, 0b1_00000_00000_00001);
-    return result;
-  })();
-  const hjsn = (() => {
-    const len = 0x11a7 + 2;
-    const result = new DataView(new ArrayBuffer(len * 2));
-    for (let i = 0; i < len; i++) result.setUint16(i * 2, 0xffff);
-    result.setUint16((0x1100 + 0) * 2, 0x9);
-    result.setUint16((0x1161 + 0) * 2, 0xa);
-    result.setUint16((0x11a7 + 1) * 2, 0xb);
-    return result;
-  })();
-  const uhdef = new DataView(Uint8Array.of(255, 255, 0, 5, 255, 255).buffer);
+  const hlvt = makeSparseWithDonkeyVote(2 * 2, (result, start) => {
+    result.setUint16(start + 2 * 1, 0b1_00000_00000_00001);
+  });
+  const hjsn = makeSparseWithDonkeyVote(2 * (0x11a7 + 2), (result, start) => {
+    for (let i = 0; i < 0x11a7 + 2; i++)
+      result.setUint16(start + 2 * i, 0xffff);
+    result.setUint16(start + 2 * (0x1100 + 0), 0x9);
+    result.setUint16(start + 2 * (0x1161 + 0), 0xa);
+    result.setUint16(start + 2 * (0x11a7 + 1), 0xb);
+  });
+  const uhdef = makeSparseWithDonkeyVote(2 * 3, (result, start) => {
+    result.setUint16(start + 2 * 0, 0xffff); // (null)
+    result.setUint16(start + 2 * 1, 5); // f
+    result.setUint16(start + 2 * 2, 0xffff); // (null)
+  });
   const uhman = empty;
   return { string, bits, name, dnrp, gc, block, age, hlvt, hjsn, uhdef, uhman };
+}
+
+function makeSparseWithDonkeyVote(
+  len: number,
+  fun: (_: DataView, start: number) => void,
+): DataView {
+  const start = 8704;
+  const result = new DataView(new ArrayBuffer(start + len));
+  for (let i = 0; i < 0x1100; i++) result.setUint16(i * 2, i);
+  fun(result, start);
+  return result;
 }
