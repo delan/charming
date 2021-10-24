@@ -4,7 +4,8 @@ import name from "../data/data.name.bin";
 import gc from "../data/data.gc.bin";
 import block from "../data/data.block.bin";
 import age from "../data/data.age.bin";
-import mpy from "../data/data.mpy.bin";
+import uhdef from "../data/data.uhdef.bin";
+import uhman from "../data/data.uhman.bin";
 
 export interface Data {
   string: string[];
@@ -13,19 +14,20 @@ export interface Data {
   gc: DataView;
   block: DataView;
   age: DataView;
-  mpy: DataView;
+  uhdef: DataView;
+  uhman: DataView;
 }
 
 export function fetchAllData(): Promise<Data> {
-  return fetchData(bits, name, gc, block, age, mpy);
+  return fetchData(bits, name, gc, block, age, uhdef, uhman);
 }
 
 async function fetchData(...paths: string[]): Promise<Data> {
-  const [bits, name, gc, block, age, mpy] = await Promise.all(
+  const [bits, name, gc, block, age, uhdef, uhman] = await Promise.all(
     paths.map(fetchDataView),
   );
 
-  return { string, bits, name, gc, block, age, mpy };
+  return { string, bits, name, gc, block, age, uhdef, uhman };
 }
 
 async function fetchDataView(path: string): Promise<DataView> {
@@ -40,7 +42,7 @@ function getFlag(data: Data, shift: number, point: number): boolean {
 
 export function getString(
   data: Data,
-  field: "name" | "gc" | "block" | "age" | "mpy",
+  field: "name" | "gc" | "block" | "age" | "uhdef" | "uhman",
   point: number,
 ): string | null {
   const index = data[field].getUint16(point * 2);
@@ -50,6 +52,17 @@ export function getString(
   }
 
   return data.string[index];
+}
+
+/**
+ * Returns the old-charming character name for the given point.
+ *
+ * Old-charming overrides character names with Unihan kDefinition (if
+ * defined), allowing users to search for CJK ideographs by definition
+ * when #search_han is checked.
+ */
+export function getOldName(data: Data, point: number): string | null {
+  return getString(data, "uhdef", point) ?? getString(data, "name", point);
 }
 
 export function kDefinitionExists(data: Data, point: number): boolean {

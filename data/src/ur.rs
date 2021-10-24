@@ -14,11 +14,16 @@ pub(crate) fn ur_handler(
     let key = captures.name_ok("key")?;
     let value = captures.name_ok("value")?;
 
-    if key == "kMandarin" {
-        sink[point].mpy = Some(popularity.vote(value));
-    } else if key == "kDefinition" {
-        sink[point].name = Some(popularity.vote(value));
-        sink[point].bits |= Bits::KdefinitionExists as u8;
+    match key {
+        "kDefinition" => {
+            // FIXME assert!(sink[point].name.is_none());
+            sink[point].uhdef = Some(popularity.vote(value));
+            sink[point].bits |= Bits::KdefinitionExists as u8;
+        }
+        "kMandarin" => {
+            sink[point].uhman = Some(popularity.vote(value));
+        }
+        _ => {}
     }
 
     Ok(())

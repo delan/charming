@@ -112,8 +112,8 @@ fn main() -> Result<(), Error> {
         r"^(?P<first>[0-9A-F]+)(?:[.][.](?P<last>[0-9A-F]+))?\s*;\s*Emoji_Presentation(\s|#|$)",
     )?;
 
-    assert_eq!(ud[0x5170], Details::r#static("orchid; elegant, graceful", "Other Letter (Lo)", "CJK Unified Ideographs", "Unicode 1.1", "lán", &[Bits::KdefinitionExists]));
-    assert_eq!(ud[0x9FFF], Details::r#static(None, "Other Letter (Lo)", "CJK Unified Ideographs", "Unicode 14.0", None, &[]));
+    assert_eq!(ud[0x5170], Details::r#static(None, "Other Letter (Lo)", "CJK Unified Ideographs", "Unicode 1.1", "orchid; elegant, graceful", "lán", &[Bits::KdefinitionExists]));
+    assert_eq!(ud[0x9FFF], Details::r#static(None, "Other Letter (Lo)", "CJK Unified Ideographs", "Unicode 14.0", None, None, &[]));
 
     let report = popularity.report();
 
@@ -129,7 +129,8 @@ fn main() -> Result<(), Error> {
     write_pool_indices(&ud, &mut pool, "data.gc.bin", |x| x.gc.map_clone())?;
     write_pool_indices(&ud, &mut pool, "data.block.bin", |x| x.block.map_clone())?;
     write_pool_indices(&ud, &mut pool, "data.age.bin", |x| x.age.map_clone())?;
-    write_pool_indices(&ud, &mut pool, "data.mpy.bin", |x| x.mpy.map_clone())?;
+    write_pool_indices(&ud, &mut pool, "data.uhdef.bin", |x| x.uhdef.map_clone())?;
+    write_pool_indices(&ud, &mut pool, "data.uhman.bin", |x| x.uhman.map_clone())?;
 
     write("data.bits.bin", |mut sink| {
         for details in ud {

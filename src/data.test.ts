@@ -1,5 +1,6 @@
 import {
   getString,
+  getOldName,
   kDefinitionExists,
   isEmojiPresentation,
   isSpaceSeparator,
@@ -20,6 +21,11 @@ test("getString returns null when index is out of bounds", () =>
 
 test("getString returns null when index is sentinel", () =>
   void expect(getString(getData(), "block", 1)).toBe(null));
+
+test("getOldName returns correct value", () => {
+  expect(getOldName(getData(), 0)).toBe("b");
+  expect(getOldName(getData(), 1)).toBe("f");
+});
 
 test("kDefinitionExists returns correct value", () => {
   expect(kDefinitionExists(getData(), 0)).toBe(false);

@@ -120,7 +120,8 @@ function Detail({ search }: { search: () => void }) {
         <StringPair field="gc" label="General category" />
         <StringPair field="block" label="Block" />
         <StringPair field="age" label="Introduced in" />
-        <StringPair field="mpy" label="Unihan kMandarin" />
+        <StringPair field="uhdef" label="Unihan kDefinition" />
+        <StringPair field="uhman" label="Unihan kMandarin" />
       </dl>
     </div>
   );
@@ -174,7 +175,7 @@ function StringPair({
   label,
   field,
 }: {
-  field: "gc" | "block" | "age" | "mpy";
+  field: "gc" | "block" | "age" | "uhdef" | "uhman";
   label: string;
 }) {
   const data = useContext(DataContext);

@@ -1,7 +1,7 @@
 import "core-js/stable";
 import "regenerator-runtime/runtime";
 
-import { fetchAllData, getString, kDefinitionExists, isEmojiPresentation, isSpaceSeparator } from "./data";
+import { fetchAllData, getString, kDefinitionExists, isEmojiPresentation, isSpaceSeparator, getOldName } from "./data";
 import { pointToString, stringToPoint } from "./encoding";
 import { toHexadecimal, pointToYouPlus, pointToString16, pointToString8, pointToEntity10 } from "./formatting";
 import { pointToDiagonal, pointToSubstitute } from "./Display";
@@ -20,7 +20,7 @@ var	ucd_version = '14.0.0',
 		block: '(unknown)',
 		age: '(unknown)',
 		gc: 'Unassigned (Cn)',
-		mpy: '(not applicable)',
+		uhman: '(not applicable)',
 	};
 
 function init_grid() {
@@ -179,9 +179,11 @@ function get_data(cp, prop) {
 		|| prop == "gc"
 		|| prop == "block"
 		|| prop == "age"
-		|| prop == "mpy"
+		|| prop == "uhman"
 	) {
-		var result = getString(data, prop, cp);
+		var result = prop == "name"
+			? getOldName(data, cp)
+			: getString(data, prop, cp);
 		if (result != null) {
 			return result;
 		}
@@ -309,7 +311,7 @@ $('#search_form, #search_han').on('change keydown paste input submit', function(
 	for (var n = 0, i = 0; n < 50 && i < 0x110000; i++) {
 		if (!han && kDefinitionExists(data, i))
 			continue;
-		var name = getString(data, "name", i);
+		var name = getOldName(data, i);
 		if (name == null)
 			continue;
 		if (name.toUpperCase().indexOf(q) > -1) {
