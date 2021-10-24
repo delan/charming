@@ -316,7 +316,7 @@ areEqual);
 function pointToName(data: Data, point: number) {
   return nullToDefault(
     getString(data, "name", point),
-    "(unknown or unassigned)",
+    "(no name)",
   );
 }
 

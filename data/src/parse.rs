@@ -8,9 +8,14 @@ pub(crate) fn parse<R, H: FnMut(&mut R, Captures) -> Result<(), Error>>(
     sink: &mut R,
     mut handler: H,
     path: &str,
+    label: impl Into<Option<&'static str>>,
     pattern: &str,
 ) -> Result<(), Error> {
-    println!("Processing {} ...", path);
+    if let Some(label) = label.into() {
+        println!("Processing {} ({}) ...", path, label);
+    } else {
+        println!("Processing {} ...", path);
+    }
 
     let source = BufReader::new(File::open(path)?);
     let pattern = Regex::new(pattern)?;

@@ -37,3 +37,40 @@ pub(crate) fn ud_handler(
 
     Ok(())
 }
+
+pub(crate) fn ud_range_handler(
+    ud_ranges: &mut HashMap<String, (usize, Option<usize>)>,
+    captures: Captures,
+) -> Result<(), Error> {
+    let point = usize::from_str_radix(captures.name_ok("point")?, 16)?;
+    let name = captures.name_ok("name")?;
+    let kind = captures.name_ok("kind")?;
+
+    match kind {
+        "First" => {
+            assert_eq!(ud_ranges.insert(name.to_owned(), (point, None)), None);
+        }
+        "Last" => {
+            let pair @ &mut (first, last) = ud_ranges.get_mut(name)
+                .expect("missing First in UnicodeData");
+            assert_eq!(last, None);
+            *pair = (first, Some(point));
+        }
+        _ => unreachable!(),
+    }
+
+    Ok(())
+}
+
+pub(crate) fn process_ud_ranges(ranges: HashMap<String, (usize, Option<usize>)>) -> HashMap<usize, usize> {
+    assert_eq!(ranges.values().filter(|(_first, last)| last.is_none()).count(), 0);
+    let mut result = HashMap::default();
+
+    for &(first, last) in ranges.values() {
+        for i in first..=last.expect("see assertion") {
+            result.insert(i, first);
+        }
+    }
+
+    result
+}

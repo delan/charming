@@ -21,13 +21,13 @@ use failure::Error;
 
 use crate::age::age_handler;
 use crate::block::block_handler;
-use crate::details::Details;
+use crate::details::{Bits, Details};
 use crate::ed::ed_handler;
 use crate::gc::gc_handler;
 use crate::na::na_handler;
 use crate::parse::parse;
 use crate::pool::{Pool, Popularity};
-use crate::ud::ud_handler;
+use crate::ud::{process_ud_ranges, ud_handler, ud_range_handler};
 use crate::ur::ur_handler;
 
 trait OptionRcExt {
@@ -46,54 +46,74 @@ fn main() -> Result<(), Error> {
     parse(
         &mut gc_labels,
         gc_handler,
-        "PropertyValueAliases.txt",
+        "PropertyValueAliases.txt", None,
         r"^gc *; *(?P<key>[^ ]+) *; *(?P<value>([^ ]+))",
     )?;
 
     let mut popularity = Popularity::default();
     let mut ud = points();
+    let mut ud_ranges = HashMap::default();
 
     parse(
         &mut ud,
-        |sink, captures| ud_handler(&gc_labels, &mut popularity, sink, captures),
-        "UnicodeData.txt",
-        r"^(?P<point>[0-9A-F]+);(?P<name>[^;]+);(?P<gc>[^;]+)",
+        |_, captures| ud_range_handler(&mut ud_ranges, captures),
+        "UnicodeData.txt", "ranges",
+        r"^(?P<point>[0-9A-F]+);<(?P<name>[^;]+), (?P<kind>First|Last)>",
     )?;
 
     parse(
         &mut ud,
+        |sink, captures| ud_handler(&gc_labels, &mut popularity, sink, captures),
+        "UnicodeData.txt", "all",
+        r"^(?P<point>[0-9A-F]+);(?P<name>[^;]+);(?P<gc>[^;]+)",
+    )?;
+
+    let ud_ranges = process_ud_ranges(ud_ranges);
+
+    for i in 0..ud.len() {
+        if let Some(&first) = ud_ranges.get(&i) {
+            ud[i] = ud[first].clone();
+            ud[i].name = None;
+        }
+    }
+
+    parse(
+        &mut ud,
         |sink, captures| block_handler(&mut popularity, sink, captures),
-        "Blocks.txt",
+        "Blocks.txt", None,
         r"^(?P<first>[0-9A-F]+)[.][.](?P<last>[0-9A-F]+); (?P<value>.+)",
     )?;
 
     parse(
         &mut ud,
         |sink, captures| age_handler(&mut popularity, sink, captures),
-        "DerivedAge.txt",
+        "DerivedAge.txt", None,
         r"^(?P<first>[0-9A-F]+)(?:[.][.](?P<last>[0-9A-F]+))?\s*;\s*(?P<value>[^ ]+)",
     )?;
 
     parse(
         &mut ud,
         |sink, captures| na_handler(&mut popularity, sink, captures),
-        "NameAliases.txt",
+        "NameAliases.txt", None,
         r"^(?P<point>[0-9A-F]+);(?P<alias>[^;]+);(?P<type>[^;]+)",
     )?;
 
     parse(
         &mut ud,
         |sink, captures| ur_handler(&mut popularity, sink, captures),
-        "Unihan_Readings.txt",
+        "Unihan_Readings.txt", None,
         r"^U[+](?P<point>[0-9A-F]+)\t(?P<key>kMandarin|kDefinition)\t(?P<value>.+)",
     )?;
 
     parse(
         &mut ud,
         ed_handler,
-        "emoji-data.txt",
+        "emoji-data.txt", None,
         r"^(?P<first>[0-9A-F]+)(?:[.][.](?P<last>[0-9A-F]+))?\s*;\s*Emoji_Presentation(\s|#|$)",
     )?;
+
+    assert_eq!(ud[0x5170], Details::r#static("orchid; elegant, graceful", "Other Letter (Lo)", "CJK Unified Ideographs", "Unicode 1.1", "lán", &[Bits::KdefinitionExists]));
+    assert_eq!(ud[0x9FFF], Details::r#static(None, "Other Letter (Lo)", "CJK Unified Ideographs", "Unicode 14.0", None, &[]));
 
     let report = popularity.report();
 
