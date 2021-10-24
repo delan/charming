@@ -5,6 +5,8 @@ mod details;
 mod dynamic;
 mod ed;
 mod gc;
+mod hst;
+mod jamo;
 mod na;
 mod parse;
 mod pool;
@@ -13,6 +15,7 @@ mod ud;
 mod ur;
 
 use std::collections::HashMap;
+use std::convert::TryInto;
 use std::fs::File;
 use std::io::{BufWriter, Write};
 use std::rc::Rc;
@@ -22,10 +25,12 @@ use failure::Error;
 
 use crate::age::age_handler;
 use crate::block::block_handler;
-use crate::details::{Bits, Details};
-use crate::dynamic::{NAME_RULES, NameRule};
+use crate::details::{Bits, Details, HangulSyllableType};
+use crate::dynamic::{NAME_RULES, NameRule, hangul_lvt_indices};
 use crate::ed::ed_handler;
 use crate::gc::gc_handler;
+use crate::hst::hst_handler;
+use crate::jamo::jamo_handler;
 use crate::na::na_handler;
 use crate::parse::parse;
 use crate::pool::{Pool, Popularity};
@@ -95,6 +100,20 @@ fn main() -> Result<(), Error> {
 
     parse(
         &mut ud,
+        |sink, captures| hst_handler(sink, captures),
+        "HangulSyllableType.txt", None,
+        r"^(?P<first>[0-9A-F]+)(?:[.][.](?P<last>[0-9A-F]+))?\s*;\s*(?P<value>[^ ]+)",
+    )?;
+
+    parse(
+        &mut ud,
+        |sink, captures| jamo_handler(&mut popularity, sink, captures),
+        "Jamo.txt", None,
+        r"^(?P<point>[0-9A-F]+)\s*;\s*(?P<value>[^ #]*)",
+    )?;
+
+    parse(
+        &mut ud,
         |sink, captures| na_handler(&mut popularity, sink, captures),
         "NameAliases.txt", None,
         r"^(?P<point>[0-9A-F]+);(?P<alias>[^;]+);(?P<type>[^;]+)",
@@ -104,7 +123,7 @@ fn main() -> Result<(), Error> {
     // rules. UnicodeData.txt often uses ranges (see above) to define
     // properties for these characters in bulk, but others are listed
     // individually due to their unique properties.
-    for (first, last, _, _) in NAME_RULES {
+    for (first, last, rule, prefix) in NAME_RULES {
         for i in first..=last {
             // Each character with a derived name should either have
             // no explicit name (iff defined in bulk) or an explicit
@@ -114,6 +133,12 @@ fn main() -> Result<(), Error> {
             // Strip out all derived names from output data, to avoid
             // polluting string pool and client heap.
             ud[i].name = None;
+
+            ud[i].dnrp = Some(popularity.vote(prefix));
+            ud[i].bits |= match rule {
+                NameRule::NR1 => Bits::DerivedNameNr1 as u8,
+                NameRule::NR2 => Bits::DerivedNameNr2 as u8,
+            };
         }
     }
 
@@ -132,9 +157,11 @@ fn main() -> Result<(), Error> {
     )?;
 
     println!("Running tests ...");
-    assert_eq!(ud[0x5170], Details::r#static(None, "Other Letter (Lo)", "CJK Unified Ideographs", "Unicode 1.1", "orchid; elegant, graceful", "lán", &[Bits::KdefinitionExists]));
-    assert_eq!(ud[0x9FFF], Details::r#static(None, "Other Letter (Lo)", "CJK Unified Ideographs", "Unicode 14.0", None, None, &[]));
-    assert_eq!(ud[0xF900], Details::r#static(None, "Other Letter (Lo)", "CJK Compatibility Ideographs", "Unicode 1.1", "how? what?", None, &[Bits::KdefinitionExists]));
+    assert_eq!(ud[0x5170], Details::r#static(None, "CJK UNIFIED IDEOGRAPH-", "Other Letter (Lo)", "CJK Unified Ideographs", "Unicode 1.1", None, None, "orchid; elegant, graceful", "lán", &[Bits::KdefinitionExists, Bits::DerivedNameNr2]));
+    assert_eq!(ud[0x9FFF], Details::r#static(None, None, "Other Letter (Lo)", "CJK Unified Ideographs", "Unicode 14.0", None, None, None, None, &[]));
+    assert_eq!(ud[0xD4DB], Details::r#static(None, "HANGUL SYLLABLE ", "Other Letter (Lo)", "Hangul Syllables", "Unicode 2.0", HangulSyllableType::Lvt, None, None, None, &[Bits::DerivedNameNr1]));
+    assert_eq!(ud[0xD788], Details::r#static(None, "HANGUL SYLLABLE ", "Other Letter (Lo)", "Hangul Syllables", "Unicode 2.0", HangulSyllableType::Lv, None, None, None, &[Bits::DerivedNameNr1]));
+    assert_eq!(ud[0xF900], Details::r#static(None, "CJK COMPATIBILITY IDEOGRAPH-", "Other Letter (Lo)", "CJK Compatibility Ideographs", "Unicode 1.1", None, None, "how? what?", None, &[Bits::KdefinitionExists, Bits::DerivedNameNr2]));
 
     let report = popularity.report();
 
@@ -147,15 +174,30 @@ fn main() -> Result<(), Error> {
     let mut pool = Pool::from(&report);
 
     write_pool_indices(&ud, &mut pool, "data.name.bin", |x| x.name.map_clone())?;
+    write_pool_indices(&ud, &mut pool, "data.dnrp.bin", |x| x.dnrp.map_clone())?;
     write_pool_indices(&ud, &mut pool, "data.gc.bin", |x| x.gc.map_clone())?;
     write_pool_indices(&ud, &mut pool, "data.block.bin", |x| x.block.map_clone())?;
     write_pool_indices(&ud, &mut pool, "data.age.bin", |x| x.age.map_clone())?;
+    write_pool_indices(&ud, &mut pool, "data.hjsn.bin", |x| x.hjsn.map_clone())?;
     write_pool_indices(&ud, &mut pool, "data.uhdef.bin", |x| x.uhdef.map_clone())?;
     write_pool_indices(&ud, &mut pool, "data.uhman.bin", |x| x.uhman.map_clone())?;
 
     write("data.bits.bin", |mut sink| {
-        for details in ud {
+        for details in &ud {
             sink.write_u8(details.bits)?;
+        }
+
+        Ok(())
+    })?;
+
+    write("data.hlvt.bin", |mut sink| {
+        for i in 0..ud.len() {
+            if let Some((l, v, t)) = hangul_lvt_indices(&ud, i) {
+                assert!(l < (1 << 5) && v < (1 << 5) && t < (1 << 5));
+                sink.write_u16::<BigEndian>((1 << 15 | l << 10 | v << 5 | t).try_into()?)?;
+            } else {
+                sink.write_u16::<BigEndian>(0 << 15)?;
+            }
         }
 
         Ok(())

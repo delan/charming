@@ -25,7 +25,7 @@ import {
   getHashPoint,
   fixHashPoint,
 } from "./state";
-import { Data, fetchAllData, getString } from "./data";
+import { Data, fetchAllData, getNameProperty, getString } from "./data";
 import { pointToString } from "./encoding";
 import {
   pointToYouPlus,
@@ -120,6 +120,7 @@ function Detail({ search }: { search: () => void }) {
         <StringPair field="gc" label="General category" />
         <StringPair field="block" label="Block" />
         <StringPair field="age" label="Introduced in" />
+        <StringPair field="hjsn" label="Hangul Jamo short name" />
         <StringPair field="uhdef" label="Unihan kDefinition" />
         <StringPair field="uhman" label="Unihan kMandarin" />
       </dl>
@@ -175,7 +176,7 @@ function StringPair({
   label,
   field,
 }: {
-  field: "gc" | "block" | "age" | "uhdef" | "uhman";
+  field: "gc" | "block" | "age" | "hjsn" | "uhdef" | "uhman";
   label: string;
 }) {
   const data = useContext(DataContext);
@@ -315,7 +316,7 @@ const Cell = React.memo(function Cell({
 areEqual);
 
 function pointToName(data: Data, point: number) {
-  return nullToDefault(getString(data, "name", point), "(no name)");
+  return nullToDefault(getNameProperty(data, point), "(no name)");
 }
 
 history.scrollRestoration = "manual";

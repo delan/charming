@@ -3,7 +3,7 @@ import "regenerator-runtime/runtime";
 
 import GraphemeSplitter from "grapheme-splitter"; // FIXME Unicode 10.0.0
 
-import { Data, getString } from "./data";
+import { Data, getNonDerivedName } from "./data";
 import { stringToPoint } from "./encoding";
 import { toHexadecimal, toDecimal } from "./formatting";
 import { SearchResult } from "./search";
@@ -31,7 +31,7 @@ function* searchByHexadecimal(data: Data, query: string) {
     return;
   }
 
-  const name = getString(data, "name", point);
+  const name = getNonDerivedName(data, point);
   yield { point, name };
 }
 
@@ -50,7 +50,7 @@ function* searchByDecimal(data: Data, query: string) {
     return;
   }
 
-  const name = getString(data, "name", point);
+  const name = getNonDerivedName(data, point);
   const label = `(${point}₁₀)${name != null ? ` ${name}` : ""}`;
 
   yield { point, name: label };
@@ -62,7 +62,7 @@ function* searchByBreakdown(data: Data, query: string, graphemes: number) {
       const point = stringToPoint(pointString);
 
       if (point != null) {
-        const name = getString(data, "name", point);
+        const name = getNonDerivedName(data, point);
         yield { point, name };
       }
     }
@@ -82,7 +82,7 @@ addEventListener("message", ({ data: { data = cache, query } }) => {
   ].map((x, i) => ({ key: i + 0x110000, ...x }));
 
   for (let point = 0; point < 0x110000; point++) {
-    const name = getString(data, "name", point);
+    const name = getNonDerivedName(data, point);
 
     if (name != null && name.toUpperCase().includes(upper)) {
       result.push({ key: point, point, name });
