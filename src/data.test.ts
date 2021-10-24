@@ -2,6 +2,7 @@ import {
   getString,
   getNameProperty,
   getNonDerivedName,
+  getNameExceptNr2,
   getOldName,
   kDefinitionExists,
   isEmojiPresentation,
@@ -33,6 +34,12 @@ test("getNonDerivedName returns correct value", () => {
   expect(getNonDerivedName(getData(), 0)).toBe(null);
   expect(getNonDerivedName(getData(), 1)).toBe(null);
   expect(getNonDerivedName(getData(), 2)).toBe("g");
+});
+
+test("getNameExceptNr2 returns correct value", () => {
+  expect(getNameExceptNr2(getData(), 0)).toBe(null);
+  expect(getNameExceptNr2(getData(), 1)).toBe("hxyz");
+  expect(getNameExceptNr2(getData(), 2)).toBe("g");
 });
 
 test("getOldName returns correct value", () => {

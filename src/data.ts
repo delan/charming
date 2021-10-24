@@ -76,6 +76,16 @@ function getString0(
   return data.string[index];
 }
 
+/**
+ * Returns the Name property for the given point, regardless of
+ * whether the property is defined by enumeration or by rule.
+ *
+ * This name is displayed in the details panel and search results.
+ *
+ * Note that charming currently overrides this name while generating
+ * data files, with the last formal name alias of type figment or
+ * control or correction (if any).
+ */
 export function getNameProperty(data: Data, point: number): string | null {
   if (hasDerivedNameNr1(data, point)) {
     const prefix = getString(data, "dnrp", point);
@@ -88,8 +98,28 @@ export function getNameProperty(data: Data, point: number): string | null {
   return getString0(data, "name", point);
 }
 
+/**
+ * Returns the Name property for the given point, but only if it can’t
+ * be derived by a rule (regardless of whether the name is stated in
+ * UnicodeData.txt explicitly).
+ */
 export function getNonDerivedName(data: Data, point: number): string | null {
   if (hasDerivedNameNr1(data, point) || hasDerivedNameNr2(data, point)) {
+    return null;
+  }
+
+  return getNameProperty(data, point);
+}
+
+/**
+ * Returns the Name property for the given point, but only if it can’t
+ * be derived by rule NR2 (regardless of whether the name is stated in
+ * UnicodeData.txt explicitly).
+ *
+ * This name is used by the search algorithm.
+ */
+export function getNameExceptNr2(data: Data, point: number): string | null {
+  if (hasDerivedNameNr2(data, point)) {
     return null;
   }
 
