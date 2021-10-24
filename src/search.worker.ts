@@ -3,7 +3,7 @@ import "regenerator-runtime/runtime";
 
 import GraphemeSplitter from "grapheme-splitter"; // FIXME Unicode 10.0.0
 
-import { Data, getNameProperty, getNameExceptNr2 } from "./data";
+import { Data, getNameProperty, getNameExceptNr2, getString } from "./data";
 import { stringToPoint } from "./encoding";
 import { toHexadecimal, toDecimal } from "./formatting";
 import { SearchResult } from "./search";
@@ -82,10 +82,18 @@ addEventListener("message", ({ data: { data = cache, query } }) => {
   ].map((x, i) => ({ key: i + 0x110000, ...x }));
 
   for (let point = 0; point < 0x110000; point++) {
-    const key = getNameExceptNr2(data, point);
+    const search = getNameExceptNr2(data, point);
 
-    if (key != null && key.toUpperCase().includes(upper)) {
+    if (search != null && search.toUpperCase().includes(upper)) {
       result.push({ key: point, point, name: getNameProperty(data, point) });
+    }
+  }
+
+  for (let point = 0; point < 0x110000; point++) {
+    const search = getString(data, "uhdef", point);
+
+    if (search != null && search.toUpperCase().includes(upper)) {
+      result.push({ key: point, point, name: `(${search}) ${getNameProperty(data, point)}`});
     }
   }
 
