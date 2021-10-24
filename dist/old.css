@@ -3,8 +3,8 @@
 	src: url("TwitterColorEmoji-SVGinOT.ttf");
 }
 @font-face {
-	font-family: "Symbola.ttf";
-	src: url("Symbola.ttf");
+	font-family: "Symbola";
+	src: url("Symbola.otf");
 }
 @font-face {
 	font-family: "Segoe UI Emoji";
@@ -41,10 +41,10 @@ th {
 	position: relative;
 }
 #grid div, #big, #goto_char {
-	font-family: "Symbola.ttf";
+	font-family: "Symbola";
 }
 .like_emoji:not(#specificity):not(#specificity) {
-	font-family: "Apple Color Emoji", "Segoe UI Emoji", "TwitterColorEmoji-SVGinOT.ttf", "Symbola.ttf";
+	font-family: "Apple Color Emoji", "Segoe UI Emoji", "TwitterColorEmoji-SVGinOT.ttf", "Symbola";
 }
 #grid div.like_space:not(#specificity):not(#specificity),
 #grid div.like_C1:not(#specificity):not(#specificity),

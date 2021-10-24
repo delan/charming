@@ -58,7 +58,7 @@ const config = {
         loader: "babel-loader",
       },
       {
-        test: /[.](woff|ttf)$/,
+        test: /[.](woff|ttf|otf)$/,
         exclude: /[/]node_modules[/]/,
         loader: "file-loader",
         options: {
