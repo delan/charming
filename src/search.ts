@@ -2,9 +2,12 @@ import { Data } from "./data";
 import SearchWorker from "./search.worker";
 
 export interface SearchResult {
-  key: number;
   point: number;
-  name: string | null;
+  reason: "hex" | "dec" | "breakdown" | "name" | "uhdef";
+}
+
+export interface KeyedSearchResult extends SearchResult {
+  key: number;
 }
 
 let worker = new SearchWorker();

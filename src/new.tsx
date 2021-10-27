@@ -34,7 +34,7 @@ import {
   pointToEntity10,
 } from "./formatting";
 import { Display } from "./Display";
-import { SearchResult, search } from "./search";
+import { KeyedSearchResult, search, SearchResult } from "./search";
 import { nullToDefault } from "./default";
 
 const {
@@ -157,19 +157,126 @@ function Search({
       />
 
       <ul>
-        {results.slice(0, 42).map(({ key, point, name }: SearchResult) => (
-          <li key={key}>
-            <a href={toFragment(point)} onClick={close}>
-              <span className="choice">
-                <Display point={point} />
-              </span>
-               {pointToYouPlus(point)} {name}
-            </a>
-          </li>
-        ))}
+        {results
+          .slice(0, 42)
+          .map(({ key, point, reason }: KeyedSearchResult) => (
+            <li key={key}>
+              <a href={toFragment(point)} onClick={close}>
+                <span className="choice">
+                  <Display point={point} />
+                </span>
+                {" "}
+                <SearchResultLabel query={query} result={{ point, reason }} />
+              </a>
+            </li>
+          ))}
       </ul>
     </div>
   );
+}
+
+function SearchResultLabel({
+  query,
+  result: { point, reason },
+}: {
+  query: string;
+  result: SearchResult;
+}) {
+  const data = useContext(DataContext);
+  const space = " ";
+
+  if (data != null) {
+    switch (reason) {
+      case "hex":
+        return (
+          <>
+            U+<b>{pointToYouPlus(point).slice(2)}</b>
+            {space}
+            {getNameProperty(data, point)}
+          </>
+        );
+      case "dec":
+        return (
+          <>
+            {pointToYouPlus(point)}
+            {space}(<b>{point}</b>
+            <sub>10</sub>){space}
+            {getNameProperty(data, point)}
+          </>
+        );
+      case "breakdown":
+        return (
+          <>
+            {pointToYouPlus(point)}
+            {space}
+            {getNameProperty(data, point)}
+          </>
+        );
+      case "name":
+        return (
+          <>
+            {pointToYouPlus(point)}
+            {space}
+            <SubstringMatches
+              label={getNameProperty(data, point)!}
+              query={query}
+            />
+          </>
+        );
+      case "uhdef":
+        return (
+          <>
+            {pointToYouPlus(point)}
+            {space}
+            <SubstringMatches
+              label={getString(data, "uhdef", point)!}
+              query={query}
+            />
+          </>
+        );
+    }
+  }
+
+  return (
+    <>
+      {pointToYouPlus(point)}
+      {space}???
+    </>
+  );
+}
+
+function SubstringMatches({ label, query }: { label: string; query: string }) {
+  // just in case query is empty, or label/query has unusual casefolding behaviour
+  if (
+    query.length == 0 ||
+    label.toUpperCase().length != label.length ||
+    query.toUpperCase().length != query.length
+  ) {
+    return <>{label}</>;
+  }
+
+  const fragments = [];
+  const haystack = label.toUpperCase();
+  const needle = query.toUpperCase();
+  const len = needle.length;
+  let i = 0;
+  let n = 0;
+  while (true) {
+    if (++n > 3) {
+      break;
+    }
+    const old = i;
+    i = haystack.indexOf(needle, old);
+    // limit to 3... just in case there’s an infinite loop bug
+    if (i == -1 || ++n > 3) {
+      fragments.push(label.slice(old));
+      break;
+    }
+    fragments.push(label.slice(old, i));
+    fragments.push(<b key={n}>{label.slice(i, i + len)}</b>);
+    i += len;
+  }
+  return <>{fragments}</>;
 }
 
 function StringPair({
