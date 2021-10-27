@@ -4,6 +4,7 @@ import SearchWorker from "./search.worker";
 export interface SearchResult {
   point: number;
   reason: "hex" | "dec" | "breakdown" | "name" | "uhdef";
+  score: number;
 }
 
 export interface KeyedSearchResult extends SearchResult {

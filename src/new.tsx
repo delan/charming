@@ -157,19 +157,17 @@ function Search({
       />
 
       <ul>
-        {results
-          .slice(0, 42)
-          .map(({ key, point, reason }: KeyedSearchResult) => (
-            <li key={key}>
-              <a href={toFragment(point)} onClick={close}>
-                <span className="choice">
-                  <Display point={point} />
-                </span>
-                {" "}
-                <SearchResultLabel query={query} result={{ point, reason }} />
-              </a>
-            </li>
-          ))}
+        {results.slice(0, 42).map((x: KeyedSearchResult) => (
+          <li key={x.key}>
+            <a href={toFragment(x.point)} onClick={close}>
+              <span className="choice">
+                <Display point={x.point} />
+              </span>
+              {" "}
+              <SearchResultLabel query={query} result={x} />
+            </a>
+          </li>
+        ))}
       </ul>
     </div>
   );
