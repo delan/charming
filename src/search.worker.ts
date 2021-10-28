@@ -22,7 +22,7 @@ function* searchByHexadecimal(
 ): Generator<KeyedSearchResult> {
   const point = parseInt(query, 16);
 
-  if (point != point) {
+  if (point != point || point < 0) {
     return;
   }
 
@@ -43,7 +43,7 @@ function* searchByDecimal(
 ): Generator<KeyedSearchResult> {
   const point = parseInt(query, 10);
 
-  if (point != point) {
+  if (point != point || point < 0) {
     return;
   }
 
