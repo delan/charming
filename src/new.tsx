@@ -192,12 +192,17 @@ function SearchResultList({
   close: () => void;
   results: KeyedSearchResult[];
 }) {
+  const itemData = useMemo(
+    () => ({ query, close, results }),
+    [query, close, results],
+  );
+
   return (
     <FixedSizeList
       width={width}
       height={height}
       itemCount={Math.min(256, results.length)}
-      itemData={{ query, close, results }}
+      itemData={itemData}
       innerElementType="ul"
       itemSize={40}
     >
@@ -206,7 +211,7 @@ function SearchResultList({
   );
 }
 
-function SearchResultRow({
+const SearchResultRow = React.memo(function SearchResultRow({
   index,
   style,
   data: { query, close, results },
@@ -223,7 +228,8 @@ function SearchResultRow({
       </a>
     </li>
   );
-}
+},
+areEqual);
 
 function SearchResultLabel({
   query,
