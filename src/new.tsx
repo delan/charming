@@ -260,13 +260,10 @@ function SubstringMatches({ label, query }: { label: string; query: string }) {
   let i = 0;
   let n = 0;
   while (true) {
-    if (++n > 3) {
-      break;
-    }
     const old = i;
     i = haystack.indexOf(needle, old);
-    // limit to 3... just in case there’s an infinite loop bug
-    if (i == -1 || ++n > 3) {
+    // limit to 1... just in case there’s an infinite loop bug
+    if (i == -1 || ++n > 1) {
       fragments.push(label.slice(old));
       break;
     }
