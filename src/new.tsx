@@ -14,7 +14,13 @@ import React, {
 } from "react";
 import ReactDOM from "react-dom";
 import useLocation from "react-use/lib/useLocation";
-import { FixedSizeGrid, GridChildComponentProps, areEqual } from "react-window";
+import {
+  FixedSizeGrid,
+  FixedSizeList,
+  GridChildComponentProps,
+  areEqual,
+  ListChildComponentProps,
+} from "react-window";
 import AutoSizer from "react-virtualized-auto-sizer"; // FIXME type definitions
 import { writeText } from "clipboard-polyfill";
 
@@ -156,20 +162,66 @@ function Search({
         placeholder="try “em dash” or “69” or “🏳️‍🌈”"
       />
 
-      <ul>
-        {results.slice(0, 42).map((x: KeyedSearchResult) => (
-          <li key={x.key}>
-            <a href={toFragment(x.point)} onClick={close}>
-              <span className="choice">
-                <Display point={x.point} />
-              </span>
-              {" "}
-              <SearchResultLabel query={query} result={x} />
-            </a>
-          </li>
-        ))}
-      </ul>
+      <div>
+        <AutoSizer>
+          {({ width, height }: { width: number; height: number }) => (
+            <SearchResultList
+              width={width}
+              height={height}
+              query={query}
+              close={close}
+              results={results}
+            />
+          )}
+        </AutoSizer>
+      </div>
     </div>
+  );
+}
+
+function SearchResultList({
+  width,
+  height,
+  query,
+  close,
+  results,
+}: {
+  width: number;
+  height: number;
+  query: string;
+  close: () => void;
+  results: KeyedSearchResult[];
+}) {
+  return (
+    <FixedSizeList
+      width={width}
+      height={height}
+      itemCount={Math.min(256, results.length)}
+      itemData={{ query, close, results }}
+      innerElementType="ul"
+      itemSize={40}
+    >
+      {SearchResultRow}
+    </FixedSizeList>
+  );
+}
+
+function SearchResultRow({
+  index,
+  style,
+  data: { query, close, results },
+}: ListChildComponentProps) {
+  const x = results[index];
+  return (
+    <li key={x.key} style={style}>
+      <a href={toFragment(x.point)} onClick={close}>
+        <span className="choice">
+          <Display point={x.point} />
+        </span>
+        {" "}
+        <SearchResultLabel query={query} result={x} />
+      </a>
+    </li>
   );
 }
 

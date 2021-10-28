@@ -79,7 +79,7 @@ body
 @media (min-width: 384px)
   .Charming
     .Search
-      padding: 1em
+      padding: 1em 1em 0 1em
 
 @media (min-width: 512px)
   .Charming
@@ -143,33 +143,43 @@ body
   left: 0
   right: 0
   background: #FFFFFF
+  display: flex
+  flex-direction: column
 
   > input
-    width: 100%
-    height: $choice-glyph-size * 2
+    flex: 0 0 $choice-glyph-size*2
     font-size: $choice-glyph-size
 
-  > ul
-    list-style-type: none
-    padding: 0
+  > div
+    flex: 1 0 auto
+    padding-top: 1em
 
-    > li
+    > div > div
+      // react-window sets overflow:auto in @style
+      overflow-y: scroll !important
 
-      > a
-        $font-size: 1rem
+      > ul
+        list-style-type: none
+        margin: 0
+        padding: 0
 
-        display: block
-        height: $choice-cell-size
-        font-size: $font-size
-        line-height: $choice-cell-size/$font-size
-        text-decoration: none
+        > li
 
-        overflow: hidden
-        white-space: nowrap
-        text-overflow: ellipsis
+          > a
+            $font-size: 1rem
 
-        .choice
-          vertical-align: middle
+            display: block
+            height: $choice-cell-size
+            font-size: $font-size
+            line-height: $choice-cell-size/$font-size
+            text-decoration: none
+
+            overflow: hidden
+            white-space: nowrap
+            text-overflow: ellipsis
+
+            .choice
+              vertical-align: middle
 
 .choice
   $outline-size: 1px
