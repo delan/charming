@@ -120,7 +120,13 @@ function* searchByUhdef(
 
 function scoreMatch(haystack: string, needle: string): number {
   return (
-    4 * Number(haystack == needle) +
+    8 * Number(haystack == needle) +
+    4 *
+      Number(
+        haystack.startsWith(`${needle} `) ||
+          haystack.endsWith(` ${needle}`) ||
+          haystack.includes(` ${needle} `),
+      ) +
     2 * Number(haystack.startsWith(needle) || haystack.includes(` ${needle}`)) +
     1 * Number(haystack.endsWith(needle) || haystack.includes(`${needle} `))
   );
