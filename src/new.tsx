@@ -246,7 +246,7 @@ function SearchResultLabel({
       case "hex":
         return (
           <>
-            U+<b>{pointToYouPlus(point).slice(2)}</b>
+            U+<b>{pointToYouPlus(point, "")}</b>
             {space}
             {getNameProperty(data, point)}
           </>

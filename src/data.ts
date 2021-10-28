@@ -114,7 +114,7 @@ export function getNameProperty(data: Data, point: number): string | null {
     return `${prefix}${getHangulSyllableName(data, point)}`;
   } else if (hasDerivedNameNr2(data, point)) {
     const prefix = getString(data, "dnrp", point);
-    return `${prefix}${pointToYouPlus(point).slice(2)}`;
+    return `${prefix}${pointToYouPlus(point, "")}`;
   }
 
   return getString0(data, "name", point);

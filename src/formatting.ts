@@ -13,8 +13,8 @@ export function toDecimal(value: number, length = 0): string {
   return value.toString(10).padStart(length, "0");
 }
 
-export function pointToYouPlus(point: number): string {
-  return `U+${toHexadecimal(point, 4)}`;
+export function pointToYouPlus(point: number, prefix = "U+"): string {
+  return `${prefix}${toHexadecimal(point, 4)}`;
 }
 
 export function pointToTofu(point: number): string {
