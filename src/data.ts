@@ -1,5 +1,6 @@
 import string from "../data/data.string.json";
 import bits from "../data/data.bits.bin";
+import pagebits from "../data/data.pagebits.bin";
 import name from "../data/data.name.bin";
 import dnrp from "../data/data.dnrp.bin";
 import gc from "../data/data.gc.bin";
@@ -15,6 +16,7 @@ import { pointToYouPlus } from "./formatting";
 export interface Data {
   string: string[];
   bits: DataView;
+  pagebits: DataView;
   name: DataView;
   dnrp: DataView;
   gc: DataView;
@@ -27,14 +29,39 @@ export interface Data {
 }
 
 export function fetchAllData(): Promise<Data> {
-  return fetchData(bits, name, dnrp, gc, block, age, hlvt, hjsn, uhdef, uhman);
+  return fetchData(
+    bits,
+    pagebits,
+    name,
+    dnrp,
+    gc,
+    block,
+    age,
+    hlvt,
+    hjsn,
+    uhdef,
+    uhman,
+  );
 }
 
 async function fetchData(...paths: string[]): Promise<Data> {
-  const [bits, name, dnrp, gc, block, age, hlvt, hjsn, uhdef, uhman] =
+  const [bits, pagebits, name, dnrp, gc, block, age, hlvt, hjsn, uhdef, uhman] =
     await Promise.all(paths.map(fetchDataView));
 
-  return { string, bits, name, dnrp, gc, block, age, hlvt, hjsn, uhdef, uhman };
+  return {
+    string,
+    bits,
+    pagebits,
+    name,
+    dnrp,
+    gc,
+    block,
+    age,
+    hlvt,
+    hjsn,
+    uhdef,
+    uhman,
+  };
 }
 
 async function fetchDataView(path: string): Promise<DataView> {
@@ -67,6 +94,10 @@ function getSparse(
 
 function getFlag(data: Data, shift: number, point: number): boolean {
   return !!((getSparse(Uint8, data.bits, 0, point) >> shift) & 1);
+}
+
+function getPageFlag(data: Data, shift: number, page: number): boolean {
+  return !!((data.pagebits.getUint8(page) >> shift) & 1);
 }
 
 /**
@@ -208,4 +239,12 @@ export function hasDerivedNameNr1(data: Data, point: number): boolean {
 
 export function hasDerivedNameNr2(data: Data, point: number): boolean {
   return getFlag(data, 5, point);
+}
+
+export function hasAnyNameExceptNr2(data: Data, page: number): boolean {
+  return getPageFlag(data, 0, page);
+}
+
+export function hasAnyUhdef(data: Data, page: number): boolean {
+  return getPageFlag(data, 1, page);
 }

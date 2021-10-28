@@ -8,6 +8,7 @@ mod gc;
 mod hst;
 mod jamo;
 mod na;
+mod page;
 mod parse;
 mod pool;
 mod range;
@@ -32,6 +33,7 @@ use crate::gc::gc_handler;
 use crate::hst::hst_handler;
 use crate::jamo::jamo_handler;
 use crate::na::na_handler;
+use crate::page::PageBits;
 use crate::parse::parse;
 use crate::pool::{Pool, Popularity};
 use crate::ud::{process_ud_ranges, ud_handler, ud_range_handler};
@@ -190,6 +192,20 @@ fn main() -> Result<(), Error> {
         assert!(l < (1 << 5) && v < (1 << 5) && t < (1 << 5));
         return (1 << 15 | l << 10 | v << 5 | t) as u16;
     }))?;
+    write("data.pagebits.bin", |mut sink| {
+        for page in ud.chunks(256) {
+            let mut value = 0;
+            if page.iter().filter(|x| x.name.is_some() || x.bits & Bits::DerivedNameNr1 as u8 != 0).count() > 0 {
+                value |= PageBits::HasAnyNameExceptNr2 as u8;
+            }
+            if page.iter().filter(|x| x.uhdef.is_some()).count() > 0 {
+                value |= PageBits::HasAnyUhdef as u8;
+            }
+            sink.write_u8(value)?;
+        }
+
+        Ok(())
+    })?;
 
     Ok(())
 }

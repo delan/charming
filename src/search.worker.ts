@@ -3,7 +3,13 @@ import "regenerator-runtime/runtime";
 
 import GraphemeSplitter from "grapheme-splitter"; // FIXME Unicode 10.0.0
 
-import { Data, getNameExceptNr2, getString } from "./data";
+import {
+  Data,
+  getNameExceptNr2,
+  getString,
+  hasAnyNameExceptNr2,
+  hasAnyUhdef,
+} from "./data";
 import { stringToPoint } from "./encoding";
 import { toHexadecimal, toDecimal } from "./formatting";
 import { KeyedSearchResult } from "./search";
@@ -87,16 +93,27 @@ function* searchByName(
 ): Generator<KeyedSearchResult> {
   const upper = query.toUpperCase();
 
-  for (let point = 0; point < 0x110000; point++) {
-    const name = getNameExceptNr2(data, point);
-    if (name == null) continue;
+  for (let page = 0; page < 0x1100; page++) {
+    if (page % 0x100 == 0)
+      performance.mark(`sBN ${Math.floor(page / 0x100)} <`);
+    if (page % 0x100 == 0xff)
+      performance.mark(`sBN ${Math.floor(page / 0x100)} >`);
+    if (!hasAnyNameExceptNr2(data, page)) continue;
 
-    const search = name.toUpperCase();
-    if (search.includes(upper)) {
-      const score = scoreMatch(search, upper);
-      yield { key: keyStart + point, point, reason: "name", score };
+    for (let point = page * 0x100; point < (page + 1) * 0x100; point++) {
+      const name = getNameExceptNr2(data, point);
+      if (name == null) continue;
+
+      const search = name.toUpperCase();
+      if (search.includes(upper)) {
+        const score = scoreMatch(search, upper);
+        yield { key: keyStart + point, point, reason: "name", score };
+      }
     }
   }
+
+  for (let i = 0; i < 17; i++)
+    performance.measure(`sBN ${i}`, `sBN ${i} <`, `sBN ${i} >`);
 }
 
 function* searchByUhdef(
@@ -106,16 +123,27 @@ function* searchByUhdef(
 ): Generator<KeyedSearchResult> {
   const upper = query.toUpperCase();
 
-  for (let point = 0; point < 0x110000; point++) {
-    const uhdef = getString(data, "uhdef", point);
-    if (uhdef == null) continue;
+  for (let page = 0; page < 0x1100; page++) {
+    if (page % 0x100 == 0)
+      performance.mark(`sBU ${Math.floor(page / 0x100)} <`);
+    if (page % 0x100 == 0xff)
+      performance.mark(`sBU ${Math.floor(page / 0x100)} >`);
+    if (!hasAnyUhdef(data, page)) continue;
 
-    const search = uhdef.toUpperCase();
-    if (search.includes(upper)) {
-      const score = scoreMatch(search, upper);
-      yield { key: keyStart + point, point, reason: "uhdef", score };
+    for (let point = page * 0x100; point < (page + 1) * 0x100; point++) {
+      const uhdef = getString(data, "uhdef", point);
+      if (uhdef == null) continue;
+
+      const search = uhdef.toUpperCase();
+      if (search.includes(upper)) {
+        const score = scoreMatch(search, upper);
+        yield { key: keyStart + point, point, reason: "uhdef", score };
+      }
     }
   }
+
+  for (let i = 0; i < 17; i++)
+    performance.measure(`sBU ${i}`, `sBU ${i} <`, `sBU ${i} >`);
 }
 
 function scoreMatch(haystack: string, needle: string): number {
