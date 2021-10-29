@@ -152,9 +152,9 @@ function* searchByUhdef(
     performance.measure(`sBU ${i}`, `sBU ${i} <`, `sBU ${i} >`);
 }
 
-function scoreMatch(haystack: string, needle: string): [number, number | null] {
+function scoreMatch(haystack: string, needle: string): [number, number] {
   let resultScore = 0;
-  let resultOffset: number | null = null;
+  let resultOffset = haystack.indexOf(needle);
 
   // prettier-ignore
   {
