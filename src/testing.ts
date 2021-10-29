@@ -7,6 +7,8 @@ export function getData() {
     result.setUint8(start + 1, 0b01010101);
     result.setUint8(start + 2, 0b11001111);
   });
+  // FIXME write tests for pagebits
+  const pagebits = new DataView(new ArrayBuffer(0x1100));
   const name = makeSparseWithDonkeyVote(2 * 3, (result, start) => {
     result.setUint16(start + 2 * 0, 1); // b
     result.setUint16(start + 2 * 1, 2); // c
@@ -41,14 +43,27 @@ export function getData() {
     result.setUint16(start + 2 * 2, 0xffff); // (null)
   });
   const uhman = empty;
-  return { string, bits, name, dnrp, gc, block, age, hlvt, hjsn, uhdef, uhman };
+  return {
+    string,
+    bits,
+    pagebits,
+    name,
+    dnrp,
+    gc,
+    block,
+    age,
+    hlvt,
+    hjsn,
+    uhdef,
+    uhman,
+  };
 }
 
 function makeSparseWithDonkeyVote(
   len: number,
   fun: (_: DataView, start: number) => void,
 ): DataView {
-  const start = 8704;
+  const start = 0x1100 * 2;
   const result = new DataView(new ArrayBuffer(start + len));
   for (let i = 0; i < 0x1100; i++) result.setUint16(i * 2, i);
   fun(result, start);
