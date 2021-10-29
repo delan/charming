@@ -233,7 +233,7 @@ areEqual);
 
 function SearchResultLabel({
   query,
-  result: { point, reason },
+  result: { point, reason, offset },
 }: {
   query: string;
   result: SearchResult;
@@ -276,6 +276,7 @@ function SearchResultLabel({
             <SubstringMatches
               label={getNameProperty(data, point)!}
               query={query}
+              offset={offset}
             />
           </>
         );
@@ -287,6 +288,7 @@ function SearchResultLabel({
             <SubstringMatches
               label={getString(data, "uhdef", point)!}
               query={query}
+              offset={offset}
             />
           </>
         );
@@ -301,9 +303,18 @@ function SearchResultLabel({
   );
 }
 
-function SubstringMatches({ label, query }: { label: string; query: string }) {
-  // just in case query is empty, or label/query has unusual casefolding behaviour
+function SubstringMatches({
+  label,
+  query,
+  offset,
+}: {
+  label: string;
+  query: string;
+  offset: number | null;
+}) {
+  // check if label/query has unusual casefolding behaviour
   if (
+    offset == null ||
     query.length == 0 ||
     label.toUpperCase().length != label.length ||
     query.toUpperCase().length != query.length
@@ -311,25 +322,15 @@ function SubstringMatches({ label, query }: { label: string; query: string }) {
     return <>{label}</>;
   }
 
-  const fragments = [];
-  const haystack = label.toUpperCase();
-  const needle = query.toUpperCase();
-  const len = needle.length;
-  let i = 0;
-  let n = 0;
-  while (true) {
-    const old = i;
-    i = haystack.indexOf(needle, old);
-    // limit to 1... just in case there’s an infinite loop bug
-    if (i == -1 || ++n > 1) {
-      fragments.push(label.slice(old));
-      break;
-    }
-    fragments.push(label.slice(old, i));
-    fragments.push(<b key={n}>{label.slice(i, i + len)}</b>);
-    i += len;
-  }
-  return <>{fragments}</>;
+  const i = offset,
+    j = offset + query.length;
+  return (
+    <>
+      {label.slice(0, i)}
+      <b>{label.slice(i, j)}</b>
+      {label.slice(j)}
+    </>
+  );
 }
 
 function StringPair({

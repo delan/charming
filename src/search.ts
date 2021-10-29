@@ -5,6 +5,7 @@ export interface SearchResult {
   point: number;
   reason: "hex" | "dec" | "breakdown" | "name" | "uhdef";
   score: number;
+  offset: number | null;
 }
 
 export interface KeyedSearchResult extends SearchResult {

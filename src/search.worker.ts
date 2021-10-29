@@ -40,7 +40,7 @@ function* searchByHexadecimal(
     return;
   }
 
-  yield { key: keyStart, point, reason: "hex", score: 0 };
+  yield { key: keyStart, point, reason: "hex", score: 0, offset: null };
 }
 
 function* searchByDecimal(
@@ -61,7 +61,7 @@ function* searchByDecimal(
     return;
   }
 
-  yield { key: keyStart, point, reason: "dec", score: 0 };
+  yield { key: keyStart, point, reason: "dec", score: 0, offset: null };
 }
 
 function* searchByBreakdown(
@@ -76,7 +76,13 @@ function* searchByBreakdown(
       const point = stringToPoint(pointString);
 
       if (point != null) {
-        yield { key: keyStart + i, point, reason: "breakdown", score: 0 };
+        yield {
+          key: keyStart + i,
+          point,
+          reason: "breakdown",
+          score: 0,
+          offset: null,
+        };
       }
     }
 
@@ -106,8 +112,8 @@ function* searchByName(
 
       const search = name.toUpperCase();
       if (search.includes(upper)) {
-        const score = scoreMatch(search, upper);
-        yield { key: keyStart + point, point, reason: "name", score };
+        const [score, offset] = scoreMatch(search, upper);
+        yield { key: keyStart + point, point, reason: "name", score, offset };
       }
     }
   }
@@ -136,8 +142,8 @@ function* searchByUhdef(
 
       const search = uhdef.toUpperCase();
       if (search.includes(upper)) {
-        const score = scoreMatch(search, upper);
-        yield { key: keyStart + point, point, reason: "uhdef", score };
+        const [score, offset] = scoreMatch(search, upper);
+        yield { key: keyStart + point, point, reason: "uhdef", score, offset };
       }
     }
   }
@@ -146,18 +152,39 @@ function* searchByUhdef(
     performance.measure(`sBU ${i}`, `sBU ${i} <`, `sBU ${i} >`);
 }
 
-function scoreMatch(haystack: string, needle: string): number {
-  return (
-    8 * Number(haystack == needle) +
-    4 *
-      Number(
-        haystack.startsWith(`${needle} `) ||
-          haystack.endsWith(` ${needle}`) ||
-          haystack.includes(` ${needle} `),
-      ) +
-    2 * Number(haystack.startsWith(needle) || haystack.includes(` ${needle}`)) +
-    1 * Number(haystack.endsWith(needle) || haystack.includes(`${needle} `))
-  );
+function scoreMatch(haystack: string, needle: string): [number, number | null] {
+  let resultScore = 0;
+  let resultOffset: number | null = null;
+
+  // prettier-ignore
+  {
+    // count each kind of match only once, and use offset of best match
+        check(1, haystack.endsWith(needle), x => x, () => haystack.length - needle.length)
+    ||  check(1, haystack.indexOf(`${needle} `), x => x != -1, x => x);
+        check(2, haystack.startsWith(needle), x => x, () => 0)
+    ||  check(2, haystack.indexOf(` ${needle}`), x => x != -1, x => x + 1);
+        check(4, haystack.startsWith(`${needle} `), x => x, () => 0)
+    ||  check(4, haystack.endsWith(` ${needle}`), x => x, () => haystack.length - needle.length)
+    ||  check(4, haystack.indexOf(` ${needle} `), x => x != -1, x => x + 1);
+        check(8, haystack == needle, x => x, () => 0);
+  }
+
+  return [resultScore, resultOffset];
+
+  function check(
+    score: number,
+    result: any,
+    pred: (_: any) => boolean,
+    offset: (_: any) => number,
+  ): boolean {
+    if (pred(result)) {
+      resultScore += score;
+      resultOffset = offset(result);
+      return true;
+    } else {
+      return false;
+    }
+  }
 }
 
 function sortByScore(results: KeyedSearchResult[]): KeyedSearchResult[] {
