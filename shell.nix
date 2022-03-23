@@ -10,6 +10,8 @@ pkgs.mkShell {
     # Makefile
     pkgs.patchelf
     pkgs.curl
+    pkgs.cacert # for curl https
+    pkgs.poppler_utils # pdfdetach(1)
 
     # package.json
     pkgs.nodejs-10_x

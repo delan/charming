@@ -11,4 +11,3 @@ set -x
 [ -f build/Font.ttf ] \
     || find $1 -name '*.svg' -print0 \
     | >&2 xargs -0 nanoemoji --color_format cff_colr_0
->&2 npx glyphhanger --formats=woff2 --subset=build/Font.ttf
