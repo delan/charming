@@ -1,5 +1,7 @@
 const path = require("path");
+const { execSync } = require("child_process");
 const webpack = require("webpack");
+const DefinePlugin = require("webpack/lib/DefinePlugin");
 const CompressionPlugin = require("compression-webpack-plugin");
 const HtmlPlugin = require("html-webpack-plugin");
 
@@ -84,6 +86,11 @@ const config = {
     ],
   },
   plugins: [
+    new DefinePlugin({
+      __COMMIT_HASH__: JSON.stringify(
+        `${execSync("git rev-parse HEAD")}`.trim(),
+      ),
+    }),
     new HtmlPlugin({
       filename: "old.html",
       template: "src/old.html",

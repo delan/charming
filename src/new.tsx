@@ -69,6 +69,8 @@ function Charming() {
     }
   }, [data, point]);
 
+  const href = `https://github.com/delan/charming/tree/${__COMMIT_HASH__}`;
+
   return (
     <div className="Charming">
       <DataContext.Provider value={data}>
@@ -76,7 +78,7 @@ function Charming() {
           <Detail search={() => void setSearchOpen(true)} />
           <Map />
 
-          <a href="https://github.com/delan/charming" aria-label="source">
+          <a href={href} aria-label="source">
             <i className="fab fa-github" aria-hidden="true"></i>
           </a>
 

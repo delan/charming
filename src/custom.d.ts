@@ -20,3 +20,6 @@ declare module "react-virtualized-auto-sizer" {
 
   export default class extends Component<AutoSizerProps> {}
 }
+
+// see DefinePlugin in webpack.config.js
+declare const __COMMIT_HASH__: string;
