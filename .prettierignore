@@ -2,7 +2,8 @@
 /package-lock.json
 /dist/
 
+/src/old.js
 /data/data.string.json
 /data/target/
-/src/old.js
+/helper/
 /minilzo-js/

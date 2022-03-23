@@ -19,5 +19,6 @@
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "jsx": "preserve"
-  }
+  },
+  "exclude": ["helper/"]
 }
