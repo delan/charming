@@ -1,8 +1,27 @@
+Welcome! You’ll need:
+
+• Nix and one of the following
+  • nix-shell [--pure]
+  • direnv allow
+• or your own environment with
+  • make(1) + git(1)
+  • Rust 1.58+
+  • Python 3.7+ (for make assets)
+  • Node.js 10+ (for make assets)
+
 # fetch dependencies
 git submodule update --init --recursive
 
+# install dependencies
+npm i
+make [init-clean] init
+make init-nixos # if using NixOS
+
 # build data
-make -C data
+make data
+
+# build assets
+make assets
 
 # build client
 npm run build

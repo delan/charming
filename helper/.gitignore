@@ -1,0 +1,4 @@
+/.venv/
+/build/
+/twemoji-*/
+/twemoji-*.tar.gz
