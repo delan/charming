@@ -6,7 +6,7 @@ Welcome! You’ll need:
 • or your own environment with
   • make(1) + git(1) + pdfdetach(1)
   • Rust 1.58+
-  • Python 3.7+ (for make assets)
+  • Python 3.8+ (for make assets)
   • Node.js 10+ (for make assets)
 
 # fetch dependencies
