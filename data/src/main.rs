@@ -74,7 +74,7 @@ fn main() -> Result<(), Error> {
         &mut ud,
         |sink, captures| ud_handler(&gc_labels, &mut popularity, sink, captures),
         "UnicodeData.txt", "all",
-        r"^(?P<point>[0-9A-F]+);(?P<name>[^;]+);(?P<gc>[^;]+)",
+        r"^(?P<point>[0-9A-F]+);(?P<name>[^;]+);(?P<gc>[^;]+);(?:[^;]*;){7}(?P<nau1>[^;]+)?",
     )?;
 
     let ud_ranges = process_ud_ranges(ud_ranges);
@@ -163,11 +163,16 @@ fn main() -> Result<(), Error> {
     )?;
 
     println!("Running tests ...");
-    assert_eq!(ud[0x5170], Details::r#static(None, "CJK UNIFIED IDEOGRAPH-", "Other Letter (Lo)", "CJK Unified Ideographs", "Unicode 1.1", None, None, None, "orchid; elegant, graceful", "lán", &[Bits::KdefinitionExists, Bits::DerivedNameNr2]));
-    assert_eq!(ud[0x9FFF], Details::r#static(None, None, "Other Letter (Lo)", "CJK Unified Ideographs", "Unicode 14.0", None, None, None, None, None, &[]));
-    assert_eq!(ud[0xD4DB], Details::r#static(None, "HANGUL SYLLABLE ", "Other Letter (Lo)", "Hangul Syllables", "Unicode 2.0", HangulSyllableType::Lvt, None, (17, 16, 15), None, None, &[Bits::DerivedNameNr1]));
-    assert_eq!(ud[0xD788], Details::r#static(None, "HANGUL SYLLABLE ", "Other Letter (Lo)", "Hangul Syllables", "Unicode 2.0", HangulSyllableType::Lv, None, (18, 20, 0), None, None, &[Bits::DerivedNameNr1]));
-    assert_eq!(ud[0xF900], Details::r#static(None, "CJK COMPATIBILITY IDEOGRAPH-", "Other Letter (Lo)", "CJK Compatibility Ideographs", "Unicode 1.1", None, None, None, "how? what?", None, &[Bits::KdefinitionExists, Bits::DerivedNameNr2]));
+    assert_eq!(ud[0x0000], Details::r#static(None, None, "NULL", None, None, "NUL", "NULL", None, "Control (Cc)", "Basic Latin", "Unicode 1.1", None, None, None, None, None, &[]));
+    assert_eq!(ud[0x0080], Details::r#static(None, None, None, None, "PADDING CHARACTER", "PAD", None, None, "Control (Cc)", "Latin-1 Supplement", "Unicode 1.1", None, None, None, None, None, &[]));
+    assert_eq!(ud[0x039B], Details::r#static("GREEK CAPITAL LETTER LAMDA", None, None, None, None, None, "GREEK CAPITAL LETTER LAMBDA", None, "Uppercase Letter (Lu)", "Greek and Coptic", "Unicode 1.1", None, None, None, None, None, &[]));
+    assert_eq!(ud[0x5170], Details::r#static(None, None, None, None, None, None, None, "CJK UNIFIED IDEOGRAPH-", "Other Letter (Lo)", "CJK Unified Ideographs", "Unicode 1.1", None, None, None, "orchid; elegant, graceful", "lán", &[Bits::KdefinitionExists, Bits::DerivedNameNr2]));
+    assert_eq!(ud[0x9FFF], Details::r#static(None, None, None, None, None, None, None, None, "Other Letter (Lo)", "CJK Unified Ideographs", "Unicode 14.0", None, None, None, None, None, &[]));
+    assert_eq!(ud[0xD4DB], Details::r#static(None, None, None, None, None, None, None, "HANGUL SYLLABLE ", "Other Letter (Lo)", "Hangul Syllables", "Unicode 2.0", HangulSyllableType::Lvt, None, (17, 16, 15), None, None, &[Bits::DerivedNameNr1]));
+    assert_eq!(ud[0xD788], Details::r#static(None, None, None, None, None, None, None, "HANGUL SYLLABLE ", "Other Letter (Lo)", "Hangul Syllables", "Unicode 2.0", HangulSyllableType::Lv, None, (18, 20, 0), None, None, &[Bits::DerivedNameNr1]));
+    assert_eq!(ud[0xF900], Details::r#static(None, None, None, None, None, None, None, "CJK COMPATIBILITY IDEOGRAPH-", "Other Letter (Lo)", "CJK Compatibility Ideographs", "Unicode 1.1", None, None, None, "how? what?", None, &[Bits::KdefinitionExists, Bits::DerivedNameNr2]));
+    assert_eq!(ud[0xFE18], Details::r#static("PRESENTATION FORM FOR VERTICAL RIGHT WHITE LENTICULAR BRAKCET", "PRESENTATION FORM FOR VERTICAL RIGHT WHITE LENTICULAR BRACKET", None, None, None, None, None, None, "Close Punctuation (Pe)", "Vertical Forms", "Unicode 4.1", None, None, None, None, None, &[]));
+    assert_eq!(ud[0xFEFF], Details::r#static("ZERO WIDTH NO-BREAK SPACE", None, None, "BYTE ORDER MARK", None, "ZWNBSP", "BYTE ORDER MARK", None, "Format (Cf)", "Arabic Presentation Forms-B", "Unicode 1.1", None, None, None, None, None, &[]));
 
     let report = popularity.report();
 
@@ -179,7 +184,15 @@ fn main() -> Result<(), Error> {
 
     let mut pool = Pool::from(&report);
 
+    dbg!(ud.iter().filter(|x| x.nacorr.is_some() || x.nacont.is_some() || x.naalte.is_some() || x.nafigm.is_some() || x.naabbr.is_some() || x.nau1.is_some()).count());
+
     write_pool_indices(&ud, &mut pool, "data.name.bin", |x| x.name.map_clone())?;
+    write_pool_indices(&ud, &mut pool, "data.nacorr.bin", |x| x.nacorr.map_clone())?;
+    write_pool_indices(&ud, &mut pool, "data.nacont.bin", |x| x.nacont.map_clone())?;
+    write_pool_indices(&ud, &mut pool, "data.naalte.bin", |x| x.naalte.map_clone())?;
+    write_pool_indices(&ud, &mut pool, "data.nafigm.bin", |x| x.nafigm.map_clone())?;
+    write_pool_indices(&ud, &mut pool, "data.naabbr.bin", |x| x.naabbr.map_clone())?;
+    write_pool_indices(&ud, &mut pool, "data.nau1.bin", |x| x.nau1.map_clone())?;
     write_pool_indices(&ud, &mut pool, "data.dnrp.bin", |x| x.dnrp.map_clone())?;
     write_pool_indices(&ud, &mut pool, "data.gc.bin", |x| x.gc.map_clone())?;
     write_pool_indices(&ud, &mut pool, "data.block.bin", |x| x.block.map_clone())?;
@@ -200,6 +213,24 @@ fn main() -> Result<(), Error> {
             }
             if page.iter().filter(|x| x.uhdef.is_some()).count() > 0 {
                 value |= PageBits::HasAnyUhdef as u8;
+            }
+            if page.iter().filter(|x| x.nacorr.is_some()).count() > 0 {
+                value |= PageBits::HasAnyNacorr as u8;
+            }
+            if page.iter().filter(|x| x.nacont.is_some()).count() > 0 {
+                value |= PageBits::HasAnyNacont as u8;
+            }
+            if page.iter().filter(|x| x.naalte.is_some()).count() > 0 {
+                value |= PageBits::HasAnyNaalte as u8;
+            }
+            if page.iter().filter(|x| x.nafigm.is_some()).count() > 0 {
+                value |= PageBits::HasAnyNafigm as u8;
+            }
+            if page.iter().filter(|x| x.naabbr.is_some()).count() > 0 {
+                value |= PageBits::HasAnyNaabbr as u8;
+            }
+            if page.iter().filter(|x| x.nau1.is_some()).count() > 0 {
+                value |= PageBits::HasAnyNau1 as u8;
             }
             sink.write_u8(value)?;
         }

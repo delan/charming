@@ -4,6 +4,12 @@ use std::rc::Rc;
 pub(crate) struct Details {
     pub bits: u8,
     pub name: Option<Rc<str>>,
+    pub nacorr: Option<Rc<str>>,
+    pub nacont: Option<Rc<str>>,
+    pub naalte: Option<Rc<str>>,
+    pub nafigm: Option<Rc<str>>,
+    pub naabbr: Option<Rc<str>>,
+    pub nau1: Option<Rc<str>>,
     pub dnrp: Option<Rc<str>>,
     pub gc: Option<Rc<str>>,
     pub block: Option<Rc<str>>,
@@ -35,6 +41,12 @@ pub(crate) enum HangulSyllableType {
 impl Details {
     pub(crate) fn r#static(
         name: impl Into<Option<&'static str>>,
+        nacorr: impl Into<Option<&'static str>>,
+        nacont: impl Into<Option<&'static str>>,
+        naalte: impl Into<Option<&'static str>>,
+        nafigm: impl Into<Option<&'static str>>,
+        naabbr: impl Into<Option<&'static str>>,
+        nau1: impl Into<Option<&'static str>>,
         dnrp: impl Into<Option<&'static str>>,
         gc: impl Into<Option<&'static str>>,
         block: impl Into<Option<&'static str>>,
@@ -47,6 +59,12 @@ impl Details {
         bits: &'static [Bits],
     ) -> Self {
         let name = name.into().map(|x| x.into());
+        let nacorr = nacorr.into().map(|x| x.into());
+        let nacont = nacont.into().map(|x| x.into());
+        let naalte = naalte.into().map(|x| x.into());
+        let nafigm = nafigm.into().map(|x| x.into());
+        let naabbr = naabbr.into().map(|x| x.into());
+        let nau1 = nau1.into().map(|x| x.into());
         let dnrp = dnrp.into().map(|x| x.into());
         let gc = gc.into().map(|x| x.into());
         let block = block.into().map(|x| x.into());
@@ -58,6 +76,6 @@ impl Details {
         let uhman = uhman.into().map(|x| x.into());
         let bits = bits.iter().map(|&x| x as u8).fold(0, |r,x| r | x);
 
-        Self { bits, name, dnrp, gc, block, age, hst, hjsn, hlvt, uhdef, uhman }
+        Self { bits, name, nacorr, nacont, naalte, nafigm, naabbr, nau1, dnrp, gc, block, age, hst, hjsn, hlvt, uhdef, uhman }
     }
 }

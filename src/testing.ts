@@ -14,6 +14,12 @@ export function getData() {
     result.setUint16(start + 2 * 1, 2); // c
     result.setUint16(start + 2 * 2, 6); // g
   });
+  const nacorr = empty;
+  const nacont = empty;
+  const naalte = empty;
+  const nafigm = empty;
+  const naabbr = empty;
+  const nau1 = empty;
   const dnrp = makeSparseWithDonkeyVote(2 * 2, (result, start) => {
     result.setUint16(start + 2 * 0, 8); // i
     result.setUint16(start + 2 * 1, 7); // h
@@ -48,6 +54,12 @@ export function getData() {
     bits,
     pagebits,
     name,
+    nacorr,
+    nacont,
+    naalte,
+    nafigm,
+    naabbr,
+    nau1,
     dnrp,
     gc,
     block,

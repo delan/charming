@@ -282,13 +282,19 @@ function SearchResultLabel({
             />
           </>
         );
+      case "nacorr":
+      case "nacont":
+      case "naalte":
+      case "nafigm":
+      case "naabbr":
+      case "nau1":
       case "uhdef":
         return (
           <>
             {pointToYouPlus(point)}
             {space}
             <SubstringMatches
-              label={getString(data, "uhdef", point)!}
+              label={getString(data, reason, point)!}
               query={query}
               offset={offset}
             />

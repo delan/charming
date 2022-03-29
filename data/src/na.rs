@@ -14,8 +14,20 @@ pub(crate) fn na_handler(
     let alias = captures.name_ok("alias")?;
     let r#type = captures.name_ok("type")?;
 
-    if ["figment", "control", "correction"].contains(&r#type) {
-        sink[point].name = Some(popularity.vote(alias));
+    if r#type == "correction" {
+        sink[point].nacorr = Some(popularity.vote(alias));
+    }
+    if r#type == "control" {
+        sink[point].nacont = Some(popularity.vote(alias));
+    }
+    if r#type == "alternate" {
+        sink[point].naalte = Some(popularity.vote(alias));
+    }
+    if r#type == "figment" {
+        sink[point].nafigm = Some(popularity.vote(alias));
+    }
+    if r#type == "abbreviation" {
+        sink[point].naabbr = Some(popularity.vote(alias));
     }
 
     Ok(())

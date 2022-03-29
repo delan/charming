@@ -2,6 +2,12 @@ import string from "../data/data.string.json";
 import bits from "../data/data.bits.bin";
 import pagebits from "../data/data.pagebits.bin";
 import name from "../data/data.name.bin";
+import nacorr from "../data/data.nacorr.bin";
+import nacont from "../data/data.nacont.bin";
+import naalte from "../data/data.naalte.bin";
+import nafigm from "../data/data.nafigm.bin";
+import naabbr from "../data/data.naabbr.bin";
+import nau1 from "../data/data.nau1.bin";
 import dnrp from "../data/data.dnrp.bin";
 import gc from "../data/data.gc.bin";
 import block from "../data/data.block.bin";
@@ -13,11 +19,40 @@ import uhman from "../data/data.uhman.bin";
 
 import { pointToYouPlus } from "./formatting";
 
+export type StringField =
+  | "nacorr"
+  | "nacont"
+  | "naalte"
+  | "nafigm"
+  | "naabbr"
+  | "nau1"
+  | "dnrp"
+  | "gc"
+  | "block"
+  | "age"
+  | "hjsn"
+  | "uhdef"
+  | "uhman";
+export type SearchableStringField =
+  | "nacorr"
+  | "nacont"
+  | "naalte"
+  | "nafigm"
+  | "naabbr"
+  | "nau1"
+  | "uhdef";
+
 export interface Data {
   string: string[];
   bits: DataView;
   pagebits: DataView;
   name: DataView;
+  nacorr: DataView;
+  nacont: DataView;
+  naalte: DataView;
+  nafigm: DataView;
+  naabbr: DataView;
+  nau1: DataView;
   dnrp: DataView;
   gc: DataView;
   block: DataView;
@@ -33,6 +68,12 @@ export function fetchAllData(): Promise<Data> {
     bits,
     pagebits,
     name,
+    nacorr,
+    nacont,
+    naalte,
+    nafigm,
+    naabbr,
+    nau1,
     dnrp,
     gc,
     block,
@@ -45,14 +86,37 @@ export function fetchAllData(): Promise<Data> {
 }
 
 async function fetchData(...paths: string[]): Promise<Data> {
-  const [bits, pagebits, name, dnrp, gc, block, age, hlvt, hjsn, uhdef, uhman] =
-    await Promise.all(paths.map(fetchDataView));
+  const [
+    bits,
+    pagebits,
+    name,
+    nacorr,
+    nacont,
+    naalte,
+    nafigm,
+    naabbr,
+    nau1,
+    dnrp,
+    gc,
+    block,
+    age,
+    hlvt,
+    hjsn,
+    uhdef,
+    uhman,
+  ] = await Promise.all(paths.map(fetchDataView));
 
   return {
     string,
     bits,
     pagebits,
     name,
+    nacorr,
+    nacont,
+    naalte,
+    nafigm,
+    naabbr,
+    nau1,
     dnrp,
     gc,
     block,
@@ -109,7 +173,7 @@ function getPageFlag(data: Data, shift: number, page: number): boolean {
  */
 export function getString(
   data: Data,
-  field: "dnrp" | "gc" | "block" | "age" | "hjsn" | "uhdef" | "uhman",
+  field: StringField,
   point: number,
 ): string | null {
   return getString0(data, field, point);
@@ -117,7 +181,7 @@ export function getString(
 
 function getString0(
   data: Data,
-  field: "name" | "dnrp" | "gc" | "block" | "age" | "hjsn" | "uhdef" | "uhman",
+  field: "name" | StringField,
   point: number,
 ): string | null {
   const index = getSparse(Uint16, data[field], 0xffff, point);
@@ -187,6 +251,7 @@ export function getNameExceptNr2(data: Data, point: number): string | null {
  * when #search_han is checked.
  */
 export function getOldName(data: Data, point: number): string | null {
+  // FIXME figment/control/correction
   return getString(data, "uhdef", point) ?? getString0(data, "name", point);
 }
 
@@ -247,4 +312,28 @@ export function hasAnyNameExceptNr2(data: Data, page: number): boolean {
 
 export function hasAnyUhdef(data: Data, page: number): boolean {
   return getPageFlag(data, 1, page);
+}
+
+export function hasAnyNacorr(data: Data, page: number): boolean {
+  return getPageFlag(data, 2, page);
+}
+
+export function hasAnyNacont(data: Data, page: number): boolean {
+  return getPageFlag(data, 3, page);
+}
+
+export function hasAnyNaalte(data: Data, page: number): boolean {
+  return getPageFlag(data, 4, page);
+}
+
+export function hasAnyNafigm(data: Data, page: number): boolean {
+  return getPageFlag(data, 5, page);
+}
+
+export function hasAnyNaabbr(data: Data, page: number): boolean {
+  return getPageFlag(data, 6, page);
+}
+
+export function hasAnyNau1(data: Data, page: number): boolean {
+  return getPageFlag(data, 7, page);
 }

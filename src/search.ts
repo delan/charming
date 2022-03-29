@@ -1,9 +1,9 @@
-import { Data } from "./data";
+import { Data, SearchableStringField } from "./data";
 import SearchWorker from "./search.worker";
 
 export interface SearchResult {
   point: number;
-  reason: "hex" | "dec" | "breakdown" | "name" | "uhdef";
+  reason: "hex" | "dec" | "breakdown" | "name" | SearchableStringField;
   score: number;
   offset: number | null;
 }

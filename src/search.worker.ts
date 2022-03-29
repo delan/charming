@@ -7,8 +7,15 @@ import {
   Data,
   getNameExceptNr2,
   getString,
+  hasAnyNaabbr,
+  hasAnyNaalte,
+  hasAnyNacont,
+  hasAnyNacorr,
+  hasAnyNafigm,
   hasAnyNameExceptNr2,
+  hasAnyNau1,
   hasAnyUhdef,
+  SearchableStringField,
 } from "./data";
 import { stringToPoint } from "./encoding";
 import { toHexadecimal, toDecimal } from "./formatting";
@@ -122,6 +129,61 @@ function* searchByName(
     performance.measure(`sBN ${i}`, `sBN ${i} <`, `sBN ${i} >`);
 }
 
+function* searchByNameAlias(
+  keyStart: number,
+  data: Data,
+  query: string,
+): Generator<KeyedSearchResult> {
+  const upper = query.toUpperCase();
+
+  for (let page = 0; page < 0x1100; page++) {
+    if (page % 0x100 == 0)
+      performance.mark(`sBNA ${Math.floor(page / 0x100)} <`);
+    if (page % 0x100 == 0xff)
+      performance.mark(`sBNA ${Math.floor(page / 0x100)} >`);
+
+    const kinds: SearchableStringField[] = [
+      "nacorr",
+      "nacont",
+      "naalte",
+      "nafigm",
+      "naabbr",
+      "nau1",
+    ];
+    const guards = [
+      hasAnyNacorr,
+      hasAnyNacont,
+      hasAnyNaalte,
+      hasAnyNafigm,
+      hasAnyNaabbr,
+      hasAnyNau1,
+    ];
+    for (const [i, kind] of kinds.entries()) {
+      if (!guards[i](data, page)) continue;
+
+      for (let point = page * 0x100; point < (page + 1) * 0x100; point++) {
+        const name = getString(data, kind, point);
+        if (name == null) continue;
+
+        const search = name.toUpperCase();
+        if (search.includes(upper)) {
+          const [score, offset] = scoreMatch(search, upper);
+          yield {
+            key: keyStart + point,
+            point,
+            reason: kind,
+            score,
+            offset,
+          };
+        }
+      }
+    }
+  }
+
+  for (let i = 0; i < 17; i++)
+    performance.measure(`sBNA ${i}`, `sBNA ${i} <`, `sBNA ${i} >`);
+}
+
 function* searchByUhdef(
   keyStart: number,
   data: Data,
@@ -189,7 +251,18 @@ function scoreMatch(haystack: string, needle: string): [number, number] {
 
 function sortByScore(results: KeyedSearchResult[]): KeyedSearchResult[] {
   // sort by score descending, then by key ascending
-  return results.sort((p, q) => q.score - p.score || p.key - q.key);
+  return results.sort(
+    (p, q) => q.score - p.score || p.key - q.key,
+  );
+}
+
+function dedupResults(results: KeyedSearchResult[]): KeyedSearchResult[] {
+  // sort by key ascending, then by score descending, then keep best result for each key
+  return results.sort(
+    (p, q) => p.key - q.key || q.score - p.score,
+  ).filter(
+    (x, i, xs) => x.key != xs[i-1]?.key,
+  );
 }
 
 addEventListener("message", ({ data: { data = cache, query } }) => {
@@ -197,7 +270,10 @@ addEventListener("message", ({ data: { data = cache, query } }) => {
     ...searchByHexadecimal(0x220000, query),
     ...searchByDecimal(0x220001, query),
     ...searchByBreakdown(0x220002, query, 3),
-    ...sortByScore([...searchByName(0x000000, data, query)]),
+    ...sortByScore(dedupResults([
+      ...searchByName(0x000000, data, query),
+      ...searchByNameAlias(0x000000, data, query),
+    ])),
     ...sortByScore([...searchByUhdef(0x110000, data, query)]),
   ];
 

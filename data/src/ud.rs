@@ -16,6 +16,7 @@ pub(crate) fn ud_handler(
     let point = usize::from_str_radix(captures.name_ok("point")?, 16)?;
     let name = captures.name_ok("name")?;
     let gc = captures.name_ok("gc")?;
+    let nau1 = captures.name("nau1").map(|x| popularity.vote(x.into()));
 
     let bits = if gc == "Zs" {
         Bits::IsSpaceSeparator as u8
@@ -25,12 +26,24 @@ pub(crate) fn ud_handler(
         0
     };
 
-    let name = Some(popularity.vote(name));
+    assert!(
+        !name.contains("<")
+        || name == "<control>"
+        || name.ends_with(", First>")
+        || name.ends_with(", Last>")
+    );
+
+    let name = if name.contains("<") {
+        None
+    } else {
+        Some(popularity.vote(name))
+    };
     let gc = Some(popularity.vote(gc_labels.get(gc).unwrap()));
 
     sink[point] = Details {
         bits,
         name,
+        nau1,
         gc,
         ..Default::default()
     };
