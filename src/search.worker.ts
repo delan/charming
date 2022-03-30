@@ -251,18 +251,14 @@ function scoreMatch(haystack: string, needle: string): [number, number] {
 
 function sortByScore(results: KeyedSearchResult[]): KeyedSearchResult[] {
   // sort by score descending, then by key ascending
-  return results.sort(
-    (p, q) => q.score - p.score || p.key - q.key,
-  );
+  return results.sort((p, q) => q.score - p.score || p.key - q.key);
 }
 
 function dedupResults(results: KeyedSearchResult[]): KeyedSearchResult[] {
   // sort by key ascending, then by score descending, then keep best result for each key
-  return results.sort(
-    (p, q) => p.key - q.key || q.score - p.score,
-  ).filter(
-    (x, i, xs) => x.key != xs[i-1]?.key,
-  );
+  return results
+    .sort((p, q) => p.key - q.key || q.score - p.score)
+    .filter((x, i, xs) => x.key != xs[i - 1]?.key);
 }
 
 addEventListener("message", ({ data: { data = cache, query } }) => {
@@ -270,10 +266,12 @@ addEventListener("message", ({ data: { data = cache, query } }) => {
     ...searchByHexadecimal(0x220000, query),
     ...searchByDecimal(0x220001, query),
     ...searchByBreakdown(0x220002, query, 3),
-    ...sortByScore(dedupResults([
-      ...searchByName(0x000000, data, query),
-      ...searchByNameAlias(0x000000, data, query),
-    ])),
+    ...sortByScore(
+      dedupResults([
+        ...searchByName(0x000000, data, query),
+        ...searchByNameAlias(0x000000, data, query),
+      ]),
+    ),
     ...sortByScore([...searchByUhdef(0x110000, data, query)]),
   ];
 
