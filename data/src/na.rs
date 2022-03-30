@@ -2,7 +2,7 @@ use failure::Error;
 use regex::Captures;
 
 use crate::captures::CapturesExt;
-use crate::details::Details;
+use crate::details::{Details, Alias};
 use crate::pool::Popularity;
 
 pub(crate) fn na_handler(
@@ -14,36 +14,10 @@ pub(crate) fn na_handler(
     let alias = captures.name_ok("alias")?;
     let r#type = captures.name_ok("type")?;
 
-    if r#type == "correction" {
-        if let Some(old) = sink[point].nacorr.as_deref() {
-            eprintln!("Warning: sink[U+{:04X}].nacorr being overwritten from “{}” to “{}”", point, old, alias);
-        }
-        sink[point].nacorr = Some(popularity.vote(alias));
-    }
-    if r#type == "control" {
-        if let Some(old) = sink[point].nacont.as_deref() {
-            eprintln!("Warning: sink[U+{:04X}].nacont being overwritten from “{}” to “{}”", point, old, alias);
-        }
-        sink[point].nacont = Some(popularity.vote(alias));
-    }
-    if r#type == "alternate" {
-        if let Some(old) = sink[point].naalte.as_deref() {
-            eprintln!("Warning: sink[U+{:04X}].naalte being overwritten from “{}” to “{}”", point, old, alias);
-        }
-        sink[point].naalte = Some(popularity.vote(alias));
-    }
-    if r#type == "figment" {
-        if let Some(old) = sink[point].nafigm.as_deref() {
-            eprintln!("Warning: sink[U+{:04X}].nafigm being overwritten from “{}” to “{}”", point, old, alias);
-        }
-        sink[point].nafigm = Some(popularity.vote(alias));
-    }
-    if r#type == "abbreviation" {
-        if let Some(old) = sink[point].naabbr.as_deref() {
-            eprintln!("Warning: sink[U+{:04X}].naabbr being overwritten from “{}” to “{}”", point, old, alias);
-        }
-        sink[point].naabbr = Some(popularity.vote(alias));
-    }
+    sink[point].alias.push(Alias {
+        inner: popularity.vote(alias),
+        r#type: r#type.parse()?,
+    });
 
     Ok(())
 }

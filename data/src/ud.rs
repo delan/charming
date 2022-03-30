@@ -4,7 +4,7 @@ use failure::Error;
 use regex::Captures;
 
 use crate::captures::CapturesExt;
-use crate::details::{Bits, Details};
+use crate::details::{Bits, Details, AliasType, Alias};
 use crate::pool::Popularity;
 
 pub(crate) fn ud_handler(
@@ -16,7 +16,10 @@ pub(crate) fn ud_handler(
     let point = usize::from_str_radix(captures.name_ok("point")?, 16)?;
     let name = captures.name_ok("name")?;
     let gc = captures.name_ok("gc")?;
-    let nau1 = captures.name("nau1").map(|x| popularity.vote(x.into()));
+    let nau1 = captures.name("nau1").map(|x| Alias {
+        inner: popularity.vote(x.into()),
+        r#type: AliasType::Unicode1,
+    });
 
     let bits = if gc == "Zs" {
         Bits::IsSpaceSeparator as u8
@@ -43,7 +46,7 @@ pub(crate) fn ud_handler(
     sink[point] = Details {
         bits,
         name,
-        nau1,
+        alias: nau1.into_iter().collect(),
         gc,
         ..Default::default()
     };

@@ -5,17 +5,13 @@ import GraphemeSplitter from "grapheme-splitter"; // FIXME Unicode 10.0.0
 
 import {
   Data,
+  getAliasCount,
+  getAliasValue,
   getNameExceptNr2,
   getString,
-  hasAnyNaabbr,
-  hasAnyNaalte,
-  hasAnyNacont,
-  hasAnyNacorr,
-  hasAnyNafigm,
+  hasAnyAlias,
   hasAnyNameExceptNr2,
-  hasAnyNau1,
   hasAnyUhdef,
-  SearchableStringField,
 } from "./data";
 import { stringToPoint } from "./encoding";
 import { toHexadecimal, toDecimal } from "./formatting";
@@ -47,7 +43,7 @@ function* searchByHexadecimal(
     return;
   }
 
-  yield { key: keyStart, point, reason: "hex", score: 0, offset: null };
+  yield { key: keyStart, point, reason: "hex", score: 0 };
 }
 
 function* searchByDecimal(
@@ -68,7 +64,7 @@ function* searchByDecimal(
     return;
   }
 
-  yield { key: keyStart, point, reason: "dec", score: 0, offset: null };
+  yield { key: keyStart, point, reason: "dec", score: 0 };
 }
 
 function* searchByBreakdown(
@@ -88,7 +84,6 @@ function* searchByBreakdown(
           point,
           reason: "breakdown",
           score: 0,
-          offset: null,
         };
       }
     }
@@ -135,35 +130,20 @@ function* searchByNameAlias(
   query: string,
 ): Generator<KeyedSearchResult> {
   const upper = query.toUpperCase();
+  let aliasIndex = 0;
 
   for (let page = 0; page < 0x1100; page++) {
     if (page % 0x100 == 0)
       performance.mark(`sBNA ${Math.floor(page / 0x100)} <`);
     if (page % 0x100 == 0xff)
       performance.mark(`sBNA ${Math.floor(page / 0x100)} >`);
+    if (!hasAnyAlias(data, page)) continue;
 
-    const kinds: SearchableStringField[] = [
-      "nacorr",
-      "nacont",
-      "naalte",
-      "nafigm",
-      "naabbr",
-      "nau1",
-    ];
-    const guards = [
-      hasAnyNacorr,
-      hasAnyNacont,
-      hasAnyNaalte,
-      hasAnyNafigm,
-      hasAnyNaabbr,
-      hasAnyNau1,
-    ];
-    for (const [i, kind] of kinds.entries()) {
-      if (!guards[i](data, page)) continue;
-
-      for (let point = page * 0x100; point < (page + 1) * 0x100; point++) {
-        const name = getString(data, kind, point);
-        if (name == null) continue;
+    for (let point = page * 0x100; point < (page + 1) * 0x100; point++) {
+      const aliasCount = getAliasCount(data, point);
+      for (let i = 0; i < aliasCount; i++, aliasIndex++) {
+        const name = getAliasValue(data, aliasIndex)!;
+        // const type = getAliasType(data, aliasIndex)!; // TODO
 
         const search = name.toUpperCase();
         if (search.includes(upper)) {
@@ -171,7 +151,8 @@ function* searchByNameAlias(
           yield {
             key: keyStart + point,
             point,
-            reason: kind,
+            reason: "alias",
+            aliasIndex,
             score,
             offset,
           };

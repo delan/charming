@@ -2,12 +2,9 @@ import string from "../data/data.string.json";
 import bits from "../data/data.bits.bin";
 import pagebits from "../data/data.pagebits.bin";
 import name from "../data/data.name.bin";
-import nacorr from "../data/data.nacorr.bin";
-import nacont from "../data/data.nacont.bin";
-import naalte from "../data/data.naalte.bin";
-import nafigm from "../data/data.nafigm.bin";
-import naabbr from "../data/data.naabbr.bin";
-import nau1 from "../data/data.nau1.bin";
+import aliasc from "../data/data.aliasc.bin";
+import aliass from "../data/data.aliass.bin";
+import aliast from "../data/data.aliast.bin";
 import dnrp from "../data/data.dnrp.bin";
 import gc from "../data/data.gc.bin";
 import block from "../data/data.block.bin";
@@ -20,12 +17,6 @@ import uhman from "../data/data.uhman.bin";
 import { pointToYouPlus } from "./formatting";
 
 export type StringField =
-  | "nacorr"
-  | "nacont"
-  | "naalte"
-  | "nafigm"
-  | "naabbr"
-  | "nau1"
   | "dnrp"
   | "gc"
   | "block"
@@ -33,26 +24,15 @@ export type StringField =
   | "hjsn"
   | "uhdef"
   | "uhman";
-export type SearchableStringField =
-  | "nacorr"
-  | "nacont"
-  | "naalte"
-  | "nafigm"
-  | "naabbr"
-  | "nau1"
-  | "uhdef";
 
 export interface Data {
   string: string[];
   bits: DataView;
   pagebits: DataView;
   name: DataView;
-  nacorr: DataView;
-  nacont: DataView;
-  naalte: DataView;
-  nafigm: DataView;
-  naabbr: DataView;
-  nau1: DataView;
+  aliasc: DataView;
+  aliass: DataView;
+  aliast: DataView;
   dnrp: DataView;
   gc: DataView;
   block: DataView;
@@ -63,17 +43,23 @@ export interface Data {
   uhman: DataView;
 }
 
+export enum AliasType {
+  Correction = 0,
+  Control = 1,
+  Alternate = 2,
+  Figment = 3,
+  Abbreviation = 4,
+  Unicode1 = 5,
+}
+
 export function fetchAllData(): Promise<Data> {
   return fetchData(
     bits,
     pagebits,
     name,
-    nacorr,
-    nacont,
-    naalte,
-    nafigm,
-    naabbr,
-    nau1,
+    aliasc,
+    aliass,
+    aliast,
     dnrp,
     gc,
     block,
@@ -90,12 +76,9 @@ async function fetchData(...paths: string[]): Promise<Data> {
     bits,
     pagebits,
     name,
-    nacorr,
-    nacont,
-    naalte,
-    nafigm,
-    naabbr,
-    nau1,
+    aliasc,
+    aliass,
+    aliast,
     dnrp,
     gc,
     block,
@@ -111,12 +94,9 @@ async function fetchData(...paths: string[]): Promise<Data> {
     bits,
     pagebits,
     name,
-    nacorr,
-    nacont,
-    naalte,
-    nafigm,
-    naabbr,
-    nau1,
+    aliasc,
+    aliass,
+    aliast,
     dnrp,
     gc,
     block,
@@ -185,7 +165,10 @@ function getString0(
   point: number,
 ): string | null {
   const index = getSparse(Uint16, data[field], 0xffff, point);
+  return getStringByIndex(data, index);
+}
 
+function getStringByIndex(data: Data, index: number): string | null {
   if (index == 0xffff || index >= data.string.length) {
     return null;
   }
@@ -282,6 +265,22 @@ export function getHangulSyllableName(
   return null;
 }
 
+export function getAliasCount(data: Data, point: number): number {
+  return getSparse(Uint8, data.aliasc, 0, point);
+}
+
+export function getAliasValue(data: Data, aliasIndex: number): string | null {
+  const ty = Uint16;
+  const offset = aliasIndex * ty.len;
+  return getStringByIndex(data, data.aliass[ty.method](offset));
+}
+
+export function getAliasType(data: Data, aliasIndex: number): AliasType | null {
+  const ty = Uint8;
+  const offset = aliasIndex * ty.len;
+  return data.aliast[ty.method](offset);
+}
+
 export function kDefinitionExists(data: Data, point: number): boolean {
   return getFlag(data, 0, point);
 }
@@ -314,26 +313,6 @@ export function hasAnyUhdef(data: Data, page: number): boolean {
   return getPageFlag(data, 1, page);
 }
 
-export function hasAnyNacorr(data: Data, page: number): boolean {
+export function hasAnyAlias(data: Data, page: number): boolean {
   return getPageFlag(data, 2, page);
-}
-
-export function hasAnyNacont(data: Data, page: number): boolean {
-  return getPageFlag(data, 3, page);
-}
-
-export function hasAnyNaalte(data: Data, page: number): boolean {
-  return getPageFlag(data, 4, page);
-}
-
-export function hasAnyNafigm(data: Data, page: number): boolean {
-  return getPageFlag(data, 5, page);
-}
-
-export function hasAnyNaabbr(data: Data, page: number): boolean {
-  return getPageFlag(data, 6, page);
-}
-
-export function hasAnyNau1(data: Data, page: number): boolean {
-  return getPageFlag(data, 7, page);
 }

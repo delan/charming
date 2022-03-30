@@ -31,7 +31,13 @@ import {
   getHashPoint,
   fixHashPoint,
 } from "./state";
-import { Data, fetchAllData, getNameProperty, getString } from "./data";
+import {
+  Data,
+  fetchAllData,
+  getAliasValue,
+  getNameProperty,
+  getString,
+} from "./data";
 import { pointToString } from "./encoding";
 import {
   pointToYouPlus,
@@ -235,13 +241,14 @@ areEqual);
 
 function SearchResultLabel({
   query,
-  result: { point, reason, offset },
+  result,
 }: {
   query: string;
   result: SearchResult;
 }) {
   const data = useContext(DataContext);
   const space = " ";
+  const { point, reason } = result;
 
   if (data != null) {
     switch (reason) {
@@ -278,16 +285,10 @@ function SearchResultLabel({
             <SubstringMatches
               label={getNameProperty(data, point)!}
               query={query}
-              offset={offset}
+              offset={result.offset}
             />
           </>
         );
-      case "nacorr":
-      case "nacont":
-      case "naalte":
-      case "nafigm":
-      case "naabbr":
-      case "nau1":
       case "uhdef":
         return (
           <>
@@ -296,7 +297,19 @@ function SearchResultLabel({
             <SubstringMatches
               label={getString(data, reason, point)!}
               query={query}
-              offset={offset}
+              offset={result.offset}
+            />
+          </>
+        );
+      case "alias":
+        return (
+          <>
+            {pointToYouPlus(point)}
+            {space}
+            <SubstringMatches
+              label={getAliasValue(data, result.aliasIndex)!}
+              query={query}
+              offset={result.offset}
             />
           </>
         );
