@@ -50,6 +50,7 @@ export enum AliasType {
   Figment = 3,
   Abbreviation = 4,
   Unicode1 = 5,
+  Cldr = 6,
 }
 
 export function fetchAllData(): Promise<Data> {

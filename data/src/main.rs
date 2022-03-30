@@ -4,6 +4,7 @@ mod captures;
 mod details;
 mod dynamic;
 mod ed;
+mod et;
 mod gc;
 mod hst;
 mod jamo;
@@ -29,6 +30,7 @@ use crate::block::block_handler;
 use crate::details::{Bits, Details, HangulSyllableType};
 use crate::dynamic::{NAME_RULES, NameRule, hangul_lvt_indices};
 use crate::ed::ed_handler;
+use crate::et::et_handler;
 use crate::gc::gc_handler;
 use crate::hst::hst_handler;
 use crate::jamo::jamo_handler;
@@ -160,6 +162,13 @@ fn main() -> Result<(), Error> {
         ed_handler,
         "emoji-data.txt", None,
         r"^(?P<first>[0-9A-F]+)(?:[.][.](?P<last>[0-9A-F]+))?\s*;\s*Emoji_Presentation(\s|#|$)",
+    )?;
+
+    parse(
+        &mut ud,
+        |sink, captures| et_handler(&mut popularity, sink, captures),
+        "emoji-test.txt", None,
+        r"^(?P<points>[0-9A-F]+(?: [0-9A-F]+)*)\s*;\s*fully-qualified\s*# .* E[0-9]+[.][0-9]+ (?P<name>.+)",
     )?;
 
     println!("Running tests ...");
@@ -317,7 +326,7 @@ fn write_alias_files(source: &[Details], pool: &Pool) -> Result<(), Error> {
     let mut strings = Vec::default();
     let mut types = Vec::default();
 
-    for details in source {
+    for (i, details) in source.iter().enumerate() {
         counts.push(details.alias.len());
         for alias in &details.alias {
             strings.push(pool.r#use(&alias.inner));
