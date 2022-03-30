@@ -16,7 +16,7 @@ import uhdef from "../data/data.uhdef.bin";
 import uhman from "../data/data.uhman.bin";
 
 import { pointToYouPlus } from "./formatting";
-import { pointLengthUnits16, stringToPoint } from "./encoding";
+import { stringToPoint } from "./encoding";
 
 export type StringField =
   | "dnrp"
@@ -351,162 +351,57 @@ export function hasAnyAlias(data: Data, page: number): boolean {
   return getPageFlag(data, 2, page);
 }
 
+interface ClusterBreaker {
+  startUnitIndex: number;
+  startPointIndex: number;
+  kind: string;
+  astral: string;
+}
+
+const CLUSTER_BREAK =
+  // CR       LF       | ???              | Control  | Prepend*  (  (   L*        (   V+        | LV        V*        | LVT      ) T*        | L+        | T+        )| RI RI       | \p{ExPi}  (   Extend*    ZWJ       \p{ExPi}  )*|[^ Control CR LF]          ) [Extend ZWJ SpacingMark]*
+  /[\x01\x81][\x02\x82]|[\x01\x02\x81\x82]|[\x03\x83]|[\x07\x87]*(?:(?:[\x09\x89]*(?:[\x0A\x8A]+|[\x0C\x8C][\x0A\x8A]*|[\x0D\x8D])[\x0B\x8B]*|[\x09\x89]+|[\x0B\x8B]+)|[\x06\x86]{2}|[\x80-\xFF](?:[\x04\x84]*[\x05\x85][\x80-\xFF])*|[^\x03\x01\x02\x83\x81\x82])[\x04\x05\x08\x84\x85\x88]*/g;
+
 export function getNextClusterBreak(
   data: Data,
   string: string,
-  start: number | null = null,
-): number | null {
-  if (start == string.length) return null;
+  context: ClusterBreaker | null = null,
+): ClusterBreaker | null {
+  if (context == null) {
+    if (string.length == 0) return null;
 
-  if (start == null)
     // GB1: sot / Any
-    return string.length > 0 ? 0 : null;
-
-  const iterator = string.slice(start)[Symbol.iterator]();
-  let result = start;
-
-  enum EmojiState {
-    None = 0,
-    ExtendedPictographic = 1,
-    Zwj = 2,
-  }
-  let emojiState = EmojiState.None;
-
-  enum RiState {
-    Even = 0,
-    Odd = 1,
-  }
-  let regionalIndicatorState = RiState.Even;
-
-  for (
-    let [p, q] = [getNextPoint(iterator), getNextPoint(iterator)];
-    p != null;
-    [p, q] = [q, getNextPoint(iterator)]
-  ) {
-    result += pointLengthUnits16(p);
-
-    if (q == null)
-      // GB2: Any / eot
-      return result;
-
-    const [pt, qt] = [getGraphemeBreak(data, p), getGraphemeBreak(data, q)];
-
-    switch (qt) {
-      case GraphemeBreak.Extend:
-        if (
-          emojiState == EmojiState.ExtendedPictographic ||
-          isExtendedPictographic(data, p)
-        )
-          emojiState = EmojiState.ExtendedPictographic;
-        else emojiState = EmojiState.None;
-        break;
-      case GraphemeBreak.Zwj:
-        if (
-          emojiState == EmojiState.ExtendedPictographic ||
-          isExtendedPictographic(data, p)
-        )
-          emojiState = EmojiState.Zwj;
-        else emojiState = EmojiState.None;
-        break;
-    }
-
-    switch (pt) {
-      case GraphemeBreak.Cr:
-        if (qt == GraphemeBreak.Lf)
-          // GB3: CR * LF
-          continue;
-        // GB4: (Control | CR | LF) /
-        return result;
-      case GraphemeBreak.Lf:
-      case GraphemeBreak.Control:
-        return result;
-    }
-
-    switch (qt) {
-      case GraphemeBreak.Control:
-      case GraphemeBreak.Cr:
-      case GraphemeBreak.Lf:
-        // GB5: / (Control | CR | LF)
-        return result;
-    }
-
-    switch (pt) {
-      case GraphemeBreak.HangulL:
-        switch (qt) {
-          case GraphemeBreak.HangulL:
-          case GraphemeBreak.HangulV:
-          case GraphemeBreak.HangulLV:
-          case GraphemeBreak.HangulLVT:
-            // GB6: L * (L | V | LV | LVT)
-            continue;
-        }
-        break;
-      case GraphemeBreak.HangulLV:
-      case GraphemeBreak.HangulV:
-        switch (qt) {
-          case GraphemeBreak.HangulV:
-          case GraphemeBreak.HangulT:
-            // GB7: (LV | V) * (V | T)
-            continue;
-        }
-        break;
-      case GraphemeBreak.HangulLVT:
-      case GraphemeBreak.HangulT:
-        if (qt == GraphemeBreak.HangulT)
-          // GB8: (LVT | T) * T
-          continue;
-        break;
-    }
-
-    switch (qt) {
-      case GraphemeBreak.Extend:
-      case GraphemeBreak.Zwj:
-        // GB9: * (Extend | Zwj)
-        continue;
-      case GraphemeBreak.SpacingMark:
-        // GB9a: * SpacingMark
-        continue;
-    }
-
-    switch (pt) {
-      case GraphemeBreak.Prepend:
-        // GB9b: Prepend *
-        continue;
-    }
-
-    if (emojiState == EmojiState.Zwj && isExtendedPictographic(data, q)) {
-      // GB11: \p{Extended_Pictographic} Extend* ZWJ * \p{Extended_Pictographic}
-      continue;
-    }
-
-    switch (pt) {
-      case GraphemeBreak.RegionalIndicator:
-        switch (qt) {
-          case GraphemeBreak.RegionalIndicator:
-            switch (regionalIndicatorState) {
-              case RiState.Even:
-                // GB12: sot (RI RI)* RI * RI
-                // GB13: [^RI] (RI RI)* RI * RI
-                regionalIndicatorState = RiState.Odd;
-                continue;
-              case RiState.Odd:
-                regionalIndicatorState = RiState.Even;
-                break;
-            }
-            break;
-          default:
-            regionalIndicatorState = RiState.Even;
-        }
-        break;
-    }
-
-    return result;
+    return {
+      startUnitIndex: 0,
+      startPointIndex: 0,
+      kind: string.replace(
+        /[\uD800-\uDBFF][\uDC00-\uDFFF]|[^]/g,
+        (pointish) => {
+          const point = stringToPoint(pointish)!;
+          const gb = getGraphemeBreak(data, point) ?? 0;
+          const exp = Number(isExtendedPictographic(data, point));
+          return String.fromCharCode((exp << 7) | gb);
+        },
+      ),
+      astral: string.replace(
+        /[\uD800-\uDBFF][\uDC00-\uDFFF]|[^]/g,
+        (pointish) => {
+          const point = stringToPoint(pointish)!;
+          const astral = Number(point > 0xffff);
+          return String.fromCharCode(astral);
+        },
+      ),
+    };
   }
 
-  throw new Error();
-}
+  if (context.startUnitIndex == string.length) return null;
 
-function getNextPoint(iterator: IterableIterator<string>): number | null {
-  const result = iterator.next();
-  return result.done ? null : stringToPoint(result.value)!;
+  CLUSTER_BREAK.lastIndex = context.startPointIndex;
+  CLUSTER_BREAK.exec(context.kind);
+
+  for (let i = context.startPointIndex; i < CLUSTER_BREAK.lastIndex; i++)
+    context.startUnitIndex += context.astral.charCodeAt(i) & 1 ? 2 : 1;
+  context.startPointIndex = CLUSTER_BREAK.lastIndex;
+
+  return context;
 }

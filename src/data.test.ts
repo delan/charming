@@ -92,22 +92,19 @@ test("getNextClusterBreak returns correct values", () => {
     const breaks = line.match(/[÷×]/g)!;
     const string = pointsToString(points);
 
-    let start = null;
+    let context = null;
     let pointStart = 0;
     let pointLen = 0;
     for (const brake of breaks) {
       switch (brake) {
         case "÷":
-          const actual = getNextClusterBreak(data, string, start);
-          const expected: number =
-            (start ?? 0) +
-            pointsToString(points.slice(pointStart, pointStart + pointLen))
-              .length;
+          context = getNextClusterBreak(data, string, context)!;
+          const actual = context.startPointIndex;
+          const expected = pointStart + pointLen;
           if (actual != expected) {
-            console.error([line, start, pointStart, pointLen]);
+            console.error([line, pointStart, pointLen, context]);
             expect(actual).toBe(expected);
           }
-          start = actual;
           pointStart += pointLen;
           pointLen = 1;
           break;
