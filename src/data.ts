@@ -6,6 +6,7 @@ import aliasc from "../data/data.aliasc.bin";
 import aliass from "../data/data.aliass.bin";
 import aliast from "../data/data.aliast.bin";
 import dnrp from "../data/data.dnrp.bin";
+import gb from "../data/data.gb.bin";
 import gc from "../data/data.gc.bin";
 import block from "../data/data.block.bin";
 import age from "../data/data.age.bin";
@@ -15,6 +16,7 @@ import uhdef from "../data/data.uhdef.bin";
 import uhman from "../data/data.uhman.bin";
 
 import { pointToYouPlus } from "./formatting";
+import { pointLengthUnits16, stringToPoint } from "./encoding";
 
 export type StringField =
   | "dnrp"
@@ -34,6 +36,7 @@ export interface Data {
   aliass: DataView;
   aliast: DataView;
   dnrp: DataView;
+  gb: DataView;
   gc: DataView;
   block: DataView;
   age: DataView;
@@ -53,6 +56,22 @@ export enum AliasType {
   Cldr = 6,
 }
 
+export enum GraphemeBreak {
+  Cr = 1,
+  Lf = 2,
+  Control = 3,
+  Extend = 4,
+  Zwj = 5,
+  RegionalIndicator = 6,
+  Prepend = 7,
+  SpacingMark = 8,
+  HangulL = 9,
+  HangulV = 10,
+  HangulT = 11,
+  HangulLV = 12,
+  HangulLVT = 13,
+}
+
 export function fetchAllData(): Promise<Data> {
   return fetchData(
     bits,
@@ -62,6 +81,7 @@ export function fetchAllData(): Promise<Data> {
     aliass,
     aliast,
     dnrp,
+    gb,
     gc,
     block,
     age,
@@ -81,6 +101,7 @@ async function fetchData(...paths: string[]): Promise<Data> {
     aliass,
     aliast,
     dnrp,
+    gb,
     gc,
     block,
     age,
@@ -99,6 +120,7 @@ async function fetchData(...paths: string[]): Promise<Data> {
     aliass,
     aliast,
     dnrp,
+    gb,
     gc,
     block,
     age,
@@ -124,12 +146,12 @@ type SparseMemberType = {
 const Uint8: SparseMemberType = { method: "getUint8", len: 1 };
 const Uint16: SparseMemberType = { method: "getUint16", len: 2 };
 
-function getSparse(
+function getSparse<T>(
   ty: SparseMemberType,
   field: DataView,
-  def: number,
+  def: T,
   point: number,
-): number {
+): number | T {
   const page_offset = field.getUint16(Math.floor(point / 256) * 2);
   if (page_offset == 0xffff) return def;
 
@@ -282,6 +304,13 @@ export function getAliasType(data: Data, aliasIndex: number): AliasType | null {
   return data.aliast[ty.method](offset);
 }
 
+export function getGraphemeBreak(
+  data: Data,
+  point: number,
+): GraphemeBreak | null {
+  return getSparse(Uint8, data.gb, null, point);
+}
+
 export function kDefinitionExists(data: Data, point: number): boolean {
   return getFlag(data, 0, point);
 }
@@ -306,6 +335,10 @@ export function hasDerivedNameNr2(data: Data, point: number): boolean {
   return getFlag(data, 5, point);
 }
 
+export function isExtendedPictographic(data: Data, point: number): boolean {
+  return getFlag(data, 6, point);
+}
+
 export function hasAnyNameExceptNr2(data: Data, page: number): boolean {
   return getPageFlag(data, 0, page);
 }
@@ -316,4 +349,164 @@ export function hasAnyUhdef(data: Data, page: number): boolean {
 
 export function hasAnyAlias(data: Data, page: number): boolean {
   return getPageFlag(data, 2, page);
+}
+
+export function getNextClusterBreak(
+  data: Data,
+  string: string,
+  start: number | null = null,
+): number | null {
+  if (start == string.length) return null;
+
+  if (start == null)
+    // GB1: sot / Any
+    return string.length > 0 ? 0 : null;
+
+  const iterator = string.slice(start)[Symbol.iterator]();
+  let result = start;
+
+  enum EmojiState {
+    None = 0,
+    ExtendedPictographic = 1,
+    Zwj = 2,
+  }
+  let emojiState = EmojiState.None;
+
+  enum RiState {
+    Even = 0,
+    Odd = 1,
+  }
+  let regionalIndicatorState = RiState.Even;
+
+  for (
+    let [p, q] = [getNextPoint(iterator), getNextPoint(iterator)];
+    p != null;
+    [p, q] = [q, getNextPoint(iterator)]
+  ) {
+    result += pointLengthUnits16(p);
+
+    if (q == null)
+      // GB2: Any / eot
+      return result;
+
+    const [pt, qt] = [getGraphemeBreak(data, p), getGraphemeBreak(data, q)];
+
+    switch (qt) {
+      case GraphemeBreak.Extend:
+        if (
+          emojiState == EmojiState.ExtendedPictographic ||
+          isExtendedPictographic(data, p)
+        )
+          emojiState = EmojiState.ExtendedPictographic;
+        else emojiState = EmojiState.None;
+        break;
+      case GraphemeBreak.Zwj:
+        if (
+          emojiState == EmojiState.ExtendedPictographic ||
+          isExtendedPictographic(data, p)
+        )
+          emojiState = EmojiState.Zwj;
+        else emojiState = EmojiState.None;
+        break;
+    }
+
+    switch (pt) {
+      case GraphemeBreak.Cr:
+        if (qt == GraphemeBreak.Lf)
+          // GB3: CR * LF
+          continue;
+        // GB4: (Control | CR | LF) /
+        return result;
+      case GraphemeBreak.Lf:
+      case GraphemeBreak.Control:
+        return result;
+    }
+
+    switch (qt) {
+      case GraphemeBreak.Control:
+      case GraphemeBreak.Cr:
+      case GraphemeBreak.Lf:
+        // GB5: / (Control | CR | LF)
+        return result;
+    }
+
+    switch (pt) {
+      case GraphemeBreak.HangulL:
+        switch (qt) {
+          case GraphemeBreak.HangulL:
+          case GraphemeBreak.HangulV:
+          case GraphemeBreak.HangulLV:
+          case GraphemeBreak.HangulLVT:
+            // GB6: L * (L | V | LV | LVT)
+            continue;
+        }
+        break;
+      case GraphemeBreak.HangulLV:
+      case GraphemeBreak.HangulV:
+        switch (qt) {
+          case GraphemeBreak.HangulV:
+          case GraphemeBreak.HangulT:
+            // GB7: (LV | V) * (V | T)
+            continue;
+        }
+        break;
+      case GraphemeBreak.HangulLVT:
+      case GraphemeBreak.HangulT:
+        if (qt == GraphemeBreak.HangulT)
+          // GB8: (LVT | T) * T
+          continue;
+        break;
+    }
+
+    switch (qt) {
+      case GraphemeBreak.Extend:
+      case GraphemeBreak.Zwj:
+        // GB9: * (Extend | Zwj)
+        continue;
+      case GraphemeBreak.SpacingMark:
+        // GB9a: * SpacingMark
+        continue;
+    }
+
+    switch (pt) {
+      case GraphemeBreak.Prepend:
+        // GB9b: Prepend *
+        continue;
+    }
+
+    if (emojiState == EmojiState.Zwj && isExtendedPictographic(data, q)) {
+      // GB11: \p{Extended_Pictographic} Extend* ZWJ * \p{Extended_Pictographic}
+      continue;
+    }
+
+    switch (pt) {
+      case GraphemeBreak.RegionalIndicator:
+        switch (qt) {
+          case GraphemeBreak.RegionalIndicator:
+            switch (regionalIndicatorState) {
+              case RiState.Even:
+                // GB12: sot (RI RI)* RI * RI
+                // GB13: [^RI] (RI RI)* RI * RI
+                regionalIndicatorState = RiState.Odd;
+                continue;
+              case RiState.Odd:
+                regionalIndicatorState = RiState.Even;
+                break;
+            }
+            break;
+          default:
+            regionalIndicatorState = RiState.Even;
+        }
+        break;
+    }
+
+    return result;
+  }
+
+  throw new Error();
+}
+
+function getNextPoint(iterator: IterableIterator<string>): number | null {
+  const result = iterator.next();
+  return result.done ? null : stringToPoint(result.value)!;
 }

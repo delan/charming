@@ -1,3 +1,5 @@
+import { readFileSync } from "fs";
+
 import {
   getString,
   getNameProperty,
@@ -10,7 +12,9 @@ import {
   isAnyMark,
   hasDerivedNameNr1,
   hasDerivedNameNr2,
+  getNextClusterBreak,
 } from "./data";
+import { pointsToString } from "./encoding";
 import { getData } from "./testing";
 
 test("getString returns correct string", () => {
@@ -77,3 +81,46 @@ test("hasDerivedNameNr2 returns correct value", () => {
   expect(hasDerivedNameNr2(getData(), 0)).toBe(true);
   expect(hasDerivedNameNr2(getData(), 1)).toBe(false);
 });
+
+test("getNextClusterBreak returns correct values", () => {
+  const test: string = readFileSync("data/GraphemeBreakTest.txt", "utf8");
+  const data = getData();
+  data.gb = bufferToDataView(readFileSync("data/data.gb.bin"));
+  data.bits = bufferToDataView(readFileSync("data/data.bits.bin"));
+  for (const line of test.match(/^÷[ ÷×0-9A-F]+/gm)!) {
+    const points = line.match(/[0-9A-F]+/g)!.map((x) => parseInt(x, 16));
+    const breaks = line.match(/[÷×]/g)!;
+    const string = pointsToString(points);
+
+    let start = null;
+    let pointStart = 0;
+    let pointLen = 0;
+    for (const brake of breaks) {
+      switch (brake) {
+        case "÷":
+          const actual = getNextClusterBreak(data, string, start);
+          const expected: number =
+            (start ?? 0) +
+            pointsToString(points.slice(pointStart, pointStart + pointLen))
+              .length;
+          if (actual != expected) {
+            console.error([line, start, pointStart, pointLen]);
+            expect(actual).toBe(expected);
+          }
+          start = actual;
+          pointStart += pointLen;
+          pointLen = 1;
+          break;
+        case "×":
+          pointLen += 1;
+          break;
+      }
+    }
+  }
+});
+
+function bufferToDataView(buffer: Buffer): DataView {
+  const array = new Uint8Array(buffer.byteLength);
+  buffer.copy(array, 0, 0, buffer.byteLength);
+  return new DataView(array.buffer);
+}

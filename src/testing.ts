@@ -7,7 +7,7 @@ export function getData() {
     result.setUint8(start + 1, 0b01010101);
     result.setUint8(start + 2, 0b11001111);
   });
-  // FIXME write tests for pagebits, alias[cst]
+  // FIXME write tests for pagebits, alias[cst], gb
   const pagebits = new DataView(new ArrayBuffer(0x1100));
   const name = makeSparseWithDonkeyVote(2 * 3, (result, start) => {
     result.setUint16(start + 2 * 0, 1); // b
@@ -21,6 +21,7 @@ export function getData() {
     result.setUint16(start + 2 * 0, 8); // i
     result.setUint16(start + 2 * 1, 7); // h
   });
+  const gb = empty;
   const gc = makeSparseWithDonkeyVote(2 * 2, (result, start) => {
     result.setUint16(start + 2 * 0, 3); // d
     result.setUint16(start + 2 * 1, 4); // e
@@ -55,6 +56,7 @@ export function getData() {
     aliass,
     aliast,
     dnrp,
+    gb,
     gc,
     block,
     age,
