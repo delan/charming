@@ -15,6 +15,8 @@ import hjsn from "../data/data.hjsn.bin";
 import uhdef from "../data/data.uhdef.bin";
 import uhman from "../data/data.uhman.bin";
 
+import { EGCBREAK } from "../data/egcbreak";
+
 import { pointToYouPlus } from "./formatting";
 import { stringToPoint } from "./encoding";
 
@@ -358,10 +360,6 @@ interface ClusterBreaker {
   astral: string;
 }
 
-const CLUSTER_BREAK =
-  // CR       LF       | ???              | Control  | Prepend*  (  (   L*        (   V+        | LV        V*        | LVT      ) T*        | L+        | T+        )| RI RI       | \p{ExPi}  (   Extend*    ZWJ       \p{ExPi}  )*|[^ Control CR LF]          ) [Extend ZWJ SpacingMark]*
-  /[\x01\x81][\x02\x82]|[\x01\x02\x81\x82]|[\x03\x83]|[\x07\x87]*(?:(?:[\x09\x89]*(?:[\x0A\x8A]+|[\x0C\x8C][\x0A\x8A]*|[\x0D\x8D])[\x0B\x8B]*|[\x09\x89]+|[\x0B\x8B]+)|[\x06\x86]{2}|[\x80-\xFF](?:[\x04\x84]*[\x05\x85][\x80-\xFF])*|[^\x03\x01\x02\x83\x81\x82])[\x04\x05\x08\x84\x85\x88]*/g;
-
 export function getNextClusterBreak(
   data: Data,
   string: string,
@@ -396,12 +394,12 @@ export function getNextClusterBreak(
 
   if (context.startUnitIndex == string.length) return null;
 
-  CLUSTER_BREAK.lastIndex = context.startPointIndex;
-  CLUSTER_BREAK.exec(context.kind);
+  EGCBREAK.lastIndex = context.startPointIndex;
+  EGCBREAK.exec(context.kind);
 
-  for (let i = context.startPointIndex; i < CLUSTER_BREAK.lastIndex; i++)
+  for (let i = context.startPointIndex; i < EGCBREAK.lastIndex; i++)
     context.startUnitIndex += context.astral.charCodeAt(i) & 1 ? 2 : 1;
-  context.startPointIndex = CLUSTER_BREAK.lastIndex;
+  context.startPointIndex = EGCBREAK.lastIndex;
 
   return context;
 }

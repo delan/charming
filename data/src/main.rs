@@ -14,6 +14,7 @@ mod page;
 mod parse;
 mod pool;
 mod range;
+mod uax29;
 mod ud;
 mod ur;
 
@@ -40,6 +41,7 @@ use crate::na::na_handler;
 use crate::page::PageBits;
 use crate::parse::parse;
 use crate::pool::{Pool, Popularity};
+use crate::uax29::generate_egcbreak;
 use crate::ud::{process_ud_ranges, ud_handler, ud_range_handler};
 use crate::ur::ur_handler;
 
@@ -193,6 +195,10 @@ fn main() -> Result<(), Error> {
     assert_eq!(ud[0xF900], Details::r#static(None, &[], "CJK COMPATIBILITY IDEOGRAPH-", None, "Other Letter (Lo)", "CJK Compatibility Ideographs", "Unicode 1.1", None, None, None, "how? what?", None, &[Bits::KdefinitionExists, Bits::DerivedNameNr2]));
     assert_eq!(ud[0xFE18], Details::r#static("PRESENTATION FORM FOR VERTICAL RIGHT WHITE LENTICULAR BRAKCET", &[("PRESENTATION FORM FOR VERTICAL RIGHT WHITE LENTICULAR BRACKET", Correction)], None, None, "Close Punctuation (Pe)", "Vertical Forms", "Unicode 4.1", None, None, None, None, None, &[]));
     assert_eq!(ud[0xFEFF], Details::r#static("ZERO WIDTH NO-BREAK SPACE", &[("BYTE ORDER MARK", Unicode1), ("BYTE ORDER MARK", Alternate), ("BOM", Abbreviation), ("ZWNBSP", Abbreviation)], None, GraphemeBreak::Control, "Format (Cf)", "Arabic Presentation Forms-B", "Unicode 1.1", None, None, None, None, None, &[]));
+
+    write("egcbreak.ts", |mut sink| {
+        Ok(writeln!(sink, "export const EGCBREAK = /{}/g;", generate_egcbreak()?)?)
+    })?;
 
     let report = popularity.report();
 

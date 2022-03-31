@@ -3,7 +3,6 @@
 /dist/
 
 /src/old.js
-/data/data.string.json
-/data/target/
+/data/
 /helper/
 /minilzo-js/
