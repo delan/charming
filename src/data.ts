@@ -357,7 +357,6 @@ interface ClusterBreaker {
   startUnitIndex: number;
   startPointIndex: number;
   kind: string;
-  astral: string;
 }
 
 export function getNextClusterBreak(
@@ -368,27 +367,21 @@ export function getNextClusterBreak(
   if (context == null) {
     if (string.length == 0) return null;
 
+    const pattern = /[\uD800-\uDBFF][\uDC00-\uDFFF]|[^]/g;
+    let result = null;
+    let kind = "";
+    while ((result = pattern.exec(string))) {
+      const point = stringToPoint(result[0])!;
+      const gb = getGraphemeBreak(data, point) ?? 0;
+      const exp = Number(isExtendedPictographic(data, point));
+      kind += String.fromCharCode((exp << 7) | gb);
+    }
+
     // GB1: sot / Any
     return {
       startUnitIndex: 0,
       startPointIndex: 0,
-      kind: string.replace(
-        /[\uD800-\uDBFF][\uDC00-\uDFFF]|[^]/g,
-        (pointish) => {
-          const point = stringToPoint(pointish)!;
-          const gb = getGraphemeBreak(data, point) ?? 0;
-          const exp = Number(isExtendedPictographic(data, point));
-          return String.fromCharCode((exp << 7) | gb);
-        },
-      ),
-      astral: string.replace(
-        /[\uD800-\uDBFF][\uDC00-\uDFFF]|[^]/g,
-        (pointish) => {
-          const point = stringToPoint(pointish)!;
-          const astral = Number(point > 0xffff);
-          return String.fromCharCode(astral);
-        },
-      ),
+      kind,
     };
   }
 
@@ -398,7 +391,7 @@ export function getNextClusterBreak(
   EGCBREAK.exec(context.kind);
 
   for (let i = context.startPointIndex; i < EGCBREAK.lastIndex; i++)
-    context.startUnitIndex += context.astral.charCodeAt(i) & 1 ? 2 : 1;
+    context.startUnitIndex += string.codePointAt(context.startUnitIndex)! > 0xFFFF ? 2 : 1;
   context.startPointIndex = EGCBREAK.lastIndex;
 
   return context;
