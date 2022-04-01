@@ -389,7 +389,8 @@ export function getNextClusterBreak(
   EGCBREAK.exec(context.kind);
 
   for (let i = context.startPointIndex; i < EGCBREAK.lastIndex; i++)
-    context.startUnitIndex += string.codePointAt(context.startUnitIndex)! > 0xFFFF ? 2 : 1;
+    context.startUnitIndex +=
+      string.codePointAt(context.startUnitIndex)! > 0xffff ? 2 : 1;
   context.startPointIndex = EGCBREAK.lastIndex;
 
   return context;
