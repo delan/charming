@@ -367,11 +367,9 @@ export function getNextClusterBreak(
   if (context == null) {
     if (string.length == 0) return null;
 
-    const pattern = /[\uD800-\uDBFF][\uDC00-\uDFFF]|[^]/g;
-    let result = null;
     let kind = "";
-    while ((result = pattern.exec(string))) {
-      const point = stringToPoint(result[0])!;
+    for (const pointish of string) {
+      const point = stringToPoint(pointish)!;
       const gb = getGraphemeBreak(data, point) ?? 0;
       const exp = Number(isExtendedPictographic(data, point));
       kind += String.fromCharCode((exp << 7) | gb);
