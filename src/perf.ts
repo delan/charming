@@ -42,10 +42,9 @@ function perf0(query: string, h: number) {
 function perf1(data: Data, query: string, h: number) {
   let context = getNextClusterBreak(data!, query);
   if (context == null) return h;
-  let i = context.startPointIndex;
+  let i = context.startUnitIndex;
   while ((context = getNextClusterBreak(data!, query, context)) != null) {
-    for (const egc of query.slice(i, context.startUnitIndex))
-      h = hashString(egc, h);
+    h = hashString(query.slice(i, context.startUnitIndex), h);
     i = context.startUnitIndex;
   }
   return h;
