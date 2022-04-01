@@ -2,6 +2,7 @@ import "core-js/stable";
 import "regenerator-runtime/runtime";
 
 import GraphemeSplitter from "grapheme-splitter";
+import GraphemeIterator from "grapheme-iterator";
 import { Data, fetchAllData, getNextClusterBreak } from "./data";
 
 const splitter = new GraphemeSplitter();
@@ -31,6 +32,14 @@ function perfTest(data: Data, query: string) {
   performance.mark(`>`);
   performance.measure("perf1", "<", ">");
   console.log(h.toString(16));
+
+  h = fnv1a(0);
+  performance.mark(`<`);
+  for (let i = 0; i < 420; i++)
+    h = perf2(query, h);
+  performance.mark(`>`);
+  performance.measure("perf2", "<", ">");
+  console.log(h.toString(16));
 }
 
 function perf0(query: string, h: number) {
@@ -47,6 +56,12 @@ function perf1(data: Data, query: string, h: number) {
     h = hashString(query.slice(i, context.startUnitIndex), h);
     i = context.startUnitIndex;
   }
+  return h;
+}
+
+function perf2(query: string, h: number) {
+  for (const egc of GraphemeIterator(query))
+    h = hashString(egc, h);
   return h;
 }
 
