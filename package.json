@@ -42,7 +42,6 @@
     "css-loader": "2.1.1",
     "file-loader": "4.0.0",
     "glyphhanger": "5.0.0",
-    "grapheme-breaker": "0.3.2",
     "grapheme-iterator": "1.0.0",
     "grapheme-splitter": "1.0.4",
     "html-loader": "0.5.5",
