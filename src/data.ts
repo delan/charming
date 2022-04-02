@@ -3,6 +3,7 @@ import bits from "../data/data.bits.bin";
 import pagebits from "../data/data.pagebits.bin";
 import name from "../data/data.name.bin";
 import aliasc from "../data/data.aliasc.bin";
+import aliasi from "../data/data.aliasi.bin";
 import aliass from "../data/data.aliass.bin";
 import aliast from "../data/data.aliast.bin";
 import dnrp from "../data/data.dnrp.bin";
@@ -35,6 +36,7 @@ export interface Data {
   pagebits: DataView;
   name: DataView;
   aliasc: DataView;
+  aliasi: DataView;
   aliass: DataView;
   aliast: DataView;
   dnrp: DataView;
@@ -80,6 +82,7 @@ export function fetchAllData(): Promise<Data> {
     pagebits,
     name,
     aliasc,
+    aliasi,
     aliass,
     aliast,
     dnrp,
@@ -100,6 +103,7 @@ async function fetchData(...paths: string[]): Promise<Data> {
     pagebits,
     name,
     aliasc,
+    aliasi,
     aliass,
     aliast,
     dnrp,
@@ -119,6 +123,7 @@ async function fetchData(...paths: string[]): Promise<Data> {
     pagebits,
     name,
     aliasc,
+    aliasi,
     aliass,
     aliast,
     dnrp,
@@ -292,6 +297,10 @@ export function getHangulSyllableName(
 
 export function getAliasCount(data: Data, point: number): number {
   return getSparse(Uint8, data.aliasc, 0, point);
+}
+
+export function getAliasBaseIndex(data: Data, point: number): number | null {
+  return getSparse(Uint16, data.aliasi, null, point);
 }
 
 export function getAliasValue(data: Data, aliasIndex: number): string | null {

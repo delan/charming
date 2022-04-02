@@ -35,6 +35,9 @@ import {
   AliasType,
   Data,
   fetchAllData,
+  getAliasBaseIndex,
+  getAliasCount,
+  getAliasType,
   getAliasValue,
   getNameProperty,
   getString,
@@ -128,6 +131,10 @@ function Detail({ search }: { search: () => void }) {
           {pointToName(data, point)}
         </a>
       </p>
+      <AliasList
+        start={getAliasBaseIndex(data, point)}
+        count={getAliasCount(data, point)}
+      />
       <dl>
         <Pair value={pointToString8(point)} label="UTF-8" />
         <Pair value={pointToString16(point)} label="UTF-16" />
@@ -384,6 +391,34 @@ function SubstringMatches({
       <b>{label.slice(i, j)}</b>
       {label.slice(j)}
     </>
+  );
+}
+
+function AliasList({ start, count }: { start: number | null; count: number }) {
+  const result = [];
+
+  if (start == null) return null;
+
+  for (let i = start; i < start + count; i++)
+    result.push(<AliasPair key={i} index={i} />);
+
+  return <ul className="AliasList">{result}</ul>;
+}
+
+function AliasPair({ index }: { index: number }) {
+  const data = useContext(DataContext);
+  const space = " ";
+
+  if (data == null) return null;
+
+  return (
+    <li>
+      <span className="marker">
+        <AliasHint type={getAliasType(data, index)!} />
+        {space}
+      </span>
+      {getAliasValue(data, index)!}
+    </li>
   );
 }
 

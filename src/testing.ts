@@ -15,6 +15,7 @@ export function getData() {
     result.setUint16(start + 2 * 2, 6); // g
   });
   const aliasc = empty;
+  const aliasi = empty;
   const aliass = empty;
   const aliast = empty;
   const dnrp = makeSparseWithDonkeyVote(2 * 2, (result, start) => {
@@ -53,6 +54,7 @@ export function getData() {
     pagebits,
     name,
     aliasc,
+    aliasi,
     aliass,
     aliast,
     dnrp,

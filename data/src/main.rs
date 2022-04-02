@@ -341,14 +341,19 @@ fn derived_name(point: usize) -> Option<String> {
 
 fn write_alias_files(source: &[Details], pool: &Pool) -> Result<(), Error> {
     let mut counts = Vec::default();
+    let mut indices = Vec::default();
     let mut strings = Vec::default();
     let mut types = Vec::default();
+    let mut index = 0u16;
 
     for details in source {
-        counts.push(match details.alias.len() {
+        let count = match details.alias.len() {
             0 => None,
             x => Some(x.try_into().expect("alias count overflow")),
-        });
+        };
+        counts.push(count);
+        indices.push(count.map(|_| index));
+        index = index.checked_add(count.unwrap_or(0).into()).expect("alias index overflow");
         for alias in &details.alias {
             strings.push(pool.r#use(&alias.inner));
             types.push(alias.r#type);
@@ -356,6 +361,8 @@ fn write_alias_files(source: &[Details], pool: &Pool) -> Result<(), Error> {
     }
 
     write_sparse(&counts, "data.aliasc.bin", 0, u8_writer, |&x| x)?;
+
+    write_sparse(&indices, "data.aliasi.bin", 0xFFFF, u16_writer, |&x| x)?;
 
     write("data.aliass.bin", |mut sink| {
         for string in strings {

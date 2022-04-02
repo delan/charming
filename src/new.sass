@@ -109,6 +109,11 @@ body
   * + *
     margin-top: 0.5em
 
+  > .loading
+    font-size: 13em
+    text-align: center
+    color: #C0C0C0
+
   > h1
     font-size: 1.5em
     text-align: center
@@ -128,11 +133,6 @@ body
     > a
       text-decoration: none
       color: #0000FF
-
-  > .loading
-    font-size: 13em
-    text-align: center
-    color: #C0C0C0
 
 .Map
 
@@ -166,6 +166,8 @@ body
         > li
 
           > a
+            // --ascent: calc(#{$choice-cell-size} - (#{$choice-cell-size} - #{$font-size}) / 2)
+            // background: linear-gradient(to bottom, #00ff0080 0 var(--ascent), transparent var(--ascent) 100%)
             $font-size: 1rem
 
             display: block
@@ -182,11 +184,28 @@ body
               vertical-align: middle
 
 .AliasHint
+  line-height: 1
   font-size: 0.75rem
   padding: 0.25rem
   border: 1px solid
   border-radius: 0.5rem
   color: #606060
+
+.AliasList
+  position: relative
+  list-style: ""
+  padding: 0 0 0 3rem
+
+  > li
+    // background: #00ff0080
+    line-height: calc(1px + 0.25rem + 1 * 0.75rem + 0.25rem + 1px)
+
+    > .marker
+      // background: #ff00ff80
+      width: 3rem
+      position: absolute
+      left: 0
+      text-align: left
 
 .choice
   $outline-size: 1px
