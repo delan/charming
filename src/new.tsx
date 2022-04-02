@@ -11,8 +11,9 @@ import React, {
   useContext,
   useRef,
   useMemo,
+  StrictMode,
 } from "react";
-import ReactDOM from "react-dom";
+import ReactDOMClient from "react-dom/client";
 import useLocation from "react-use/lib/useLocation";
 import {
   FixedSizeGrid,
@@ -71,7 +72,7 @@ function Charming() {
   const point = getHashPoint(location.hash, 0);
 
   useEffect(() => void fetchAllData().then(setData), []);
-  useEffect(() => void fixHashPoint(point));
+  useEffect(() => void fixHashPoint(location.hash!, point));
 
   useEffect(() => {
     if (data != null) {
@@ -571,4 +572,9 @@ function pointToName(data: Data, point: number) {
 
 history.scrollRestoration = "manual";
 
-ReactDOM.render(<Charming />, document.querySelector("main"));
+const root = ReactDOMClient.createRoot(document.querySelector("main")!);
+root.render(
+  <StrictMode>
+    <Charming />
+  </StrictMode>,
+);

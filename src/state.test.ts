@@ -28,10 +28,10 @@ test("fixHashPoint calls History#replaceState iff it needs fixing", () => {
   location.hash = "#f";
 
   replaceState.mockClear();
-  fixHashPoint(0xf);
+  fixHashPoint(location.hash, 0xf);
   expect(replaceState).toHaveBeenCalledWith(null, "", "#F");
 
   replaceState.mockClear();
-  fixHashPoint(0xf);
+  fixHashPoint(location.hash, 0xf);
   expect(replaceState).not.toHaveBeenCalled();
 });
