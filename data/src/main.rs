@@ -20,6 +20,7 @@ mod ur;
 
 use std::collections::HashMap;
 use std::convert::TryInto;
+use std::fmt::Debug;
 use std::fs::File;
 use std::io::{BufWriter, Write};
 use std::rc::Rc;
@@ -274,7 +275,7 @@ fn u16_writer(sink: &mut BufWriter<File>, x: u16) -> Result<(), Error> {
     Ok(())
 }
 
-fn write_sparse<T, U: Copy, G: FnMut(&T) -> Option<U>, W: FnMut(&mut BufWriter<File>, U) -> Result<(), Error>>(
+fn write_sparse<T, U: Copy + PartialEq + Debug, G: FnMut(&T) -> Option<U>, W: FnMut(&mut BufWriter<File>, U) -> Result<(), Error>>(
     source: &[T],
     path: &str,
     default: U,
@@ -304,8 +305,9 @@ fn write_sparse<T, U: Copy, G: FnMut(&T) -> Option<U>, W: FnMut(&mut BufWriter<F
         for i in 0..(source.len() / 256) {
             if page_counts[i] > 0 {
                 for j in 0..256 {
-                    writer(&mut sink, getter(&source[i * 256 + j])
-                        .unwrap_or(default))?;
+                    let value = getter(&source[i * 256 + j]);
+                    assert_ne!(value, Some(default));
+                    writer(&mut sink, value.unwrap_or(default))?;
                 }
             }
         }
@@ -343,15 +345,17 @@ fn write_alias_files(source: &[Details], pool: &Pool) -> Result<(), Error> {
     let mut types = Vec::default();
 
     for details in source {
-        counts.push(details.alias.len());
+        counts.push(match details.alias.len() {
+            0 => None,
+            x => Some(x.try_into().expect("alias count overflow")),
+        });
         for alias in &details.alias {
             strings.push(pool.r#use(&alias.inner));
             types.push(alias.r#type);
         }
     }
 
-    write_sparse(&counts, "data.aliasc.bin", 0, u8_writer,
-        |&x| Some(x.try_into().expect("alias count overflow")))?;
+    write_sparse(&counts, "data.aliasc.bin", 0, u8_writer, |&x| x)?;
 
     write("data.aliass.bin", |mut sink| {
         for string in strings {
