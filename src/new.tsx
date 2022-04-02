@@ -337,6 +337,7 @@ function SearchResultLabel({
 
 function AliasHint({ type }: { type: AliasType }) {
   // Unicode 14.0.0 §§ 4.8, 4.9
+  // UTS #51 revision 21 § 2.1
   const title = [
     "correction: corrections for serious problems in the character names",
     "control: ISO 6429 names for C0 and C1 control functions, and other commonly occurring names for control codes",
@@ -344,6 +345,7 @@ function AliasHint({ type }: { type: AliasType }) {
     "figment: several documented labels for C1 control code points which were never actually approved in any standard",
     "abbreviation: commonly occurring abbreviations (acronyms) for control codes, format characters, spaces, and variation selectors",
     "Unicode_1_Name: old names of characters prior to the prohibition of character name changes in Unicode 2.0",
+    "CLDR short name: a name that may change over time, and for emoji, might reflect the preferred depiction more accurately",
   ][type];
 
   return (
