@@ -242,7 +242,8 @@ addEventListener("message", ({ data: { data = cache, query } }) => {
   const result: KeyedSearchResult[] = [
     ...searchByHexadecimal(query),
     ...searchByDecimal(query),
-    ...searchByBreakdown(data, query, 1),
+    // three graphemes allows checking for invisible characters between two visible characters
+    ...searchByBreakdown(data, query, 3),
     ...sortByScore(
       dedupResults([
         ...searchByName(data, query),
