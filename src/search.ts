@@ -26,7 +26,7 @@ interface OtherSearchResult {
 }
 
 interface SearchResultKey {
-  key: number;
+  key: string;
 }
 
 export type KeyedSearchResult = SearchResult & SearchResultKey;

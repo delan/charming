@@ -24,10 +24,7 @@ declare function postMessage(message: any): void;
 
 let cache: Data | null = null;
 
-function* searchByHexadecimal(
-  keyStart: number,
-  query: string,
-): Generator<KeyedSearchResult> {
+function* searchByHexadecimal(query: string): Generator<KeyedSearchResult> {
   const point = parseInt(query, 16);
 
   if (point != point || point < 0) {
@@ -42,13 +39,10 @@ function* searchByHexadecimal(
     return;
   }
 
-  yield { key: keyStart, point, reason: "hex", score: 0 };
+  yield { key: `hex/${point}`, point, reason: "hex", score: 0 };
 }
 
-function* searchByDecimal(
-  keyStart: number,
-  query: string,
-): Generator<KeyedSearchResult> {
+function* searchByDecimal(query: string): Generator<KeyedSearchResult> {
   const point = parseInt(query, 10);
 
   if (point != point || point < 0) {
@@ -63,11 +57,10 @@ function* searchByDecimal(
     return;
   }
 
-  yield { key: keyStart, point, reason: "dec", score: 0 };
+  yield { key: `dec/${point}`, point, reason: "dec", score: 0 };
 }
 
 function* searchByBreakdown(
-  keyStart: number,
   data: Data,
   query: string,
   graphemes: number,
@@ -75,15 +68,16 @@ function* searchByBreakdown(
   let context = getNextClusterBreak(data, query);
   if (context == null) return;
 
-  let count = 0;
+  let graphemeCount = 0;
+  let pointCount = 0;
   let i = context.startPointIndex;
   while ((context = getNextClusterBreak(data, query, context)) != null) {
-    for (const pointString of query.slice(i, context.startUnitIndex)) {
-      const point = stringToPoint(pointString);
+    for (const pointish of query.slice(i, context.startUnitIndex)) {
+      const point = stringToPoint(pointish);
 
       if (point != null) {
         yield {
-          key: keyStart + count,
+          key: `breakdown/${pointCount++}/${point}`,
           point,
           reason: "breakdown",
           score: 0,
@@ -92,14 +86,13 @@ function* searchByBreakdown(
     }
 
     i = context.startUnitIndex;
-    if (++count >= graphemes) {
+    if (++graphemeCount >= graphemes) {
       return;
     }
   }
 }
 
 function* searchByName(
-  keyStart: number,
   data: Data,
   query: string,
 ): Generator<KeyedSearchResult> {
@@ -119,7 +112,7 @@ function* searchByName(
       const search = name.toUpperCase();
       if (search.includes(upper)) {
         const [score, offset] = scoreMatch(search, upper);
-        yield { key: keyStart + point, point, reason: "name", score, offset };
+        yield { key: `nameish/${point}`, point, reason: "name", score, offset };
       }
     }
   }
@@ -129,7 +122,6 @@ function* searchByName(
 }
 
 function* searchByNameAlias(
-  keyStart: number,
   data: Data,
   query: string,
 ): Generator<KeyedSearchResult> {
@@ -153,7 +145,7 @@ function* searchByNameAlias(
         if (search.includes(upper)) {
           const [score, offset] = scoreMatch(search, upper);
           yield {
-            key: keyStart + point,
+            key: `nameish/${point}`,
             point,
             reason: "alias",
             aliasIndex,
@@ -171,7 +163,6 @@ function* searchByNameAlias(
 }
 
 function* searchByUhdef(
-  keyStart: number,
   data: Data,
   query: string,
 ): Generator<KeyedSearchResult> {
@@ -191,7 +182,7 @@ function* searchByUhdef(
       const search = uhdef.toUpperCase();
       if (search.includes(upper)) {
         const [score, offset] = scoreMatch(search, upper);
-        yield { key: keyStart + point, point, reason: "uhdef", score, offset };
+        yield { key: `uhdef/${point}`, point, reason: "uhdef", score, offset };
       }
     }
   }
@@ -236,29 +227,29 @@ function scoreMatch(haystack: string, needle: string): [number, number] {
 }
 
 function sortByScore(results: KeyedSearchResult[]): KeyedSearchResult[] {
-  // sort by score descending, then by key ascending
-  return results.sort((p, q) => q.score - p.score || p.key - q.key);
+  // sort by score descending, then by point ascending
+  return results.sort((p, q) => q.score - p.score || p.point - q.point);
 }
 
 function dedupResults(results: KeyedSearchResult[]): KeyedSearchResult[] {
-  // sort by key ascending, then by score descending, then keep best result for each key
+  // sort by point ascending, then by score descending, then keep best result for each key
   return results
-    .sort((p, q) => p.key - q.key || q.score - p.score)
+    .sort((p, q) => p.point - q.point || q.score - p.score)
     .filter((x, i, xs) => x.key != xs[i - 1]?.key);
 }
 
 addEventListener("message", ({ data: { data = cache, query } }) => {
   const result: KeyedSearchResult[] = [
-    ...searchByHexadecimal(0x220000, query),
-    ...searchByDecimal(0x220001, query),
-    ...searchByBreakdown(0x220002, data, query, 1),
+    ...searchByHexadecimal(query),
+    ...searchByDecimal(query),
+    ...searchByBreakdown(data, query, 1),
     ...sortByScore(
       dedupResults([
-        ...searchByName(0x000000, data, query),
-        ...searchByNameAlias(0x000000, data, query),
+        ...searchByName(data, query),
+        ...searchByNameAlias(data, query),
       ]),
     ),
-    ...sortByScore([...searchByUhdef(0x110000, data, query)]),
+    ...sortByScore([...searchByUhdef(data, query)]),
   ];
 
   cache = data;
