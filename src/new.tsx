@@ -35,7 +35,6 @@ import {
 import {
   AliasType,
   Data,
-  fetchAllData,
   getAliasBaseIndex,
   getAliasCount,
   getAliasType,
@@ -53,6 +52,7 @@ import {
 import { Display } from "./Display";
 import { KeyedSearchResult, search, SearchResult } from "./search";
 import { nullToDefault } from "./default";
+import { fetchAllData } from "./fetch";
 
 const {
   clientWidth: mapContentWidth,

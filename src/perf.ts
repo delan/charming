@@ -3,7 +3,8 @@ import "regenerator-runtime/runtime";
 
 import GraphemeSplitter from "grapheme-splitter";
 import GraphemeIterator from "grapheme-iterator";
-import { Data, fetchAllData, getNextClusterBreak } from "./data";
+import { Data, getNextClusterBreak } from "./data";
+import { fetchAllData } from "./fetch";
 
 const splitter = new GraphemeSplitter();
 const textarea = document.querySelector("textarea")!;
