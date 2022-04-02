@@ -1,4 +1,4 @@
-import { Data } from "./data";
+import { AliasType, Data } from "./data";
 import SearchWorker from "./search.worker";
 
 export type SearchResult = BaseSearchResult &
@@ -18,6 +18,7 @@ interface AliasSearchResult {
   reason: "alias";
   offset: number;
   aliasIndex: number;
+  aliasType: AliasType;
 }
 
 interface OtherSearchResult {

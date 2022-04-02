@@ -6,6 +6,7 @@ import GraphemeSplitter from "grapheme-splitter"; // FIXME Unicode 10.0.0
 import {
   Data,
   getAliasCount,
+  getAliasType,
   getAliasValue,
   getNameExceptNr2,
   getString,
@@ -143,7 +144,7 @@ function* searchByNameAlias(
       const aliasCount = getAliasCount(data, point);
       for (let i = 0; i < aliasCount; i++, aliasIndex++) {
         const name = getAliasValue(data, aliasIndex)!;
-        // const type = getAliasType(data, aliasIndex)!; // TODO
+        const type = getAliasType(data, aliasIndex)!;
 
         const search = name.toUpperCase();
         if (search.includes(upper)) {
@@ -153,6 +154,7 @@ function* searchByNameAlias(
             point,
             reason: "alias",
             aliasIndex,
+            aliasType: type,
             score,
             offset,
           };
