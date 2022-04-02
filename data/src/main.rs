@@ -4,6 +4,7 @@ mod captures;
 mod details;
 mod dynamic;
 mod ed;
+mod et;
 mod gc;
 mod hst;
 mod jamo;
@@ -29,6 +30,7 @@ use crate::block::block_handler;
 use crate::details::{Bits, Details, HangulSyllableType};
 use crate::dynamic::{NAME_RULES, NameRule, hangul_lvt_indices};
 use crate::ed::ed_handler;
+use crate::et::et_handler;
 use crate::gc::gc_handler;
 use crate::hst::hst_handler;
 use crate::jamo::jamo_handler;
@@ -74,7 +76,7 @@ fn main() -> Result<(), Error> {
         &mut ud,
         |sink, captures| ud_handler(&gc_labels, &mut popularity, sink, captures),
         "UnicodeData.txt", "all",
-        r"^(?P<point>[0-9A-F]+);(?P<name>[^;]+);(?P<gc>[^;]+)",
+        r"^(?P<point>[0-9A-F]+);(?P<name>[^;]+);(?P<gc>[^;]+);(?:[^;]*;){7}(?P<nau1>[^;]+)?",
     )?;
 
     let ud_ranges = process_ud_ranges(ud_ranges);
@@ -162,12 +164,26 @@ fn main() -> Result<(), Error> {
         r"^(?P<first>[0-9A-F]+)(?:[.][.](?P<last>[0-9A-F]+))?\s*;\s*Emoji_Presentation(\s|#|$)",
     )?;
 
+    parse(
+        &mut ud,
+        |sink, captures| et_handler(&mut popularity, sink, captures),
+        "emoji-test.txt", None,
+        r"^(?P<points>[0-9A-F]+(?: [0-9A-F]+)*)\s*;\s*fully-qualified\s*# .* E[0-9]+[.][0-9]+ (?P<name>.+)",
+    )?;
+
     println!("Running tests ...");
-    assert_eq!(ud[0x5170], Details::r#static(None, "CJK UNIFIED IDEOGRAPH-", "Other Letter (Lo)", "CJK Unified Ideographs", "Unicode 1.1", None, None, None, "orchid; elegant, graceful", "lán", &[Bits::KdefinitionExists, Bits::DerivedNameNr2]));
-    assert_eq!(ud[0x9FFF], Details::r#static(None, None, "Other Letter (Lo)", "CJK Unified Ideographs", "Unicode 14.0", None, None, None, None, None, &[]));
-    assert_eq!(ud[0xD4DB], Details::r#static(None, "HANGUL SYLLABLE ", "Other Letter (Lo)", "Hangul Syllables", "Unicode 2.0", HangulSyllableType::Lvt, None, (17, 16, 15), None, None, &[Bits::DerivedNameNr1]));
-    assert_eq!(ud[0xD788], Details::r#static(None, "HANGUL SYLLABLE ", "Other Letter (Lo)", "Hangul Syllables", "Unicode 2.0", HangulSyllableType::Lv, None, (18, 20, 0), None, None, &[Bits::DerivedNameNr1]));
-    assert_eq!(ud[0xF900], Details::r#static(None, "CJK COMPATIBILITY IDEOGRAPH-", "Other Letter (Lo)", "CJK Compatibility Ideographs", "Unicode 1.1", None, None, None, "how? what?", None, &[Bits::KdefinitionExists, Bits::DerivedNameNr2]));
+    use crate::details::AliasType::*;
+    assert_eq!(ud[0x0000], Details::r#static(None, &[("NULL", Unicode1), ("NULL", Control), ("NUL", Abbreviation)], None, "Control (Cc)", "Basic Latin", "Unicode 1.1", None, None, None, None, None, &[]));
+    assert_eq!(ud[0x000A], Details::r#static(None, &[("LINE FEED (LF)", Unicode1), ("LINE FEED", Control), ("NEW LINE", Control), ("END OF LINE", Control), ("LF", Abbreviation), ("NL", Abbreviation), ("EOL", Abbreviation)], None, "Control (Cc)", "Basic Latin", "Unicode 1.1", None, None, None, None, None, &[]));
+    assert_eq!(ud[0x0080], Details::r#static(None, &[("PADDING CHARACTER", Figment), ("PAD", Abbreviation)], None, "Control (Cc)", "Latin-1 Supplement", "Unicode 1.1", None, None, None, None, None, &[]));
+    assert_eq!(ud[0x039B], Details::r#static("GREEK CAPITAL LETTER LAMDA", &[("GREEK CAPITAL LETTER LAMBDA", Unicode1)], None, "Uppercase Letter (Lu)", "Greek and Coptic", "Unicode 1.1", None, None, None, None, None, &[]));
+    assert_eq!(ud[0x5170], Details::r#static(None, &[], "CJK UNIFIED IDEOGRAPH-", "Other Letter (Lo)", "CJK Unified Ideographs", "Unicode 1.1", None, None, None, "orchid; elegant, graceful", "lán", &[Bits::KdefinitionExists, Bits::DerivedNameNr2]));
+    assert_eq!(ud[0x9FFF], Details::r#static(None, &[], None, "Other Letter (Lo)", "CJK Unified Ideographs", "Unicode 14.0", None, None, None, None, None, &[]));
+    assert_eq!(ud[0xD4DB], Details::r#static(None, &[], "HANGUL SYLLABLE ", "Other Letter (Lo)", "Hangul Syllables", "Unicode 2.0", HangulSyllableType::Lvt, None, (17, 16, 15), None, None, &[Bits::DerivedNameNr1]));
+    assert_eq!(ud[0xD788], Details::r#static(None, &[], "HANGUL SYLLABLE ", "Other Letter (Lo)", "Hangul Syllables", "Unicode 2.0", HangulSyllableType::Lv, None, (18, 20, 0), None, None, &[Bits::DerivedNameNr1]));
+    assert_eq!(ud[0xF900], Details::r#static(None, &[], "CJK COMPATIBILITY IDEOGRAPH-", "Other Letter (Lo)", "CJK Compatibility Ideographs", "Unicode 1.1", None, None, None, "how? what?", None, &[Bits::KdefinitionExists, Bits::DerivedNameNr2]));
+    assert_eq!(ud[0xFE18], Details::r#static("PRESENTATION FORM FOR VERTICAL RIGHT WHITE LENTICULAR BRAKCET", &[("PRESENTATION FORM FOR VERTICAL RIGHT WHITE LENTICULAR BRACKET", Correction)], None, "Close Punctuation (Pe)", "Vertical Forms", "Unicode 4.1", None, None, None, None, None, &[]));
+    assert_eq!(ud[0xFEFF], Details::r#static("ZERO WIDTH NO-BREAK SPACE", &[("BYTE ORDER MARK", Unicode1), ("BYTE ORDER MARK", Alternate), ("BOM", Abbreviation), ("ZWNBSP", Abbreviation)], None, "Format (Cf)", "Arabic Presentation Forms-B", "Unicode 1.1", None, None, None, None, None, &[]));
 
     let report = popularity.report();
 
@@ -177,21 +193,22 @@ fn main() -> Result<(), Error> {
         Ok(())
     })?;
 
-    let mut pool = Pool::from(&report);
+    let pool = Pool::from(&report);
 
-    write_pool_indices(&ud, &mut pool, "data.name.bin", |x| x.name.map_clone())?;
-    write_pool_indices(&ud, &mut pool, "data.dnrp.bin", |x| x.dnrp.map_clone())?;
-    write_pool_indices(&ud, &mut pool, "data.gc.bin", |x| x.gc.map_clone())?;
-    write_pool_indices(&ud, &mut pool, "data.block.bin", |x| x.block.map_clone())?;
-    write_pool_indices(&ud, &mut pool, "data.age.bin", |x| x.age.map_clone())?;
-    write_pool_indices(&ud, &mut pool, "data.hjsn.bin", |x| x.hjsn.map_clone())?;
-    write_pool_indices(&ud, &mut pool, "data.uhdef.bin", |x| x.uhdef.map_clone())?;
-    write_pool_indices(&ud, &mut pool, "data.uhman.bin", |x| x.uhman.map_clone())?;
+    write_pool_indices(&ud, &pool, "data.name.bin", |x| x.name.map_clone())?;
+    write_pool_indices(&ud, &pool, "data.dnrp.bin", |x| x.dnrp.map_clone())?;
+    write_pool_indices(&ud, &pool, "data.gc.bin", |x| x.gc.map_clone())?;
+    write_pool_indices(&ud, &pool, "data.block.bin", |x| x.block.map_clone())?;
+    write_pool_indices(&ud, &pool, "data.age.bin", |x| x.age.map_clone())?;
+    write_pool_indices(&ud, &pool, "data.hjsn.bin", |x| x.hjsn.map_clone())?;
+    write_pool_indices(&ud, &pool, "data.uhdef.bin", |x| x.uhdef.map_clone())?;
+    write_pool_indices(&ud, &pool, "data.uhman.bin", |x| x.uhman.map_clone())?;
     write_sparse(&ud, "data.bits.bin", 0, u8_writer, |x| if x.bits > 0 { Some(x.bits) } else { None })?;
     write_sparse(&ud, "data.hlvt.bin", 0, u16_writer, |x| x.hlvt.map(|(l, v, t)| {
         assert!(l < (1 << 5) && v < (1 << 5) && t < (1 << 5));
         return (1 << 15 | l << 10 | v << 5 | t) as u16;
     }))?;
+    write_alias_files(&ud, &pool)?;
     write("data.pagebits.bin", |mut sink| {
         for page in ud.chunks(256) {
             let mut value = 0;
@@ -200,6 +217,9 @@ fn main() -> Result<(), Error> {
             }
             if page.iter().filter(|x| x.uhdef.is_some()).count() > 0 {
                 value |= PageBits::HasAnyUhdef as u8;
+            }
+            if page.iter().filter(|x| !x.alias.is_empty()).count() > 0 {
+                value |= PageBits::HasAnyAlias as u8;
             }
             sink.write_u8(value)?;
         }
@@ -238,10 +258,10 @@ fn u16_writer(sink: &mut BufWriter<File>, x: u16) -> Result<(), Error> {
     Ok(())
 }
 
-fn write_sparse<T: Copy, G: FnMut(&Details) -> Option<T>, W: FnMut(&mut BufWriter<File>, T) -> Result<(), Error>>(
-    source: &Vec<Details>,
+fn write_sparse<T, U: Copy, G: FnMut(&T) -> Option<U>, W: FnMut(&mut BufWriter<File>, U) -> Result<(), Error>>(
+    source: &[T],
     path: &str,
-    default: T,
+    default: U,
     mut writer: W,
     mut getter: G,
 ) -> Result<(), Error> {
@@ -280,7 +300,7 @@ fn write_sparse<T: Copy, G: FnMut(&Details) -> Option<T>, W: FnMut(&mut BufWrite
 
 fn write_pool_indices<G: FnMut(&Details) -> Option<Rc<str>>>(
     source: &Vec<Details>,
-    pool: &mut Pool,
+    pool: &Pool,
     path: &str,
     mut getter: G,
 ) -> Result<(), Error> {
@@ -299,4 +319,39 @@ fn derived_name(point: usize) -> Option<String> {
     }
 
     None
+}
+
+fn write_alias_files(source: &[Details], pool: &Pool) -> Result<(), Error> {
+    let mut counts = Vec::default();
+    let mut strings = Vec::default();
+    let mut types = Vec::default();
+
+    for (i, details) in source.iter().enumerate() {
+        counts.push(details.alias.len());
+        for alias in &details.alias {
+            strings.push(pool.r#use(&alias.inner));
+            types.push(alias.r#type);
+        }
+    }
+
+    write_sparse(&counts, "data.aliasc.bin", 0, u8_writer,
+        |&x| Some(x.try_into().expect("alias count overflow")))?;
+
+    write("data.aliass.bin", |mut sink| {
+        for string in strings {
+            u16_writer(&mut sink, string.try_into().expect("string pool overflow"))?;
+        }
+
+        Ok(())
+    })?;
+
+    write("data.aliast.bin", |mut sink| {
+        for r#type in types {
+            u8_writer(&mut sink, r#type as u8)?;
+        }
+
+        Ok(())
+    })?;
+
+    Ok(())
 }

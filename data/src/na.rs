@@ -2,7 +2,7 @@ use failure::Error;
 use regex::Captures;
 
 use crate::captures::CapturesExt;
-use crate::details::Details;
+use crate::details::{Details, Alias};
 use crate::pool::Popularity;
 
 pub(crate) fn na_handler(
@@ -14,9 +14,10 @@ pub(crate) fn na_handler(
     let alias = captures.name_ok("alias")?;
     let r#type = captures.name_ok("type")?;
 
-    if ["figment", "control", "correction"].contains(&r#type) {
-        sink[point].name = Some(popularity.vote(alias));
-    }
+    sink[point].alias.push(Alias {
+        inner: popularity.vote(alias),
+        r#type: r#type.parse()?,
+    });
 
     Ok(())
 }

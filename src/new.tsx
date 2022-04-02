@@ -31,7 +31,14 @@ import {
   getHashPoint,
   fixHashPoint,
 } from "./state";
-import { Data, fetchAllData, getNameProperty, getString } from "./data";
+import {
+  AliasType,
+  Data,
+  fetchAllData,
+  getAliasValue,
+  getNameProperty,
+  getString,
+} from "./data";
 import { pointToString } from "./encoding";
 import {
   pointToYouPlus,
@@ -235,73 +242,118 @@ areEqual);
 
 function SearchResultLabel({
   query,
-  result: { point, reason, offset },
+  result,
 }: {
   query: string;
   result: SearchResult;
 }) {
   const data = useContext(DataContext);
   const space = " ";
+  const { point, reason } = result;
 
-  if (data != null) {
-    switch (reason) {
-      case "hex":
-        return (
-          <>
-            U+<b>{pointToYouPlus(point, "")}</b>
-            {space}
-            {getNameProperty(data, point)}
-          </>
-        );
-      case "dec":
-        return (
-          <>
-            {pointToYouPlus(point)}
-            {space}(<b>{point}</b>
-            <sub>10</sub>){space}
-            {getNameProperty(data, point)}
-          </>
-        );
-      case "breakdown":
-        return (
-          <>
-            {pointToYouPlus(point)}
-            {space}
-            {getNameProperty(data, point)}
-          </>
-        );
-      case "name":
-        return (
-          <>
-            {pointToYouPlus(point)}
-            {space}
-            <SubstringMatches
-              label={getNameProperty(data, point)!}
-              query={query}
-              offset={offset}
-            />
-          </>
-        );
-      case "uhdef":
-        return (
-          <>
-            {pointToYouPlus(point)}
-            {space}
-            <SubstringMatches
-              label={getString(data, "uhdef", point)!}
-              query={query}
-              offset={offset}
-            />
-          </>
-        );
-    }
+  if (data == null)
+    return (
+      <>
+        {pointToYouPlus(point)}
+        {space}???
+      </>
+    );
+
+  let hint =
+    result.reason == "alias" ? (
+      <>
+        {space}
+        <AliasHint type={result.aliasType} />
+        {space}
+      </>
+    ) : (
+      <>{space}</>
+    );
+
+  switch (reason) {
+    case "hex":
+      return (
+        <>
+          U+<b>{pointToYouPlus(point, "")}</b>
+          {hint}
+          {getNameProperty(data, point)}
+        </>
+      );
+    case "dec":
+      return (
+        <>
+          {pointToYouPlus(point)}
+          {space}(<b>{point}</b>
+          <sub>10</sub>){hint}
+          {getNameProperty(data, point)}
+        </>
+      );
+    case "breakdown":
+      return (
+        <>
+          {pointToYouPlus(point)}
+          {hint}
+          {getNameProperty(data, point)}
+        </>
+      );
+    case "name":
+      return (
+        <>
+          {pointToYouPlus(point)}
+          {hint}
+          <SubstringMatches
+            label={getNameProperty(data, point)!}
+            query={query}
+            offset={result.offset}
+          />
+        </>
+      );
+    case "uhdef":
+      return (
+        <>
+          {pointToYouPlus(point)}
+          {hint}
+          <SubstringMatches
+            label={getString(data, reason, point)!}
+            query={query}
+            offset={result.offset}
+          />
+        </>
+      );
+    case "alias":
+      return (
+        <>
+          {pointToYouPlus(point)}
+          {hint}
+          <SubstringMatches
+            label={getAliasValue(data, result.aliasIndex)!}
+            query={query}
+            offset={result.offset}
+          />
+        </>
+      );
   }
+}
+
+function AliasHint({ type }: { type: AliasType }) {
+  // Unicode 14.0.0 §§ 4.8, 4.9
+  // UTS #51 revision 21 § 2.1
+  const title = [
+    "correction: corrections for serious problems in the character names",
+    "control: ISO 6429 names for C0 and C1 control functions, and other commonly occurring names for control codes",
+    "alternate: widely used alternate names for format characters",
+    "figment: several documented labels for C1 control code points which were never actually approved in any standard",
+    "abbreviation: commonly occurring abbreviations (acronyms) for control codes, format characters, spaces, and variation selectors",
+    "Unicode_1_Name: old names of characters prior to the prohibition of character name changes in Unicode 2.0",
+    "CLDR short name: a name that may change over time, and for emoji, might reflect the preferred depiction more accurately",
+  ][type];
 
   return (
-    <>
-      {pointToYouPlus(point)}
-      {space}???
-    </>
+    <small className="AliasHint">
+      <abbr title={title}>
+        {["corr", "ctrl", "alt", "fig", "abbr", "u1", "cldr"][type]}
+      </abbr>
+    </small>
   );
 }
 

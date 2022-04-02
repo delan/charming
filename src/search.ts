@@ -1,16 +1,35 @@
-import { Data } from "./data";
+import { AliasType, Data } from "./data";
 import SearchWorker from "./search.worker";
 
-export interface SearchResult {
+export type SearchResult = BaseSearchResult &
+  (NameishSearchResult | AliasSearchResult | OtherSearchResult);
+
+interface BaseSearchResult {
   point: number;
-  reason: "hex" | "dec" | "breakdown" | "name" | "uhdef";
   score: number;
-  offset: number | null;
 }
 
-export interface KeyedSearchResult extends SearchResult {
+interface NameishSearchResult {
+  reason: "name" | "uhdef";
+  offset: number;
+}
+
+interface AliasSearchResult {
+  reason: "alias";
+  offset: number;
+  aliasIndex: number;
+  aliasType: AliasType;
+}
+
+interface OtherSearchResult {
+  reason: "hex" | "dec" | "breakdown";
+}
+
+interface SearchResultKey {
   key: number;
 }
+
+export type KeyedSearchResult = SearchResult & SearchResultKey;
 
 let worker = new SearchWorker();
 let listener: ((event: MessageEvent) => void) | null = null;
