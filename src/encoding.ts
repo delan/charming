@@ -37,3 +37,12 @@ export function stringToUnit16(string: string): number {
 export function isSurrogate(point: number): boolean {
   return (point & 0xfffff800) == 0xd800;
 }
+
+export function pointLengthUnits16(point: number): 1 | 2 {
+  if (point > 0x10ffff || isSurrogate(point)) throw new RangeError();
+  return point > 0xffff ? 2 : 1;
+}
+
+export function pointsToString(points: number[]): string {
+  return points.map((x) => pointToString(x)).join("");
+}

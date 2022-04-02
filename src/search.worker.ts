@@ -1,14 +1,13 @@
 import "core-js/stable";
 import "regenerator-runtime/runtime";
 
-import GraphemeSplitter from "grapheme-splitter"; // FIXME Unicode 10.0.0
-
 import {
   Data,
   getAliasCount,
   getAliasType,
   getAliasValue,
   getNameExceptNr2,
+  getNextClusterBreak,
   getString,
   hasAnyAlias,
   hasAnyNameExceptNr2,
@@ -24,7 +23,6 @@ export default {} as typeof Worker & { new (): Worker };
 declare function postMessage(message: any): void;
 
 let cache: Data | null = null;
-const splitter = new GraphemeSplitter();
 
 function* searchByHexadecimal(
   keyStart: number,
@@ -70,18 +68,22 @@ function* searchByDecimal(
 
 function* searchByBreakdown(
   keyStart: number,
+  data: Data,
   query: string,
   graphemes: number,
 ): Generator<KeyedSearchResult> {
-  let i = 0;
+  let context = getNextClusterBreak(data, query);
+  if (context == null) return;
 
-  for (const graphemeCluster of splitter.iterateGraphemes(query)) {
-    for (const pointString of graphemeCluster) {
+  let count = 0;
+  let i = context.startPointIndex;
+  while ((context = getNextClusterBreak(data, query, context)) != null) {
+    for (const pointString of query.slice(i, context.startUnitIndex)) {
       const point = stringToPoint(pointString);
 
       if (point != null) {
         yield {
-          key: keyStart + i,
+          key: keyStart + count,
           point,
           reason: "breakdown",
           score: 0,
@@ -89,7 +91,8 @@ function* searchByBreakdown(
       }
     }
 
-    if (++i >= graphemes) {
+    i = context.startUnitIndex;
+    if (++count >= graphemes) {
       return;
     }
   }
@@ -248,7 +251,7 @@ addEventListener("message", ({ data: { data = cache, query } }) => {
   const result: KeyedSearchResult[] = [
     ...searchByHexadecimal(0x220000, query),
     ...searchByDecimal(0x220001, query),
-    ...searchByBreakdown(0x220002, query, 3),
+    ...searchByBreakdown(0x220002, data, query, 1),
     ...sortByScore(
       dedupResults([
         ...searchByName(0x000000, data, query),

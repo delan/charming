@@ -5,6 +5,7 @@ mod details;
 mod dynamic;
 mod ed;
 mod et;
+mod gbp;
 mod gc;
 mod hst;
 mod jamo;
@@ -13,6 +14,7 @@ mod page;
 mod parse;
 mod pool;
 mod range;
+mod uax29;
 mod ud;
 mod ur;
 
@@ -27,10 +29,11 @@ use failure::Error;
 
 use crate::age::age_handler;
 use crate::block::block_handler;
-use crate::details::{Bits, Details, HangulSyllableType};
+use crate::details::{Bits, Details, HangulSyllableType, GraphemeBreak};
 use crate::dynamic::{NAME_RULES, NameRule, hangul_lvt_indices};
 use crate::ed::ed_handler;
 use crate::et::et_handler;
+use crate::gbp::gbp_handler;
 use crate::gc::gc_handler;
 use crate::hst::hst_handler;
 use crate::jamo::jamo_handler;
@@ -38,6 +41,7 @@ use crate::na::na_handler;
 use crate::page::PageBits;
 use crate::parse::parse;
 use crate::pool::{Pool, Popularity};
+use crate::uax29::generate_egcbreak;
 use crate::ud::{process_ud_ranges, ud_handler, ud_range_handler};
 use crate::ur::ur_handler;
 
@@ -161,7 +165,7 @@ fn main() -> Result<(), Error> {
         &mut ud,
         ed_handler,
         "emoji-data.txt", None,
-        r"^(?P<first>[0-9A-F]+)(?:[.][.](?P<last>[0-9A-F]+))?\s*;\s*Emoji_Presentation(\s|#|$)",
+        r"^(?P<first>[0-9A-F]+)(?:[.][.](?P<last>[0-9A-F]+))?\s*;\s*(?P<property>Emoji_Presentation|Extended_Pictographic)(\s|#|$)",
     )?;
 
     parse(
@@ -171,19 +175,30 @@ fn main() -> Result<(), Error> {
         r"^(?P<points>[0-9A-F]+(?: [0-9A-F]+)*)\s*;\s*fully-qualified\s*# .* E[0-9]+[.][0-9]+ (?P<name>.+)",
     )?;
 
+    parse(
+        &mut ud,
+        |sink, captures| gbp_handler(sink, captures),
+        "GraphemeBreakProperty.txt", None,
+        r"^(?P<first>[0-9A-F]+)(?:[.][.](?P<last>[0-9A-F]+))?\s*;\s*(?P<value>[^ ]+)",
+    )?;
+
     println!("Running tests ...");
     use crate::details::AliasType::*;
-    assert_eq!(ud[0x0000], Details::r#static(None, &[("NULL", Unicode1), ("NULL", Control), ("NUL", Abbreviation)], None, "Control (Cc)", "Basic Latin", "Unicode 1.1", None, None, None, None, None, &[]));
-    assert_eq!(ud[0x000A], Details::r#static(None, &[("LINE FEED (LF)", Unicode1), ("LINE FEED", Control), ("NEW LINE", Control), ("END OF LINE", Control), ("LF", Abbreviation), ("NL", Abbreviation), ("EOL", Abbreviation)], None, "Control (Cc)", "Basic Latin", "Unicode 1.1", None, None, None, None, None, &[]));
-    assert_eq!(ud[0x0080], Details::r#static(None, &[("PADDING CHARACTER", Figment), ("PAD", Abbreviation)], None, "Control (Cc)", "Latin-1 Supplement", "Unicode 1.1", None, None, None, None, None, &[]));
-    assert_eq!(ud[0x039B], Details::r#static("GREEK CAPITAL LETTER LAMDA", &[("GREEK CAPITAL LETTER LAMBDA", Unicode1)], None, "Uppercase Letter (Lu)", "Greek and Coptic", "Unicode 1.1", None, None, None, None, None, &[]));
-    assert_eq!(ud[0x5170], Details::r#static(None, &[], "CJK UNIFIED IDEOGRAPH-", "Other Letter (Lo)", "CJK Unified Ideographs", "Unicode 1.1", None, None, None, "orchid; elegant, graceful", "lán", &[Bits::KdefinitionExists, Bits::DerivedNameNr2]));
-    assert_eq!(ud[0x9FFF], Details::r#static(None, &[], None, "Other Letter (Lo)", "CJK Unified Ideographs", "Unicode 14.0", None, None, None, None, None, &[]));
-    assert_eq!(ud[0xD4DB], Details::r#static(None, &[], "HANGUL SYLLABLE ", "Other Letter (Lo)", "Hangul Syllables", "Unicode 2.0", HangulSyllableType::Lvt, None, (17, 16, 15), None, None, &[Bits::DerivedNameNr1]));
-    assert_eq!(ud[0xD788], Details::r#static(None, &[], "HANGUL SYLLABLE ", "Other Letter (Lo)", "Hangul Syllables", "Unicode 2.0", HangulSyllableType::Lv, None, (18, 20, 0), None, None, &[Bits::DerivedNameNr1]));
-    assert_eq!(ud[0xF900], Details::r#static(None, &[], "CJK COMPATIBILITY IDEOGRAPH-", "Other Letter (Lo)", "CJK Compatibility Ideographs", "Unicode 1.1", None, None, None, "how? what?", None, &[Bits::KdefinitionExists, Bits::DerivedNameNr2]));
-    assert_eq!(ud[0xFE18], Details::r#static("PRESENTATION FORM FOR VERTICAL RIGHT WHITE LENTICULAR BRAKCET", &[("PRESENTATION FORM FOR VERTICAL RIGHT WHITE LENTICULAR BRACKET", Correction)], None, "Close Punctuation (Pe)", "Vertical Forms", "Unicode 4.1", None, None, None, None, None, &[]));
-    assert_eq!(ud[0xFEFF], Details::r#static("ZERO WIDTH NO-BREAK SPACE", &[("BYTE ORDER MARK", Unicode1), ("BYTE ORDER MARK", Alternate), ("BOM", Abbreviation), ("ZWNBSP", Abbreviation)], None, "Format (Cf)", "Arabic Presentation Forms-B", "Unicode 1.1", None, None, None, None, None, &[]));
+    assert_eq!(ud[0x0000], Details::r#static(None, &[("NULL", Unicode1), ("NULL", Control), ("NUL", Abbreviation)], None, GraphemeBreak::Control, "Control (Cc)", "Basic Latin", "Unicode 1.1", None, None, None, None, None, &[]));
+    assert_eq!(ud[0x000A], Details::r#static(None, &[("LINE FEED (LF)", Unicode1), ("LINE FEED", Control), ("NEW LINE", Control), ("END OF LINE", Control), ("LF", Abbreviation), ("NL", Abbreviation), ("EOL", Abbreviation)], None, GraphemeBreak::Lf, "Control (Cc)", "Basic Latin", "Unicode 1.1", None, None, None, None, None, &[]));
+    assert_eq!(ud[0x0080], Details::r#static(None, &[("PADDING CHARACTER", Figment), ("PAD", Abbreviation)], None, GraphemeBreak::Control, "Control (Cc)", "Latin-1 Supplement", "Unicode 1.1", None, None, None, None, None, &[]));
+    assert_eq!(ud[0x039B], Details::r#static("GREEK CAPITAL LETTER LAMDA", &[("GREEK CAPITAL LETTER LAMBDA", Unicode1)], None, None, "Uppercase Letter (Lu)", "Greek and Coptic", "Unicode 1.1", None, None, None, None, None, &[]));
+    assert_eq!(ud[0x5170], Details::r#static(None, &[], "CJK UNIFIED IDEOGRAPH-", None, "Other Letter (Lo)", "CJK Unified Ideographs", "Unicode 1.1", None, None, None, "orchid; elegant, graceful", "lán", &[Bits::KdefinitionExists, Bits::DerivedNameNr2]));
+    assert_eq!(ud[0x9FFF], Details::r#static(None, &[], None, None, "Other Letter (Lo)", "CJK Unified Ideographs", "Unicode 14.0", None, None, None, None, None, &[]));
+    assert_eq!(ud[0xD4DB], Details::r#static(None, &[], "HANGUL SYLLABLE ", GraphemeBreak::HangulLVT, "Other Letter (Lo)", "Hangul Syllables", "Unicode 2.0", HangulSyllableType::Lvt, None, (17, 16, 15), None, None, &[Bits::DerivedNameNr1]));
+    assert_eq!(ud[0xD788], Details::r#static(None, &[], "HANGUL SYLLABLE ", GraphemeBreak::HangulLV, "Other Letter (Lo)", "Hangul Syllables", "Unicode 2.0", HangulSyllableType::Lv, None, (18, 20, 0), None, None, &[Bits::DerivedNameNr1]));
+    assert_eq!(ud[0xF900], Details::r#static(None, &[], "CJK COMPATIBILITY IDEOGRAPH-", None, "Other Letter (Lo)", "CJK Compatibility Ideographs", "Unicode 1.1", None, None, None, "how? what?", None, &[Bits::KdefinitionExists, Bits::DerivedNameNr2]));
+    assert_eq!(ud[0xFE18], Details::r#static("PRESENTATION FORM FOR VERTICAL RIGHT WHITE LENTICULAR BRAKCET", &[("PRESENTATION FORM FOR VERTICAL RIGHT WHITE LENTICULAR BRACKET", Correction)], None, None, "Close Punctuation (Pe)", "Vertical Forms", "Unicode 4.1", None, None, None, None, None, &[]));
+    assert_eq!(ud[0xFEFF], Details::r#static("ZERO WIDTH NO-BREAK SPACE", &[("BYTE ORDER MARK", Unicode1), ("BYTE ORDER MARK", Alternate), ("BOM", Abbreviation), ("ZWNBSP", Abbreviation)], None, GraphemeBreak::Control, "Format (Cf)", "Arabic Presentation Forms-B", "Unicode 1.1", None, None, None, None, None, &[]));
+
+    write("egcbreak.ts", |mut sink| {
+        Ok(writeln!(sink, "export const EGCBREAK = /{}/g;", generate_egcbreak()?)?)
+    })?;
 
     let report = popularity.report();
 
@@ -208,6 +223,7 @@ fn main() -> Result<(), Error> {
         assert!(l < (1 << 5) && v < (1 << 5) && t < (1 << 5));
         return (1 << 15 | l << 10 | v << 5 | t) as u16;
     }))?;
+    write_sparse(&ud, "data.gb.bin", 0, u8_writer, |x| x.gb.map(|x| x as u8))?;
     write_alias_files(&ud, &pool)?;
     write("data.pagebits.bin", |mut sink| {
         for page in ud.chunks(256) {
@@ -326,7 +342,7 @@ fn write_alias_files(source: &[Details], pool: &Pool) -> Result<(), Error> {
     let mut strings = Vec::default();
     let mut types = Vec::default();
 
-    for (i, details) in source.iter().enumerate() {
+    for details in source {
         counts.push(details.alias.len());
         for alias in &details.alias {
             strings.push(pool.r#use(&alias.inner));

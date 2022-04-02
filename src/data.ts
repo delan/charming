@@ -6,6 +6,7 @@ import aliasc from "../data/data.aliasc.bin";
 import aliass from "../data/data.aliass.bin";
 import aliast from "../data/data.aliast.bin";
 import dnrp from "../data/data.dnrp.bin";
+import gb from "../data/data.gb.bin";
 import gc from "../data/data.gc.bin";
 import block from "../data/data.block.bin";
 import age from "../data/data.age.bin";
@@ -14,7 +15,10 @@ import hjsn from "../data/data.hjsn.bin";
 import uhdef from "../data/data.uhdef.bin";
 import uhman from "../data/data.uhman.bin";
 
+import { EGCBREAK } from "../data/egcbreak";
+
 import { pointToYouPlus } from "./formatting";
+import { stringToPoint } from "./encoding";
 
 export type StringField =
   | "dnrp"
@@ -34,6 +38,7 @@ export interface Data {
   aliass: DataView;
   aliast: DataView;
   dnrp: DataView;
+  gb: DataView;
   gc: DataView;
   block: DataView;
   age: DataView;
@@ -53,6 +58,22 @@ export enum AliasType {
   Cldr = 6,
 }
 
+export enum GraphemeBreak {
+  Cr = 1,
+  Lf = 2,
+  Control = 3,
+  Extend = 4,
+  Zwj = 5,
+  RegionalIndicator = 6,
+  Prepend = 7,
+  SpacingMark = 8,
+  HangulL = 9,
+  HangulV = 10,
+  HangulT = 11,
+  HangulLV = 12,
+  HangulLVT = 13,
+}
+
 export function fetchAllData(): Promise<Data> {
   return fetchData(
     bits,
@@ -62,6 +83,7 @@ export function fetchAllData(): Promise<Data> {
     aliass,
     aliast,
     dnrp,
+    gb,
     gc,
     block,
     age,
@@ -81,6 +103,7 @@ async function fetchData(...paths: string[]): Promise<Data> {
     aliass,
     aliast,
     dnrp,
+    gb,
     gc,
     block,
     age,
@@ -99,6 +122,7 @@ async function fetchData(...paths: string[]): Promise<Data> {
     aliass,
     aliast,
     dnrp,
+    gb,
     gc,
     block,
     age,
@@ -124,12 +148,12 @@ type SparseMemberType = {
 const Uint8: SparseMemberType = { method: "getUint8", len: 1 };
 const Uint16: SparseMemberType = { method: "getUint16", len: 2 };
 
-function getSparse(
+function getSparse<T>(
   ty: SparseMemberType,
   field: DataView,
-  def: number,
+  def: T,
   point: number,
-): number {
+): number | T {
   const page_offset = field.getUint16(Math.floor(point / 256) * 2);
   if (page_offset == 0xffff) return def;
 
@@ -282,6 +306,13 @@ export function getAliasType(data: Data, aliasIndex: number): AliasType | null {
   return data.aliast[ty.method](offset);
 }
 
+export function getGraphemeBreak(
+  data: Data,
+  point: number,
+): GraphemeBreak | null {
+  return getSparse(Uint8, data.gb, null, point);
+}
+
 export function kDefinitionExists(data: Data, point: number): boolean {
   return getFlag(data, 0, point);
 }
@@ -306,6 +337,10 @@ export function hasDerivedNameNr2(data: Data, point: number): boolean {
   return getFlag(data, 5, point);
 }
 
+export function isExtendedPictographic(data: Data, point: number): boolean {
+  return getFlag(data, 6, point);
+}
+
 export function hasAnyNameExceptNr2(data: Data, page: number): boolean {
   return getPageFlag(data, 0, page);
 }
@@ -316,4 +351,47 @@ export function hasAnyUhdef(data: Data, page: number): boolean {
 
 export function hasAnyAlias(data: Data, page: number): boolean {
   return getPageFlag(data, 2, page);
+}
+
+interface ClusterBreaker {
+  startUnitIndex: number;
+  startPointIndex: number;
+  kind: string;
+}
+
+export function getNextClusterBreak(
+  data: Data,
+  string: string,
+  context: ClusterBreaker | null = null,
+): ClusterBreaker | null {
+  if (context == null) {
+    if (string.length == 0) return null;
+
+    let kind = "";
+    for (const pointish of string) {
+      const point = stringToPoint(pointish)!;
+      const gb = getGraphemeBreak(data, point) ?? 0;
+      const exp = Number(isExtendedPictographic(data, point));
+      kind += String.fromCharCode((exp << 7) | gb);
+    }
+
+    // GB1: sot / Any
+    return {
+      startUnitIndex: 0,
+      startPointIndex: 0,
+      kind,
+    };
+  }
+
+  if (context.startUnitIndex == string.length) return null;
+
+  EGCBREAK.lastIndex = context.startPointIndex;
+  EGCBREAK.exec(context.kind);
+
+  for (let i = context.startPointIndex; i < EGCBREAK.lastIndex; i++)
+    context.startUnitIndex +=
+      string.codePointAt(context.startUnitIndex)! > 0xffff ? 2 : 1;
+  context.startPointIndex = EGCBREAK.lastIndex;
+
+  return context;
 }

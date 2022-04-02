@@ -9,6 +9,7 @@ const config = {
   entry: {
     old: "./src/old.js",
     new: "./src/new.tsx",
+    perf: "./src/perf.ts",
   },
   output: {
     filename: "[contenthash]/[name].js",
@@ -100,6 +101,11 @@ const config = {
       filename: "index.html",
       template: "src/new.html",
       chunks: ["new"],
+    }),
+    new HtmlPlugin({
+      filename: "perf.html",
+      template: "src/perf.html",
+      chunks: ["perf"],
     }),
   ],
 };
