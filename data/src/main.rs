@@ -204,7 +204,9 @@ fn main() -> Result<(), Error> {
     let report = popularity.report();
 
     write("data.string.json", |mut sink| {
-        write!(sink, "{}", serde_json::to_string(&report)?)?;
+        // prevent webpack from thinking there are >>1e4 exports
+        // (this is probably harmless, but seems good to avoid)
+        write!(sink, "[{}]", serde_json::to_string(&report)?)?;
 
         Ok(())
     })?;

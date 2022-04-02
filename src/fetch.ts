@@ -60,7 +60,9 @@ async function fetchData(...paths: string[]): Promise<Data> {
   ] = await Promise.all(paths.map(fetchDataView));
 
   return {
-    string,
+    // prevent webpack from thinking there are >>1e4 exports
+    // (this is probably harmless, but seems good to avoid)
+    string: string[0],
     bits,
     pagebits,
     name,
