@@ -34,11 +34,12 @@ export function getHashPoint(hash: string | undefined, or: any) {
   return point;
 }
 
-export function fixHashPoint(point: number): void {
-  const hash = toFragment(point);
+export function fixHashPoint(hash: string, point: number): void {
+  const expected = toFragment(point);
+  const actual = hash;
 
-  if (hash != location.hash) {
-    history.replaceState(null, "", hash);
+  if (actual != expected) {
+    history.replaceState(null, "", expected);
   }
 }
 

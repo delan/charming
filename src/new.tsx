@@ -71,7 +71,7 @@ function Charming() {
   const point = getHashPoint(location.hash, 0);
 
   useEffect(() => void fetchAllData().then(setData), []);
-  useEffect(() => void fixHashPoint(point));
+  useEffect(() => void fixHashPoint(location.hash!, point));
 
   useEffect(() => {
     if (data != null) {
