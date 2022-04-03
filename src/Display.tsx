@@ -7,9 +7,10 @@ import { Data, isSpaceSeparator, isAnyMark, isEmojiPresentation } from "./data";
 
 export function Display({ points }: { points: number[] }) {
   const data = useContext(DataContext);
+  const className = (...xs: string[]) => ["Display", ...xs].join(" ");
 
   if (points.length > 1) {
-    return <span className="sequence">{pointsToString(points)}</span>;
+    return <span className={className("sequence")}>{pointsToString(points)}</span>;
   }
 
   const point = points[0];
@@ -17,7 +18,7 @@ export function Display({ points }: { points: number[] }) {
 
   if (tofu != null) {
     return (
-      <span className="synthetic tofu">
+      <span className={className("synthetic", "tofu")}>
         {[...tofu].map((x, i) => (
           <span key={i}>{x}</span>
         ))}
@@ -29,7 +30,7 @@ export function Display({ points }: { points: number[] }) {
 
   if (diagonal != null) {
     return (
-      <span className="synthetic diagonal">
+      <span className={className("synthetic", "diagonal")}>
         {[...diagonal].map((x, i) => (
           <span key={i}>{x}</span>
         ))}
@@ -40,17 +41,17 @@ export function Display({ points }: { points: number[] }) {
   const substitute = pointToSubstitute(data, point);
 
   if (substitute != null) {
-    return <span className="synthetic substitute">{substitute}</span>;
+    return <span className={className("synthetic", "substitute")}>{substitute}</span>;
   }
 
   if (data != null) {
     // FIXME eosrei/twemoji-color-font#39
     if (isEmojiPresentation(data, point)) {
-      return <span className="emoji">{pointToString(point)}</span>;
+      return <span className={className("emoji")}>{pointToString(point)}</span>;
     }
   }
 
-  return <>{pointToString(point)}</>;
+  return <span className={className()}>{pointToString(point)}</span>;
 }
 
 // see dist/scratch/edge-points.html

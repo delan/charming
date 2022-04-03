@@ -121,7 +121,6 @@ body
   > a
     display: block
     margin: 0
-    font-family: $display-font
     text-align: center
     text-decoration: none
     color: inherit
@@ -229,7 +228,6 @@ body
 
   font-size: $choice-glyph-size
   line-height: $choice-cell-size/$choice-glyph-size
-  font-family: $display-font
   text-align: center
   text-decoration: none
   color: black
@@ -241,40 +239,43 @@ body
   &.active
     background: #C0C0C0
 
-    > .synthetic
+    > .Display.synthetic
       color: #606060
 
-.synthetic
-  color: #A0A0A0
+.Display
+  font-family: $display-font
 
-  &.tofu
-    font-size: 0.5em
-    font-family: monospace, monospace
+  &.emoji
+    // FIXME eosrei/twemoji-color-font#39
+    font-family: Twitter Color Emoji, $display-font
 
-    > span
-      position: relative
+  &.synthetic
+    color: #A0A0A0
 
-    > span:first-child:nth-last-child(4)
-      top: (-7em/12)
-      left: 1ch
+    &.tofu
+      font-size: 0.5em
+      font-family: monospace, monospace
 
-      + span
+      > span
+        position: relative
+
+      > span:first-child:nth-last-child(4)
         top: (-7em/12)
         left: 1ch
 
         + span
-          top: (3em/12)
-          left: -1ch
+          top: (-7em/12)
+          left: 1ch
 
           + span
             top: (3em/12)
             left: -1ch
 
-    > span:first-child:nth-last-child(6)
-      top: (-7em/12)
-      left: 1.5ch
+            + span
+              top: (3em/12)
+              left: -1ch
 
-      + span
+      > span:first-child:nth-last-child(6)
         top: (-7em/12)
         left: 1.5ch
 
@@ -283,8 +284,8 @@ body
           left: 1.5ch
 
           + span
-            top: (3em/12)
-            left: -1.5ch
+            top: (-7em/12)
+            left: 1.5ch
 
             + span
               top: (3em/12)
@@ -294,52 +295,52 @@ body
                 top: (3em/12)
                 left: -1.5ch
 
-  &.diagonal
-    font-size: 0.5em
-    font-family: monospace, monospace
+                + span
+                  top: (3em/12)
+                  left: -1.5ch
 
-    > span:first-child:nth-last-child(2)
-      vertical-align: (2em/12)
+    &.diagonal
+      font-size: 0.5em
+      font-family: monospace, monospace
 
-      + span
-        vertical-align: (-1em/12)
-
-    > span:first-child:nth-last-child(3)
-      vertical-align: (4em/12)
-
-      + span
-        vertical-align: (1em/12)
-
-        + span
-          vertical-align: (-2em/12)
-
-    > span:first-child:nth-last-child(4)
-      vertical-align: (5em/12)
-
-      + span
+      > span:first-child:nth-last-child(2)
         vertical-align: (2em/12)
 
         + span
           vertical-align: (-1em/12)
 
-          + span
-            vertical-align: (-4em/12)
-
-    > span:first-child:nth-last-child(5)
-      vertical-align: (5em/12)
-
-      + span
-        vertical-align: (3em/12)
+      > span:first-child:nth-last-child(3)
+        vertical-align: (4em/12)
 
         + span
           vertical-align: (1em/12)
 
           + span
+            vertical-align: (-2em/12)
+
+      > span:first-child:nth-last-child(4)
+        vertical-align: (5em/12)
+
+        + span
+          vertical-align: (2em/12)
+
+          + span
             vertical-align: (-1em/12)
 
             + span
-              vertical-align: (-3em/12)
+              vertical-align: (-4em/12)
 
-.emoji
-  // FIXME eosrei/twemoji-color-font#39
-  font-family: Twitter Color Emoji, $display-font
+      > span:first-child:nth-last-child(5)
+        vertical-align: (5em/12)
+
+        + span
+          vertical-align: (3em/12)
+
+          + span
+            vertical-align: (1em/12)
+
+            + span
+              vertical-align: (-1em/12)
+
+              + span
+                vertical-align: (-3em/12)
