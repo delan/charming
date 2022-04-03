@@ -42,6 +42,7 @@ import {
   getAliasValue,
   getNameProperty,
   getString,
+  isEmoji,
   isEmojiPresentation,
 } from "./data";
 import { pointsToString } from "./encoding";
@@ -148,7 +149,7 @@ function Detail({ search }: { search: () => void }) {
         <a href={toFragment(points)} onClick={search}>
           {ifSequence(
             points,
-            (_) => "FIXME",
+            (_) => "(sequence)",
             (x) => pointToName(data, x),
           )}
         </a>
@@ -168,6 +169,7 @@ function Detail({ search }: { search: () => void }) {
 
 function PointDetails({ point }: { point: number }) {
   const data = useContext(DataContext)!;
+  const emoji = isEmoji(data, point);
 
   return (
     <>
@@ -185,10 +187,13 @@ function PointDetails({ point }: { point: number }) {
         <StringPair field="hjsn" label="Hangul Jamo short name" />
         <StringPair field="uhdef" label="Unihan kDefinition" />
         <StringPair field="uhman" label="Unihan kMandarin" />
-        <dt className="compact">Emoji_Presentation</dt>
-        <dd className="compact">
-          {isEmojiPresentation(data, point) ? "Yes" : "No"}
-        </dd>
+        {emoji && <dt>Emoji properties</dt>}
+        {emoji && (
+          <dd>
+            Emoji_Presentation?{" "}
+            {isEmojiPresentation(data, point) ? <>Yes</> : <strong>No</strong>}
+          </dd>
+        )}
       </dl>
     </>
   );
@@ -401,7 +406,7 @@ function SearchResultLabel({
         <>
           {pointsToYouPlus(points)}
           {space}
-          {`FIXME`}
+          {`(sequence)`}
         </>
       );
     case "name":
