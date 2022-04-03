@@ -1,7 +1,8 @@
 import "core-js/stable";
 import "regenerator-runtime/runtime";
 
-import { fetchAllData, getString, kDefinitionExists, isEmojiPresentation, isSpaceSeparator, getOldName } from "./data";
+import { getString, kDefinitionExists, isEmojiPresentation, isSpaceSeparator, getOldName } from "./data";
+import { fetchAllData } from "./fetch";
 import { pointToString, stringToPoint } from "./encoding";
 import { toHexadecimal, pointToYouPlus, pointToString16, pointToString8, pointToEntity10 } from "./formatting";
 import { pointToDiagonal, pointToSubstitute } from "./Display";
