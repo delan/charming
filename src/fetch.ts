@@ -1,5 +1,6 @@
 import string from "../data/data.string.json";
 import bits from "../data/data.bits.bin";
+import ebits from "../data/data.ebits.bin";
 import pagebits from "../data/data.pagebits.bin";
 import name from "../data/data.name.bin";
 import aliasc from "../data/data.aliasc.bin";
@@ -21,6 +22,7 @@ import { Data } from "./data";
 export function fetchAllData(): Promise<Data> {
   return fetchData(
     bits,
+    ebits,
     pagebits,
     name,
     aliasc,
@@ -42,6 +44,7 @@ export function fetchAllData(): Promise<Data> {
 async function fetchData(...paths: string[]): Promise<Data> {
   const [
     bits,
+    ebits,
     pagebits,
     name,
     aliasc,
@@ -64,6 +67,7 @@ async function fetchData(...paths: string[]): Promise<Data> {
     // (this is probably harmless, but seems good to avoid)
     string: string[0],
     bits,
+    ebits,
     pagebits,
     name,
     aliasc,

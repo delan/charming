@@ -3,14 +3,33 @@ import React, { useContext } from "react";
 import { pointToString, isSurrogate, pointsToString } from "./encoding";
 import { pointToTofu } from "./formatting";
 import { DataContext } from "./state";
-import { Data, isSpaceSeparator, isAnyMark, isEmojiPresentation } from "./data";
+import {
+  Data,
+  isSpaceSeparator,
+  isAnyMark,
+  isEmojiPresentation,
+  getEmojiPresentationRuns,
+} from "./data";
 
 export function Display({ points }: { points: number[] }) {
   const data = useContext(DataContext);
   const className = (...xs: string[]) => ["Display", ...xs].join(" ");
 
   if (points.length > 1) {
-    return <span className={className("sequence")}>{pointsToString(points)}</span>;
+    const string = pointsToString(points);
+    const runs = data == null ? [0] : getEmojiPresentationRuns(data, string);
+    const result = runs.map((x, i, xs) =>
+      i % 2 > 0 ? (
+        <span className="emoji">{slice(x, i, xs)}</span>
+      ) : (
+        <>{slice(x, i, xs)}</>
+      ),
+    );
+    return <span className={className("sequence")}>{result}</span>;
+
+    function slice(x: number, i: number, xs: number[]): string {
+      return i < xs.length - 1 ? string.slice(x, xs[i + 1]) : string.slice(x);
+    }
   }
 
   const point = points[0];
@@ -41,17 +60,19 @@ export function Display({ points }: { points: number[] }) {
   const substitute = pointToSubstitute(data, point);
 
   if (substitute != null) {
-    return <span className={className("synthetic", "substitute")}>{substitute}</span>;
+    return (
+      <span className={className("synthetic", "substitute")}>{substitute}</span>
+    );
   }
 
-  if (data != null) {
-    // FIXME eosrei/twemoji-color-font#39
-    if (isEmojiPresentation(data, point)) {
-      return <span className={className("emoji")}>{pointToString(point)}</span>;
-    }
-  }
+  const result =
+    data != null && isEmojiPresentation(data, point) ? (
+      <span className="emoji">{pointToString(point)}</span>
+    ) : (
+      <>{pointToString(point)}</>
+    );
 
-  return <span className={className()}>{pointToString(point)}</span>;
+  return <span className={className()}>{result}</span>;
 }
 
 // see dist/scratch/edge-points.html

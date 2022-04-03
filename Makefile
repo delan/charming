@@ -14,6 +14,7 @@ data-clean:
 	cd data && rm -f data.string.json data.*.bin
 
 assets: helper/font.sh helper/twemoji-$(TWEMOJI) helper/Symbola-$(SYMBOLA).otf
+	cd data && cargo run -- $(TWEMOJI)
 	helper/font.sh twemoji-$(TWEMOJI)/assets/svg
 	. helper/.venv/bin/activate && >&2 npx glyphhanger --formats=woff2 --subset=helper/build/Font.ttf
 	. helper/.venv/bin/activate && >&2 npx glyphhanger --formats=woff2 --subset=helper/Symbola-$(SYMBOLA).otf

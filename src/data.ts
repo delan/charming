@@ -1,7 +1,7 @@
 import { EGCBREAK } from "../data/egcbreak";
 
 import { pointToYouPlus } from "./formatting";
-import { stringToPoint } from "./encoding";
+import { pointToString, stringToPoint, stringToPoints } from "./encoding";
 
 export type StringField =
   | "dnrp"
@@ -15,6 +15,7 @@ export type StringField =
 export interface Data {
   string: string[];
   bits: DataView;
+  ebits: DataView;
   pagebits: DataView;
   name: DataView;
   aliasc: DataView;
@@ -82,6 +83,10 @@ function getSparse<T>(
 
 function getFlag(data: Data, shift: number, point: number): boolean {
   return !!((getSparse(Uint8, data.bits, 0, point) >> shift) & 1);
+}
+
+function getEmojiFlag(data: Data, shift: number, point: number): boolean {
+  return !!((getSparse(Uint8, data.ebits, 0, point) >> shift) & 1);
 }
 
 function getPageFlag(data: Data, shift: number, page: number): boolean {
@@ -240,10 +245,6 @@ export function kDefinitionExists(data: Data, point: number): boolean {
   return getFlag(data, 0, point);
 }
 
-export function isEmojiPresentation(data: Data, point: number): boolean {
-  return getFlag(data, 1, point);
-}
-
 export function isSpaceSeparator(data: Data, point: number): boolean {
   return getFlag(data, 2, point);
 }
@@ -260,10 +261,6 @@ export function hasDerivedNameNr2(data: Data, point: number): boolean {
   return getFlag(data, 5, point);
 }
 
-export function isExtendedPictographic(data: Data, point: number): boolean {
-  return getFlag(data, 6, point);
-}
-
 export function hasAnyNameExceptNr2(data: Data, page: number): boolean {
   return getPageFlag(data, 0, page);
 }
@@ -274,6 +271,30 @@ export function hasAnyUhdef(data: Data, page: number): boolean {
 
 export function hasAnyAlias(data: Data, page: number): boolean {
   return getPageFlag(data, 2, page);
+}
+
+export function isEmoji(data: Data, point: number): boolean {
+  return getEmojiFlag(data, 0, point);
+}
+
+export function isExtendedPictographic(data: Data, point: number): boolean {
+  return getEmojiFlag(data, 1, point);
+}
+
+export function isEmojiComponent(data: Data, point: number): boolean {
+  return getEmojiFlag(data, 2, point);
+}
+
+export function isEmojiPresentation(data: Data, point: number): boolean {
+  return getEmojiFlag(data, 3, point);
+}
+
+export function isEmojiModifier(data: Data, point: number): boolean {
+  return getEmojiFlag(data, 4, point);
+}
+
+export function isEmojiModifierBase(data: Data, point: number): boolean {
+  return getEmojiFlag(data, 5, point);
 }
 
 interface ClusterBreaker {
@@ -317,4 +338,100 @@ export function getNextClusterBreak(
   context.startPointIndex = EGCBREAK.lastIndex;
 
   return context;
+}
+
+export function getEmojiPresentationRuns(data: Data, string: string): number[] {
+  const points = stringToPoints(string);
+  const result = [0];
+  let emojiRun = false;
+  for (let i = 0, j = 0; j < string.length /* nothing */; ) {
+    const n = consumeEmojiSeq(i);
+    // console.log(`gEPR j=${j} i=${i} n=${n} point=${pointToYouPlus(points[i])} emojiRun=${emojiRun}`);
+    if ((n != null) != emojiRun) {
+      emojiRun = !emojiRun;
+      result.push(j);
+    }
+    for (let k = 0; k < (n ?? 1); i++, k++) j += points[i] > 0xffff ? 2 : 1;
+  }
+  return result;
+
+  function consumeEmojiSeq(i: number): number | null {
+    return consumeStandaloneSeq(i) ?? consumeSeqSeq(i);
+  }
+
+  function consumeStandaloneSeq(i: number): number | null {
+    return consumeKeycapSeq(i) ?? consumeFlagSeq(i);
+  }
+
+  function consumeSeqSeq(i: number): number | null {
+    const n = consumeTagBaseOrZwjElement(i);
+    if (n == null) return null;
+    return consumeZwjSeq(i, n) ?? consumeTagSeq(i, n) ?? n;
+  }
+
+  function consumeTagBaseOrZwjElement(i: number): number | null {
+    const point = lookahead(i, 0, (x) => x);
+    if (point == null) return null;
+    if (isEmoji(data, point))
+      if (isEmojiPresentation(data, point))
+        if (lookahead(i, 1, (x) => x == 0xfe0e)) return null;
+        else return 1;
+      else if (lookahead(i, 1, (x) => x == 0xfe0f)) return 2;
+      else if (isEmojiModifierBase(data, point))
+        if (lookahead(i, 1, (x) => isEmojiModifier(data, x))) return 2;
+        else return null;
+    return null;
+  }
+
+  function consumeZwjSeq(i: number, n: number): number | null {
+    const isZwj = (x: number) => x == 0x200d;
+    let n_ = add(n, consume(i, n, isZwj));
+    if (n_ == null) return null;
+    n_ = add(n_, consumeTagBaseOrZwjElement(i + n_));
+    if (n_ == null) return null;
+    while (i + n_ < points.length) {
+      let updated = add(n_, consume(i, n_, isZwj));
+      if (updated == null) break;
+      updated = add(updated, consumeTagBaseOrZwjElement(i + updated));
+      if (updated == null) break;
+      n_ = updated;
+    }
+    return n_;
+  }
+
+  function consumeTagSeq(i: number, n: number): number | null {
+    while (lookahead(i, n, (x) => 0xe0020 <= x && x <= 0xe007e)) n += 1;
+    if (lookahead(i, n, (x) => x == 0xe007f)) return n + 1;
+    return null;
+  }
+
+  function consumeKeycapSeq(i: number): number | null {
+    if (lookahead(i, 0, (x) => /[0-9#*]/.test(pointToString(x))))
+      if (lookahead(i, 1, (x) => x == 0xfe0f))
+        if (lookahead(i, 2, (x) => x == 0x20e3)) return 3;
+    return null;
+  }
+
+  function consumeFlagSeq(i: number): number | null {
+    const RI = GraphemeBreak.RegionalIndicator;
+    if (!lookahead(i, 0, (x) => getGraphemeBreak(data, x) == RI)) return null;
+    if (!lookahead(i, 1, (x) => getGraphemeBreak(data, x) == RI)) return null;
+    return 2;
+  }
+
+  function add(result: number, add: number | null): number | null {
+    return add != null ? result + add : null;
+  }
+
+  function consume(
+    i: number,
+    n: number,
+    pred: (_: number) => boolean,
+  ): number | null {
+    return lookahead(i, n, (x) => (pred(x) == true ? 1 : null));
+  }
+
+  function lookahead<T>(i: number, n: number, fun: (_: number) => T): T | null {
+    return i + n < points.length ? fun(points[i + n]) : null;
+  }
 }

@@ -133,6 +133,15 @@ body
       text-decoration: none
       color: #0000FF
 
+  > dl
+    > dt.compact
+      float: left
+      clear: left
+
+    > dd.compact
+      float: right
+      clear: right
+
   &.sequence > h1
     font-size: 1rem
 
@@ -245,8 +254,7 @@ body
 .Display
   font-family: $display-font
 
-  &.emoji
-    // FIXME eosrei/twemoji-color-font#39
+  > .emoji
     font-family: Twitter Color Emoji, $display-font
 
   &.synthetic

@@ -42,6 +42,7 @@ import {
   getAliasValue,
   getNameProperty,
   getString,
+  isEmojiPresentation,
 } from "./data";
 import { pointsToString } from "./encoding";
 import {
@@ -184,6 +185,10 @@ function PointDetails({ point }: { point: number }) {
         <StringPair field="hjsn" label="Hangul Jamo short name" />
         <StringPair field="uhdef" label="Unihan kDefinition" />
         <StringPair field="uhman" label="Unihan kMandarin" />
+        <dt className="compact">Emoji_Presentation</dt>
+        <dd className="compact">
+          {isEmojiPresentation(data, point) ? "Yes" : "No"}
+        </dd>
       </dl>
     </>
   );

@@ -11,6 +11,7 @@ pub(crate) struct GraphemeBreakFromStrError;
 #[derive(Debug, Default, Clone, PartialEq)]
 pub(crate) struct Details {
     pub bits: u8,
+    pub ebits: u8,
     pub name: Option<Rc<str>>,
     pub alias: Vec<Alias>,
     pub dnrp: Option<Rc<str>>,
@@ -65,12 +66,21 @@ pub(crate) enum GraphemeBreak {
 #[derive(Debug, Clone, Copy)]
 pub(crate) enum Bits {
     KdefinitionExists = 1 << 0,
-    IsEmojiPresentation = 1 << 1,
     IsSpaceSeparator = 1 << 2,
     IsAnyMark = 1 << 3,
     DerivedNameNr1 = 1 << 4,
     DerivedNameNr2 = 1 << 5,
-    IsExtendedPictographic = 1 << 6,
+}
+
+#[repr(u8)]
+#[derive(Debug, Clone, Copy)]
+pub(crate) enum EmojiBits {
+    IsEmoji = 1 << 0,
+    IsExtendedPictographic = 1 << 1,
+    IsEmojiComponent = 1 << 2,
+    IsEmojiPresentation = 1 << 3,
+    IsEmojiModifier = 1 << 4,
+    IsEmojiModifierBase = 1 << 5,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -94,6 +104,7 @@ impl Details {
         uhdef: impl Into<Option<&'static str>>,
         uhman: impl Into<Option<&'static str>>,
         bits: &'static [Bits],
+        emoji_bits: &'static [EmojiBits],
     ) -> Self {
         let name = name.into().map(|x| x.into());
         let alias = alias.iter().map(|(x, t)| Alias::r#static(x, *t)).collect();
@@ -108,8 +119,9 @@ impl Details {
         let uhdef = uhdef.into().map(|x| x.into());
         let uhman = uhman.into().map(|x| x.into());
         let bits = bits.iter().map(|&x| x as u8).fold(0, |r,x| r | x);
+        let emoji_bits = emoji_bits.iter().map(|&x| x as u8).fold(0, |r,x| r | x);
 
-        Self { bits, name, alias, dnrp, gb, gc, block, age, hst, hjsn, hlvt, uhdef, uhman }
+        Self { bits, ebits: emoji_bits, name, alias, dnrp, gb, gc, block, age, hst, hjsn, hlvt, uhdef, uhman }
     }
 }
 
