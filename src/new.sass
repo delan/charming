@@ -134,6 +134,15 @@ body
       text-decoration: none
       color: #0000FF
 
+  &.sequence > h1
+    font-size: 1rem
+
+    &::before
+      display: block
+      font-size: 1.5em
+      content: "sequence"
+      color: #C0C0C0
+
 .Map
 
 .Search
@@ -158,30 +167,33 @@ body
       // react-window sets overflow:auto in @style
       overflow-y: scroll !important
 
-      > ul
-        list-style-type: none
-        margin: 0
-        padding: 0
+.Search > div > div > div > ul,
+.Detail.sequence > ul
+  list-style: none
+  margin: 0
+  padding: 0
 
-        > li
+  > li
+    margin: 0
+    padding: 0
 
-          > a
-            // --ascent: calc(#{$choice-cell-size} - (#{$choice-cell-size} - #{$font-size}) / 2)
-            // background: linear-gradient(to bottom, #00ff0080 0 var(--ascent), transparent var(--ascent) 100%)
-            $font-size: 1rem
+    > a
+      // --ascent: calc(#{$choice-cell-size} - (#{$choice-cell-size} - #{$font-size}) / 2)
+      // background: linear-gradient(to bottom, #00ff0080 0 var(--ascent), transparent var(--ascent) 100%)
+      $font-size: 1rem
 
-            display: block
-            height: $choice-cell-size
-            font-size: $font-size
-            line-height: $choice-cell-size/$font-size
-            text-decoration: none
+      display: block
+      height: $choice-cell-size
+      font-size: $font-size
+      line-height: $choice-cell-size/$font-size
+      text-decoration: none
 
-            overflow: hidden
-            white-space: nowrap
-            text-overflow: ellipsis
+      overflow: hidden
+      white-space: nowrap
+      text-overflow: ellipsis
 
-            .choice
-              vertical-align: middle
+  .choice
+    vertical-align: middle
 
 .AliasHint
   line-height: 1

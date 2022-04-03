@@ -46,3 +46,7 @@ export function pointLengthUnits16(point: number): 1 | 2 {
 export function pointsToString(points: number[]): string {
   return points.map((x) => pointToString(x)).join("");
 }
+
+export function stringToPoints(string: string): number[] {
+  return [...string].map((x) => stringToPoint(x)!);
+}

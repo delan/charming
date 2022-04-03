@@ -13,9 +13,9 @@ import {
   hasAnyNameExceptNr2,
   hasAnyUhdef,
 } from "./data";
-import { stringToPoint } from "./encoding";
+import { pointToString, stringToPoint, stringToPoints } from "./encoding";
 import { toHexadecimal, toDecimal } from "./formatting";
-import { KeyedSearchResult } from "./search";
+import { KeyedSearchResult, SearchResult } from "./search";
 
 // https://github.com/webpack-contrib/worker-loader/issues/94#issuecomment-449861198
 export default {} as typeof Worker & { new (): Worker };
@@ -39,7 +39,7 @@ function* searchByHexadecimal(query: string): Generator<KeyedSearchResult> {
     return;
   }
 
-  yield { key: `hex/${point}`, point, reason: "hex", score: 0 };
+  yield { key: `hex/${point}`, points: [point], reason: "hex", score: 0 };
 }
 
 function* searchByDecimal(query: string): Generator<KeyedSearchResult> {
@@ -57,7 +57,7 @@ function* searchByDecimal(query: string): Generator<KeyedSearchResult> {
     return;
   }
 
-  yield { key: `dec/${point}`, point, reason: "dec", score: 0 };
+  yield { key: `dec/${point}`, points: [point], reason: "dec", score: 0 };
 }
 
 function* searchByBreakdown(
@@ -78,7 +78,7 @@ function* searchByBreakdown(
       if (point != null) {
         yield {
           key: `breakdown/${pointCount++}/${point}`,
-          point,
+          points: [point],
           reason: "breakdown",
           score: 0,
         };
@@ -90,6 +90,20 @@ function* searchByBreakdown(
       return;
     }
   }
+}
+
+function* searchBySequence(query: string): Generator<KeyedSearchResult> {
+  if (query.length == 0) return;
+  if (query.length == pointToString(stringToPoint(query)!).length) return;
+
+  const points = stringToPoints(query);
+
+  yield {
+    key: `sequence/${points.join("+")}`,
+    points,
+    reason: "sequence",
+    score: 0,
+  };
 }
 
 function* searchByName(
@@ -112,7 +126,13 @@ function* searchByName(
       const search = name.toUpperCase();
       if (search.includes(upper)) {
         const [score, offset] = scoreMatch(search, upper);
-        yield { key: `nameish/${point}`, point, reason: "name", score, offset };
+        yield {
+          key: `nameish/${point}`,
+          points: [point],
+          reason: "name",
+          score,
+          offset,
+        };
       }
     }
   }
@@ -146,7 +166,7 @@ function* searchByNameAlias(
           const [score, offset] = scoreMatch(search, upper);
           yield {
             key: `nameish/${point}`,
-            point,
+            points: [point],
             reason: "alias",
             aliasIndex,
             aliasType: type,
@@ -182,7 +202,13 @@ function* searchByUhdef(
       const search = uhdef.toUpperCase();
       if (search.includes(upper)) {
         const [score, offset] = scoreMatch(search, upper);
-        yield { key: `uhdef/${point}`, point, reason: "uhdef", score, offset };
+        yield {
+          key: `uhdef/${point}`,
+          points: [point],
+          reason: "uhdef",
+          score,
+          offset,
+        };
       }
     }
   }
@@ -228,20 +254,27 @@ function scoreMatch(haystack: string, needle: string): [number, number] {
 
 function sortByScore(results: KeyedSearchResult[]): KeyedSearchResult[] {
   // sort by score descending, then by point ascending
-  return results.sort((p, q) => q.score - p.score || p.point - q.point);
+  return results.sort((p, q) => q.score - p.score || comparePoints(p, q));
 }
 
 function dedupResults(results: KeyedSearchResult[]): KeyedSearchResult[] {
   // sort by point ascending, then by score descending, then keep best result for each key
   return results
-    .sort((p, q) => p.point - q.point || q.score - p.score)
+    .sort((p, q) => comparePoints(p, q) || q.score - p.score)
     .filter((x, i, xs) => x.key != xs[i - 1]?.key);
+}
+
+function comparePoints(p: SearchResult, q: SearchResult): number {
+  for (let i = 0; i < Math.min(p.points.length, q.points.length); i++)
+    if (p.points[i] != q.points[i]) return p.points[i] - q.points[i];
+  return p.points.length - q.points.length;
 }
 
 addEventListener("message", ({ data: { data = cache, query } }) => {
   const result: KeyedSearchResult[] = [
     ...searchByHexadecimal(query),
     ...searchByDecimal(query),
+    ...searchBySequence(query),
     // three graphemes allows checking for invisible characters between two visible characters
     ...searchByBreakdown(data, query, 3),
     ...sortByScore(

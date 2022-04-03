@@ -60,3 +60,17 @@ export function pointToEntity10(point: number): string | null {
 
   return `&#${point};`;
 }
+
+export function pointsToYouPlus(points: number[]): string {
+  return `U+${joinSequence(points, " ", (x) => pointToYouPlus(x, ""))}`;
+}
+
+export function joinSequence(
+  points: number[],
+  sep: string,
+  fun: (_: number) => string | null,
+): string | null {
+  let ok = true;
+  const result = points.map((x) => fun(x) ?? ((ok = false), null));
+  return ok ? result.join(sep) : null;
+}

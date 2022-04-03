@@ -1,13 +1,18 @@
 import React, { useContext } from "react";
 
-import { pointToString, isSurrogate } from "./encoding";
+import { pointToString, isSurrogate, pointsToString } from "./encoding";
 import { pointToTofu } from "./formatting";
 import { DataContext } from "./state";
 import { Data, isSpaceSeparator, isAnyMark, isEmojiPresentation } from "./data";
 
-export function Display({ point }: { point: number }) {
+export function Display({ points }: { points: number[] }) {
   const data = useContext(DataContext);
 
+  if (points.length > 1) {
+    return <span className="sequence">{pointsToString(points)}</span>;
+  }
+
+  const point = points[0];
   const tofu = pointToSyntheticTofu(point);
 
   if (tofu != null) {

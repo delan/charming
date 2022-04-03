@@ -5,7 +5,7 @@ export type SearchResult = BaseSearchResult &
   (NameishSearchResult | AliasSearchResult | OtherSearchResult);
 
 interface BaseSearchResult {
-  point: number;
+  points: number[];
   score: number;
 }
 
@@ -22,7 +22,7 @@ interface AliasSearchResult {
 }
 
 interface OtherSearchResult {
-  reason: "hex" | "dec" | "breakdown";
+  reason: "hex" | "dec" | "breakdown" | "sequence";
 }
 
 interface SearchResultKey {

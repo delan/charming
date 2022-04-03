@@ -27,10 +27,11 @@ import { writeText } from "clipboard-polyfill";
 
 import {
   DataContext,
-  PointContext,
+  PointContext as PointsContext,
   toFragment,
-  getHashPoint,
-  fixHashPoint,
+  getHashPoints,
+  fixHashPoints,
+  ifSequence,
 } from "./state";
 import {
   AliasType,
@@ -42,12 +43,14 @@ import {
   getNameProperty,
   getString,
 } from "./data";
-import { pointToString } from "./encoding";
+import { pointsToString } from "./encoding";
 import {
+  joinSequence,
   pointToYouPlus,
   pointToString16,
   pointToString8,
   pointToEntity10,
+  pointsToYouPlus,
 } from "./formatting";
 import { Display } from "./Display";
 import { KeyedSearchResult, search, SearchResult } from "./search";
@@ -69,23 +72,27 @@ function Charming() {
   const [searchQuery, setSearchQuery] = useState("");
 
   const location = useLocation();
-  const point = getHashPoint(location.hash, 0);
+  const points = getHashPoints(location.hash, [0]);
 
   useEffect(() => void fetchAllData().then(setData), []);
-  useEffect(() => void fixHashPoint(location.hash!, point));
+  useEffect(() => void fixHashPoints(location.hash!, points));
 
   useEffect(() => {
     if (data != null) {
-      document.title = `${pointToYouPlus(point)} ${pointToName(data, point)}`;
+      document.title = ifSequence(
+        points,
+        (x) => pointsToYouPlus(x),
+        (x) => `${pointToYouPlus(x)} ${pointToName(data, x)}`,
+      );
     }
-  }, [data, point]);
+  }, [data, points]);
 
   const href = `https://github.com/delan/charming/tree/${__COMMIT_HASH__}`;
 
   return (
     <div className="Charming">
       <DataContext.Provider value={data}>
-        <PointContext.Provider value={point}>
+        <PointsContext.Provider value={points}>
           <Detail search={() => void setSearchOpen(true)} />
           <Map />
 
@@ -100,7 +107,7 @@ function Charming() {
               close={() => void setSearchOpen(false)}
             />
           )}
-        </PointContext.Provider>
+        </PointsContext.Provider>
       </DataContext.Provider>
     </div>
   );
@@ -108,7 +115,7 @@ function Charming() {
 
 function Detail({ search }: { search: () => void }) {
   const data = useContext(DataContext);
-  const point = useContext(PointContext);
+  const points = useContext(PointsContext);
 
   if (data == null) {
     return (
@@ -118,20 +125,51 @@ function Detail({ search }: { search: () => void }) {
     );
   }
 
+  const className = [
+    "Detail",
+    ...ifSequence(
+      points,
+      (_) => ["sequence"],
+      (_) => [],
+    ),
+  ].join(" ");
+
   return (
-    <div className="Detail">
-      <h1>{pointToYouPlus(point)}</h1>
+    <div className={className}>
+      <h1>{pointsToYouPlus(points)}</h1>
       <a
-        href={toFragment(point)}
-        onClick={() => void writeText(pointToString(point))}
+        href={toFragment(points)}
+        onClick={() => void writeText(pointsToString(points))}
       >
-        <Display point={point} />
+        <Display points={points} />
       </a>
       <p>
-        <a href={toFragment(point)} onClick={search}>
-          {pointToName(data, point)}
+        <a href={toFragment(points)} onClick={search}>
+          {ifSequence(
+            points,
+            (_) => "FIXME",
+            (x) => pointToName(data, x),
+          )}
         </a>
       </p>
+      {ifSequence(
+        points,
+        (x) => (
+          <SequenceDetails points={x} />
+        ),
+        (x) => (
+          <PointDetails point={x} />
+        ),
+      )}
+    </div>
+  );
+}
+
+function PointDetails({ point }: { point: number }) {
+  const data = useContext(DataContext)!;
+
+  return (
+    <>
       <AliasList
         start={getAliasBaseIndex(data, point)}
         count={getAliasCount(data, point)}
@@ -147,7 +185,51 @@ function Detail({ search }: { search: () => void }) {
         <StringPair field="uhdef" label="Unihan kDefinition" />
         <StringPair field="uhman" label="Unihan kMandarin" />
       </dl>
-    </div>
+    </>
+  );
+}
+
+function SequenceDetails({ points }: { points: number[] }) {
+  const data = useContext(DataContext)!;
+
+  return (
+    <>
+      {points.length == 1 && (
+        <AliasList
+          start={getAliasBaseIndex(data, points[0])}
+          count={getAliasCount(data, points[0])}
+        />
+      )}
+      <ul>
+        {points.map((x) => (
+          <li>
+            <a href={toFragment([x])}>
+              <span className="choice">
+                <Display points={[x]} />
+              </span>
+              {" "}
+              {pointToYouPlus(x)}
+              {" "}
+              {getNameProperty(data, x)}
+            </a>
+          </li>
+        ))}
+      </ul>
+      <dl>
+        <Pair
+          value={joinSequence(points, " ", (x) => pointToString8(x))}
+          label="UTF-8"
+        />
+        <Pair
+          value={joinSequence(points, " ", (x) => pointToString16(x))}
+          label="UTF-16"
+        />
+        <Pair
+          value={joinSequence(points, " ", (x) => pointToEntity10(x))}
+          label="HTML"
+        />
+      </dl>
+    </>
   );
 }
 
@@ -236,9 +318,9 @@ const SearchResultRow = React.memo(function SearchResultRow({
   const x = results[index];
   return (
     <li key={x.key} style={style}>
-      <a href={toFragment(x.point)} onClick={close}>
+      <a href={toFragment(x.points)} onClick={close}>
         <span className="choice">
-          <Display point={x.point} />
+          <Display points={x.points} />
         </span>
         {" "}
         <SearchResultLabel query={query} result={x} />
@@ -257,7 +339,12 @@ function SearchResultLabel({
 }) {
   const data = useContext(DataContext);
   const space = " ";
-  const { point, reason } = result;
+  const { points, reason } = result;
+  const point = ifSequence(
+    points,
+    (x) => x[0],
+    (x) => x,
+  );
 
   if (data == null)
     return (
@@ -302,6 +389,14 @@ function SearchResultLabel({
           {pointToYouPlus(point)}
           {hint}
           {getNameProperty(data, point)}
+        </>
+      );
+    case "sequence":
+      return (
+        <>
+          {pointsToYouPlus(points)}
+          {space}
+          {`FIXME`}
         </>
       );
     case "name":
@@ -431,12 +526,13 @@ function StringPair({
   label: string;
 }) {
   const data = useContext(DataContext);
-  const point = useContext(PointContext);
+  const points = useContext(PointsContext);
 
-  if (data == null) {
+  if (data == null || points.length > 1) {
     return null;
   }
 
+  const point = points[0];
   return <Pair label={label} value={getString(data, field, point)} />;
 }
 
@@ -454,7 +550,8 @@ function Pair({ label, value }: { label: string; value: string | null }) {
 }
 
 function Map() {
-  const point = useContext(PointContext);
+  const points = useContext(PointsContext);
+  const point = points.length == 1 ? points[0] : null;
 
   return (
     <div className="Map">
@@ -474,13 +571,14 @@ function MapGrid({
 }: {
   width: number;
   height: number;
-  point: number;
+  point: number | null;
 }) {
+  const pointForScroll = point ?? 0;
   const columnCount = Math.floor((width - scrollbar) / 40);
   const rowCount = Math.ceil(1114112 / columnCount);
 
   const visibleRows = Math.floor(height / 40);
-  const rowIndex = Math.floor(point / columnCount) - visibleRows / 2;
+  const rowIndex = Math.floor(pointForScroll / columnCount) - visibleRows / 2;
 
   const itemData = useMemo(
     () => ({ columnCount, point }),
@@ -490,10 +588,10 @@ function MapGrid({
 
   useEffect(() => {
     if (grid.current != null) {
-      const rowIndex = Math.floor(point / columnCount);
+      const rowIndex = Math.floor(pointForScroll / columnCount);
       grid.current.scrollToItem({ rowIndex });
     }
-  }, [point]);
+  }, [pointForScroll]);
 
   return (
     <FixedSizeGrid
@@ -559,8 +657,8 @@ const Cell = React.memo(function Cell({
   }
 
   return (
-    <a href={toFragment(point)} className={classes.join(" ")} style={style}>
-      <Display point={point} />
+    <a href={toFragment([point])} className={classes.join(" ")} style={style}>
+      <Display points={[point]} />
     </a>
   );
 },
