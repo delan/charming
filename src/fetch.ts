@@ -1,4 +1,4 @@
-import string from "../data/data.string.json";
+import string from "../data/data.string.bin";
 import bits from "../data/data.bits.bin";
 import pagebits from "../data/data.pagebits.bin";
 import name from "../data/data.name.bin";
@@ -20,6 +20,7 @@ import { Data } from "./data";
 
 export function fetchAllData(): Promise<Data> {
   return fetchData(
+    string,
     bits,
     pagebits,
     name,
@@ -39,30 +40,37 @@ export function fetchAllData(): Promise<Data> {
   );
 }
 
-async function fetchData(...paths: string[]): Promise<Data> {
+async function fetchData(
+  stringPath: string,
+  ...paths: string[]
+): Promise<Data> {
   const [
-    bits,
-    pagebits,
-    name,
-    aliasc,
-    aliasi,
-    aliass,
-    aliast,
-    dnrp,
-    gb,
-    gc,
-    block,
-    age,
-    hlvt,
-    hjsn,
-    uhdef,
-    uhman,
-  ] = await Promise.all(paths.map(fetchDataView));
+    string,
+    [
+      bits,
+      pagebits,
+      name,
+      aliasc,
+      aliasi,
+      aliass,
+      aliast,
+      dnrp,
+      gb,
+      gc,
+      block,
+      age,
+      hlvt,
+      hjsn,
+      uhdef,
+      uhman,
+    ],
+  ] = await Promise.all([
+    fetchJson<string[]>(stringPath),
+    Promise.all(paths.map(fetchDataView)),
+  ]);
 
   return {
-    // prevent webpack from thinking there are >>1e4 exports
-    // (this is probably harmless, but seems good to avoid)
-    string: string[0],
+    string,
     bits,
     pagebits,
     name,
@@ -80,6 +88,11 @@ async function fetchData(...paths: string[]): Promise<Data> {
     uhdef,
     uhman,
   };
+}
+
+async function fetchJson<T>(path: string): Promise<T> {
+  const response = await fetch(path);
+  return response.json();
 }
 
 async function fetchDataView(path: string): Promise<DataView> {
