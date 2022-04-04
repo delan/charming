@@ -231,7 +231,7 @@ function SearchResultList({
     <FixedSizeList
       width={width}
       height={height}
-      itemCount={Math.min(256, results.length)}
+      itemCount={results.length}
       itemData={itemData}
       innerElementType="ul"
       itemSize={40}
