@@ -65,6 +65,7 @@ const scrollbar = mapWidth - mapContentWidth;
 function Charming() {
   const [data, setData] = useState<Data | null>(null);
 
+  const [searchEverOpened, setSearchEverOpened] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -86,18 +87,24 @@ function Charming() {
     <div className="Charming">
       <DataContext.Provider value={data}>
         <PointContext.Provider value={point}>
-          <Detail search={() => void setSearchOpen(true)} />
+          <Detail
+            search={() => {
+              setSearchOpen(true);
+              setSearchEverOpened(true);
+            }}
+          />
           <Map />
 
           <a href={href} aria-label="source">
             <i className="fab fa-github" aria-hidden="true"></i>
           </a>
 
-          {searchOpen && (
+          {searchEverOpened && (
             <Search
               query={searchQuery}
               setQuery={setSearchQuery}
               close={() => void setSearchOpen(false)}
+              hidden={!searchOpen}
             />
           )}
         </PointContext.Provider>
@@ -155,12 +162,15 @@ function Search({
   query,
   setQuery,
   close,
+  hidden,
 }: {
   query: string;
   setQuery: Dispatch<SetStateAction<string>>;
   close: () => void;
+  hidden: boolean;
 }) {
   const data = useContext(DataContext);
+  const input = useRef<HTMLInputElement>(null);
 
   const [results, setResults] = useState([]);
 
@@ -170,9 +180,12 @@ function Search({
     }
   }, [data, query]);
 
+  useEffect(() => void input.current!.focus(), [hidden]);
+
   return (
-    <div className="Search">
+    <div className="Search" hidden={hidden}>
       <input
+        ref={input}
         autoFocus={true}
         value={query}
         onChange={(event) => setQuery(event.target.value)}
