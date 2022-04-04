@@ -211,8 +211,8 @@ function SequenceDetails({ points }: { points: number[] }) {
         />
       )}
       <ul>
-        {points.map((x) => (
-          <li>
+        {points.map((x, i) => (
+          <li key={i}>
             <a href={toFragment([x])}>
               <span className="choice">
                 <Display points={[x]} />

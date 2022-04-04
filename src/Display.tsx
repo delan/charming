@@ -18,13 +18,11 @@ export function Display({ points }: { points: number[] }) {
   if (points.length > 1) {
     const string = pointsToString(points);
     const runs = data == null ? [0] : getEmojiPresentationRuns(data, string);
-    const result = runs.map((x, i, xs) =>
-      i % 2 > 0 ? (
-        <span className="emoji">{slice(x, i, xs)}</span>
-      ) : (
-        <>{slice(x, i, xs)}</>
-      ),
-    );
+    const result = runs.map((x, i, xs) => (
+      <span key={i} className={["", "emoji"][i % 2]}>
+        {slice(x, i, xs)}
+      </span>
+    ));
     return <span className={className("sequence")}>{result}</span>;
 
     function slice(x: number, i: number, xs: number[]): string {
