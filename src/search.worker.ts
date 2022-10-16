@@ -3,6 +3,7 @@ import "regenerator-runtime/runtime";
 
 import {
   Data,
+  findSequenceIndex,
   getAliasCount,
   getAliasType,
   getAliasValue,
@@ -92,16 +93,22 @@ function* searchByBreakdown(
   }
 }
 
-function* searchBySequence(query: string): Generator<KeyedSearchResult> {
+function* searchBySequence(
+  data: Data,
+  query: string,
+): Generator<KeyedSearchResult> {
   if (query.length == 0) return;
   if (query.length == pointToString(stringToPoint(query)!).length) return;
 
   const points = stringToPoints(query);
+  const sequenceIndex = findSequenceIndex(data, points);
+  if (sequenceIndex == null) return;
 
   yield {
     key: `sequence/${points.join("+")}`,
     points,
     reason: "sequence",
+    sequenceIndex,
     score: 0,
   };
 }
@@ -274,7 +281,7 @@ addEventListener("message", ({ data: { data = cache, query } }) => {
   const result: KeyedSearchResult[] = [
     ...searchByHexadecimal(query),
     ...searchByDecimal(query),
-    ...searchBySequence(query),
+    ...searchBySequence(data, query),
     // three graphemes allows checking for invisible characters between two visible characters
     ...searchByBreakdown(data, query, 3),
     ...sortByScore(

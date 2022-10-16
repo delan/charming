@@ -425,7 +425,7 @@ function SearchResultLabel({
         <>
           {pointsToYouPlus(points)}
           {space}
-          {`(sequence)`}
+          {getSequenceFirstName(data, result.sequenceIndex)}
         </>
       );
     case "name":
