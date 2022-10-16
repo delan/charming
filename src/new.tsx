@@ -36,11 +36,13 @@ import {
 import {
   AliasType,
   Data,
+  findSequenceIndex,
   getAliasBaseIndex,
   getAliasCount,
   getAliasType,
   getAliasValue,
   getNameProperty,
+  getSequenceFirstName,
   getString,
   isEmoji,
   isEmojiPresentation,
@@ -156,7 +158,11 @@ function Detail({ search }: { search: () => void }) {
         <a href={toFragment(points)} onClick={search}>
           {ifSequence(
             points,
-            (_) => "(sequence)",
+            (x) => {
+              const sequenceIndex = findSequenceIndex(data, x);
+              if (sequenceIndex == null) return "(sequence)";
+              return getSequenceFirstName(data, sequenceIndex);
+            },
             (x) => pointToName(data, x),
           )}
         </a>

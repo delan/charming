@@ -313,6 +313,15 @@ export function getSequencePoints(
   return result;
 }
 
+export function getSequenceFirstName(
+  data: Data,
+  sequenceIndex: number,
+): string | null {
+  const start = data.seqn.getUint16(sequenceIndex * 3 + 0);
+  const base = data.info.sequenceCount * 3;
+  return getStringByIndex(data, data.seqn.getUint16(base + start * 2));
+}
+
 export function getGraphemeBreak(
   data: Data,
   point: number,
