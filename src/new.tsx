@@ -93,8 +93,6 @@ function Charming() {
     }
   }, [data, points]);
 
-  const href = `https://github.com/delan/charming/tree/${__COMMIT_HASH__}`;
-
   return (
     <div className="Charming">
       <DataContext.Provider value={data}>
@@ -106,11 +104,6 @@ function Charming() {
             }}
           />
           <Map />
-
-          <a href={href} aria-label="source">
-            <i className="fab fa-github" aria-hidden="true"></i>
-          </a>
-
           {searchEverOpened && (
             <Search
               query={searchQuery}
@@ -146,11 +139,25 @@ function Detail({ search }: { search: () => void }) {
     ),
   ].join(" ");
 
+  const href = `https://github.com/delan/charming/tree/${__COMMIT_HASH__}`;
+
   return (
     <div className={className}>
+      <a
+        href={toFragment(points)}
+        className="toolbar"
+        aria-label="search"
+        onClick={search}
+      >
+        <i className="fas fa-search" aria-hidden="true"></i>
+      </a>
+      <a href={href} className="toolbar" aria-label="source">
+        <i className="fab fa-github" aria-hidden="true"></i>
+      </a>
       <h1>{pointsToYouPlus(points)}</h1>
       <a
         href={toFragment(points)}
+        className="big"
         onClick={() => void writeText(pointsToString(points))}
       >
         <Display points={points} />
