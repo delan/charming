@@ -10,6 +10,7 @@ mod gc;
 mod hst;
 mod jamo;
 mod na;
+mod ns;
 mod page;
 mod parse;
 mod pool;
@@ -41,6 +42,7 @@ use crate::gc::gc_handler;
 use crate::hst::hst_handler;
 use crate::jamo::jamo_handler;
 use crate::na::na_handler;
+use crate::ns::ns_handler;
 use crate::page::PageBits;
 use crate::parse::parse;
 use crate::pool::{Pool, Popularity};
@@ -173,6 +175,14 @@ fn main() -> Result<(), Error> {
     )?;
 
     let mut sequences = Sequences::default();
+
+    parse(
+        &mut ud,
+        |_, captures| ns_handler(&mut popularity, &mut sequences, captures),
+        "NamedSequences.txt", None,
+        r"^(?P<name>[^#].*)\s*;\s*(?P<points>[0-9A-F]+(?: [0-9A-F]+)*)",
+    )?;
+
     parse(
         &mut ud,
         |sink, captures| et_handler(&mut popularity, sink, &mut sequences, captures),
