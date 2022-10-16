@@ -10,10 +10,12 @@ mod gc;
 mod hst;
 mod jamo;
 mod na;
+mod ns;
 mod page;
 mod parse;
 mod pool;
 mod range;
+mod sequence;
 mod uax29;
 mod ud;
 mod ur;
@@ -21,16 +23,17 @@ mod ur;
 use std::collections::HashMap;
 use std::convert::TryInto;
 use std::fmt::Debug;
-use std::fs::File;
+use std::fs::{File, self};
 use std::io::{BufWriter, Write};
 use std::rc::Rc;
 
 use byteorder::{BigEndian, WriteBytesExt};
 use failure::Error;
+use serde::Serialize;
 
 use crate::age::age_handler;
 use crate::block::block_handler;
-use crate::details::{Bits, Details, HangulSyllableType, GraphemeBreak};
+use crate::details::{Bits, Details, HangulSyllableType, GraphemeBreak, EmojiBits};
 use crate::dynamic::{NAME_RULES, NameRule, hangul_lvt_indices};
 use crate::ed::ed_handler;
 use crate::et::et_handler;
@@ -39,9 +42,11 @@ use crate::gc::gc_handler;
 use crate::hst::hst_handler;
 use crate::jamo::jamo_handler;
 use crate::na::na_handler;
+use crate::ns::ns_handler;
 use crate::page::PageBits;
 use crate::parse::parse;
 use crate::pool::{Pool, Popularity};
+use crate::sequence::Sequences;
 use crate::uax29::generate_egcbreak;
 use crate::ud::{process_ud_ranges, ud_handler, ud_range_handler};
 use crate::ur::ur_handler;
@@ -166,12 +171,21 @@ fn main() -> Result<(), Error> {
         &mut ud,
         ed_handler,
         "emoji-data.txt", None,
-        r"^(?P<first>[0-9A-F]+)(?:[.][.](?P<last>[0-9A-F]+))?\s*;\s*(?P<property>Emoji_Presentation|Extended_Pictographic)(\s|#|$)",
+        r"^(?P<first>[0-9A-F]+)(?:[.][.](?P<last>[0-9A-F]+))?\s*;\s*(?P<property>Emoji|Extended_Pictographic|Emoji_Component|Emoji_Presentation|Emoji_Modifier|Emoji_Modifier_Base)(\s|#|$)",
+    )?;
+
+    let mut sequences = Sequences::default();
+
+    parse(
+        &mut ud,
+        |_, captures| ns_handler(&mut popularity, &mut sequences, captures),
+        "NamedSequences.txt", None,
+        r"^(?P<name>[^#].*)\s*;\s*(?P<points>[0-9A-F]+(?: [0-9A-F]+)*)",
     )?;
 
     parse(
         &mut ud,
-        |sink, captures| et_handler(&mut popularity, sink, captures),
+        |sink, captures| et_handler(&mut popularity, sink, &mut sequences, captures),
         "emoji-test.txt", None,
         r"^(?P<points>[0-9A-F]+(?: [0-9A-F]+)*)\s*;\s*fully-qualified\s*# .* E[0-9]+[.][0-9]+ (?P<name>.+)",
     )?;
@@ -183,19 +197,65 @@ fn main() -> Result<(), Error> {
         r"^(?P<first>[0-9A-F]+)(?:[.][.](?P<last>[0-9A-F]+))?\s*;\s*(?P<value>[^ ]+)",
     )?;
 
+    // TODO add test cases for ebits
     println!("Running tests ...");
     use crate::details::AliasType::*;
-    assert_eq!(ud[0x0000], Details::r#static(None, &[("NULL", Unicode1), ("NULL", Control), ("NUL", Abbreviation)], None, GraphemeBreak::Control, "Control (Cc)", "Basic Latin", "Unicode 1.1", None, None, None, None, None, &[]));
-    assert_eq!(ud[0x000A], Details::r#static(None, &[("LINE FEED (LF)", Unicode1), ("LINE FEED", Control), ("NEW LINE", Control), ("END OF LINE", Control), ("LF", Abbreviation), ("NL", Abbreviation), ("EOL", Abbreviation)], None, GraphemeBreak::Lf, "Control (Cc)", "Basic Latin", "Unicode 1.1", None, None, None, None, None, &[]));
-    assert_eq!(ud[0x0080], Details::r#static(None, &[("PADDING CHARACTER", Figment), ("PAD", Abbreviation)], None, GraphemeBreak::Control, "Control (Cc)", "Latin-1 Supplement", "Unicode 1.1", None, None, None, None, None, &[]));
-    assert_eq!(ud[0x039B], Details::r#static("GREEK CAPITAL LETTER LAMDA", &[("GREEK CAPITAL LETTER LAMBDA", Unicode1)], None, None, "Uppercase Letter (Lu)", "Greek and Coptic", "Unicode 1.1", None, None, None, None, None, &[]));
-    assert_eq!(ud[0x5170], Details::r#static(None, &[], "CJK UNIFIED IDEOGRAPH-", None, "Other Letter (Lo)", "CJK Unified Ideographs", "Unicode 1.1", None, None, None, "orchid; elegant, graceful", "lán", &[Bits::KdefinitionExists, Bits::DerivedNameNr2]));
-    assert_eq!(ud[0x9FFF], Details::r#static(None, &[], None, None, "Other Letter (Lo)", "CJK Unified Ideographs", "Unicode 14.0", None, None, None, None, None, &[]));
-    assert_eq!(ud[0xD4DB], Details::r#static(None, &[], "HANGUL SYLLABLE ", GraphemeBreak::HangulLVT, "Other Letter (Lo)", "Hangul Syllables", "Unicode 2.0", HangulSyllableType::Lvt, None, (17, 16, 15), None, None, &[Bits::DerivedNameNr1]));
-    assert_eq!(ud[0xD788], Details::r#static(None, &[], "HANGUL SYLLABLE ", GraphemeBreak::HangulLV, "Other Letter (Lo)", "Hangul Syllables", "Unicode 2.0", HangulSyllableType::Lv, None, (18, 20, 0), None, None, &[Bits::DerivedNameNr1]));
-    assert_eq!(ud[0xF900], Details::r#static(None, &[], "CJK COMPATIBILITY IDEOGRAPH-", None, "Other Letter (Lo)", "CJK Compatibility Ideographs", "Unicode 1.1", None, None, None, "how? what?", None, &[Bits::KdefinitionExists, Bits::DerivedNameNr2]));
-    assert_eq!(ud[0xFE18], Details::r#static("PRESENTATION FORM FOR VERTICAL RIGHT WHITE LENTICULAR BRAKCET", &[("PRESENTATION FORM FOR VERTICAL RIGHT WHITE LENTICULAR BRACKET", Correction)], None, None, "Close Punctuation (Pe)", "Vertical Forms", "Unicode 4.1", None, None, None, None, None, &[]));
-    assert_eq!(ud[0xFEFF], Details::r#static("ZERO WIDTH NO-BREAK SPACE", &[("BYTE ORDER MARK", Unicode1), ("BYTE ORDER MARK", Alternate), ("BOM", Abbreviation), ("ZWNBSP", Abbreviation)], None, GraphemeBreak::Control, "Format (Cf)", "Arabic Presentation Forms-B", "Unicode 1.1", None, None, None, None, None, &[]));
+    assert_eq!(ud[0x0000], Details::r#static(None, &[("NULL", Unicode1), ("NULL", Control), ("NUL", Abbreviation)], None, GraphemeBreak::Control, "Control (Cc)", "Basic Latin", "Unicode 1.1", None, None, None, None, None, &[], &[]));
+    assert_eq!(ud[0x000A], Details::r#static(None, &[("LINE FEED (LF)", Unicode1), ("LINE FEED", Control), ("NEW LINE", Control), ("END OF LINE", Control), ("LF", Abbreviation), ("NL", Abbreviation), ("EOL", Abbreviation)], None, GraphemeBreak::Lf, "Control (Cc)", "Basic Latin", "Unicode 1.1", None, None, None, None, None, &[], &[]));
+    assert_eq!(ud[0x0080], Details::r#static(None, &[("PADDING CHARACTER", Figment), ("PAD", Abbreviation)], None, GraphemeBreak::Control, "Control (Cc)", "Latin-1 Supplement", "Unicode 1.1", None, None, None, None, None, &[], &[]));
+    assert_eq!(ud[0x039B], Details::r#static("GREEK CAPITAL LETTER LAMDA", &[("GREEK CAPITAL LETTER LAMBDA", Unicode1)], None, None, "Uppercase Letter (Lu)", "Greek and Coptic", "Unicode 1.1", None, None, None, None, None, &[], &[]));
+    assert_eq!(ud[0x5170], Details::r#static(None, &[], "CJK UNIFIED IDEOGRAPH-", None, "Other Letter (Lo)", "CJK Unified Ideographs", "Unicode 1.1", None, None, None, "orchid; elegant, graceful", "lán", &[Bits::KdefinitionExists, Bits::DerivedNameNr2], &[]));
+    assert_eq!(ud[0x9FFF], Details::r#static(None, &[], None, None, "Other Letter (Lo)", "CJK Unified Ideographs", "Unicode 14.0", None, None, None, None, None, &[], &[]));
+    assert_eq!(ud[0xD4DB], Details::r#static(None, &[], "HANGUL SYLLABLE ", GraphemeBreak::HangulLVT, "Other Letter (Lo)", "Hangul Syllables", "Unicode 2.0", HangulSyllableType::Lvt, None, (17, 16, 15), None, None, &[Bits::DerivedNameNr1], &[]));
+    assert_eq!(ud[0xD788], Details::r#static(None, &[], "HANGUL SYLLABLE ", GraphemeBreak::HangulLV, "Other Letter (Lo)", "Hangul Syllables", "Unicode 2.0", HangulSyllableType::Lv, None, (18, 20, 0), None, None, &[Bits::DerivedNameNr1], &[]));
+    assert_eq!(ud[0xF900], Details::r#static(None, &[], "CJK COMPATIBILITY IDEOGRAPH-", None, "Other Letter (Lo)", "CJK Compatibility Ideographs", "Unicode 1.1", None, None, None, "how? what?", None, &[Bits::KdefinitionExists, Bits::DerivedNameNr2], &[]));
+    assert_eq!(ud[0xFE18], Details::r#static("PRESENTATION FORM FOR VERTICAL RIGHT WHITE LENTICULAR BRAKCET", &[("PRESENTATION FORM FOR VERTICAL RIGHT WHITE LENTICULAR BRACKET", Correction)], None, None, "Close Punctuation (Pe)", "Vertical Forms", "Unicode 4.1", None, None, None, None, None, &[], &[]));
+    assert_eq!(ud[0xFEFF], Details::r#static("ZERO WIDTH NO-BREAK SPACE", &[("BYTE ORDER MARK", Unicode1), ("BYTE ORDER MARK", Alternate), ("BOM", Abbreviation), ("ZWNBSP", Abbreviation)], None, GraphemeBreak::Control, "Format (Cf)", "Arabic Presentation Forms-B", "Unicode 1.1", None, None, None, None, None, &[], &[]));
+
+    if let Some(twemoji) = std::env::args().nth(1) {
+        let twemoji_path = format!("../helper/twemoji-{}/assets/svg", twemoji);
+        println!("Fixing twemoji in {} ...", twemoji_path);
+        for entry in fs::read_dir(twemoji_path)? {
+            let entry = entry?;
+            let path = entry.path();
+            let name = path.file_name().expect("path has no name");
+            let name = name.to_str().expect("name is not unicode");
+            let stem = path.file_stem().expect("path has no stem");
+            let stem = stem.to_str().expect("stem is not unicode");
+            let extension = path.extension().expect("path has no extension");
+            let extension = extension.to_str().expect("extension is not unicode");
+            let points = stem.split("-")
+                .map(|x| usize::from_str_radix(x, 16).unwrap())
+                .collect::<Vec<_>>();
+            let mut new_points = Vec::default();
+            for (i, &point) in points.iter().enumerate() {
+                let ebits = ud[point].ebits;
+                let e = (EmojiBits::IsEmoji as u8 & ebits) != 0;
+                let ep = (EmojiBits::IsEmojiPresentation as u8 & ebits) != 0;
+                let emb = (EmojiBits::IsEmojiModifierBase as u8 & ebits) != 0;
+                let next_point = points.get(i + 1);
+                let next_is_vs16 = next_point.map_or(false, |&x| x == 0xFE0F);
+                let next_ebits = next_point.map(|&j| ud[j].ebits);
+                let next_em = next_ebits.map_or(false, |x| (EmojiBits::IsEmojiModifier as u8 & x) != 0);
+                new_points.push(point);
+                if e && !ep && !next_is_vs16 && !(emb && next_em) {
+                    if !emb && next_em {
+                        eprintln!("Warning: {}: tolerating non-RGI emoji modifier sequence", name);
+                    } else {
+                        // eprintln!("Warning: {}: U+{:04X} without VS16 or Emoji_Modifier", point, name);
+                        new_points.push(0xFE0F);
+                    }
+                }
+            }
+            if new_points != points {
+                let new_points = new_points.iter().map(|x| format!("{:x}", x)).collect::<Vec<_>>();
+                let new = path.with_file_name(new_points.join("-"));
+                let new = new.with_extension(extension);
+                // eprintln!("mv {} {:?}", name, new);
+                fs::rename(path, new)?;
+            }
+        }
+    }
 
     write("egcbreak.ts", |mut sink| {
         Ok(writeln!(sink, "export const EGCBREAK = /{}/g;", generate_egcbreak()?)?)
@@ -221,12 +281,14 @@ fn main() -> Result<(), Error> {
     write_pool_indices(&ud, &pool, "data.uhdef.bin", |x| x.uhdef.map_clone())?;
     write_pool_indices(&ud, &pool, "data.uhman.bin", |x| x.uhman.map_clone())?;
     write_sparse(&ud, "data.bits.bin", 0, u8_writer, |x| if x.bits > 0 { Some(x.bits) } else { None })?;
+    write_sparse(&ud, "data.ebits.bin", 0, u8_writer, |x| if x.ebits > 0 { Some(x.ebits) } else { None })?;
     write_sparse(&ud, "data.hlvt.bin", 0, u16_writer, |x| x.hlvt.map(|(l, v, t)| {
         assert!(l < (1 << 5) && v < (1 << 5) && t < (1 << 5));
         return (1 << 15 | l << 10 | v << 5 | t) as u16;
     }))?;
     write_sparse(&ud, "data.gb.bin", 0, u8_writer, |x| x.gb.map(|x| x as u8))?;
     write_alias_files(&ud, &pool)?;
+    write_sequence_files(&sequences, &pool)?;
     write("data.pagebits.bin", |mut sink| {
         for page in ud.chunks(256) {
             let mut value = 0;
@@ -241,6 +303,21 @@ fn main() -> Result<(), Error> {
             }
             sink.write_u8(value)?;
         }
+
+        Ok(())
+    })?;
+    write("data.info.json", |mut sink| {
+        #[derive(Serialize)]
+        #[serde(rename_all = "camelCase")]
+        struct DataInfo {
+            sequence_bucket_count: usize,
+            sequence_count: usize,
+        }
+
+        write!(sink, "{}", serde_json::to_string(&DataInfo {
+            sequence_bucket_count: sequences.buckets.len(),
+            sequence_count: sequences.buckets.values().fold(0, |a, x| a + x.len()),
+        })?)?;
 
         Ok(())
     })?;
@@ -272,6 +349,12 @@ fn u8_writer(sink: &mut BufWriter<File>, x: u8) -> Result<(), Error> {
 
 fn u16_writer(sink: &mut BufWriter<File>, x: u16) -> Result<(), Error> {
     sink.write_u16::<BigEndian>(x)?;
+
+    Ok(())
+}
+
+fn u32_writer(sink: &mut BufWriter<File>, x: u32) -> Result<(), Error> {
+    sink.write_u32::<BigEndian>(x)?;
 
     Ok(())
 }
@@ -376,6 +459,75 @@ fn write_alias_files(source: &[Details], pool: &Pool) -> Result<(), Error> {
     write("data.aliast.bin", |mut sink| {
         for r#type in types {
             u8_writer(&mut sink, r#type as u8)?;
+        }
+
+        Ok(())
+    })?;
+
+    Ok(())
+}
+
+fn write_sequence_files(sequences: &Sequences, pool: &Pool) -> Result<(), Error> {
+    write("data.seqb.bin", |mut sink| {
+        let mut start = 0;
+
+        for (key, bucket) in sequences.buckets.iter() {
+            let len = bucket.len().try_into().expect("sequence bucket len overflow");
+            // eprintln!("{:04X}\t{:04X}\t{}\t{}", key.0, key.1, start, len);
+            u32_writer(&mut sink, key.0.try_into().unwrap())?;
+            u32_writer(&mut sink, key.1.try_into().unwrap())?;
+            u16_writer(&mut sink, start)?;
+            u8_writer(&mut sink, len)?;
+            start = start.checked_add(len.into()).expect("sequence bucket start overflow");
+        }
+
+        Ok(())
+    })?;
+
+    write("data.seqp.bin", |mut sink| {
+        let mut start = 0;
+        for bucket in sequences.buckets.values() {
+            for sequence in bucket {
+                let len = sequence.points.len().try_into().expect("sequence points len overflow");
+                // let debug = sequence.points.iter().map(|x| format!("{:04X}", x)).reduce(|a, x| format!("{} {}", a, x)).unwrap();
+                // eprintln!("{}\t{}\t{}", start, len, debug);
+                u16_writer(&mut sink, start)?;
+                u8_writer(&mut sink, len)?;
+                start = start.checked_add(len.into()).expect("sequence points start overflow");
+            }
+        }
+
+        for bucket in sequences.buckets.values() {
+            for sequence in bucket {
+                for &point in sequence.points.iter() {
+                    u32_writer(&mut sink, point.try_into().unwrap())?;
+                }
+            }
+        }
+
+        Ok(())
+    })?;
+
+    write("data.seqn.bin", |mut sink| {
+        let mut start = 0;
+        for bucket in sequences.buckets.values() {
+            for sequence in bucket {
+                let len = sequence.names.len().try_into().expect("sequence names len overflow");
+                // let debug = sequence.points.iter().map(|x| format!("{:04X}", x)).reduce(|a, x| format!("{} {}", a, x)).unwrap();
+                // eprintln!("{}\t{}\t{}", start, len, debug);
+                u16_writer(&mut sink, start)?;
+                u8_writer(&mut sink, len)?;
+                start = start.checked_add(len.into()).expect("sequence names start overflow");
+            }
+        }
+
+        for bucket in sequences.buckets.values() {
+            for sequence in bucket {
+                for name in sequence.names.iter() {
+                    let string = pool.r#use(&name);
+                    u16_writer(&mut sink, string.try_into().expect("string pool overflow"))?;
+                }
+            }
         }
 
         Ok(())

@@ -7,14 +7,15 @@ import {
   getNameExceptNr2,
   getOldName,
   kDefinitionExists,
-  isEmojiPresentation,
   isSpaceSeparator,
   isAnyMark,
   hasDerivedNameNr1,
   hasDerivedNameNr2,
   getNextClusterBreak,
+  getEmojiPresentationRuns,
 } from "./data";
-import { pointsToString } from "./encoding";
+import { pointsToString, stringToPoints } from "./encoding";
+import { pointsToYouPlus } from "./formatting";
 import { getData } from "./testing";
 
 test("getString returns correct string", () => {
@@ -57,11 +58,6 @@ test("kDefinitionExists returns correct value", () => {
   expect(kDefinitionExists(getData(), 1)).toBe(true);
 });
 
-test("isEmojiPresentation returns correct value", () => {
-  expect(isEmojiPresentation(getData(), 0)).toBe(true);
-  expect(isEmojiPresentation(getData(), 1)).toBe(false);
-});
-
 test("isSpaceSeparator returns correct value", () => {
   expect(isSpaceSeparator(getData(), 0)).toBe(false);
   expect(isSpaceSeparator(getData(), 1)).toBe(true);
@@ -86,7 +82,7 @@ test("getNextClusterBreak returns correct values", () => {
   const test: string = readFileSync("data/GraphemeBreakTest.txt", "utf8");
   const data = getData();
   data.gb = bufferToDataView(readFileSync("data/data.gb.bin"));
-  data.bits = bufferToDataView(readFileSync("data/data.bits.bin"));
+  data.ebits = bufferToDataView(readFileSync("data/data.ebits.bin"));
   for (const line of test.match(/^÷[ ÷×0-9A-F]+/gm)!) {
     const points = line.match(/[0-9A-F]+/g)!.map((x) => parseInt(x, 16));
     const breaks = line.match(/[÷×]/g)!;
@@ -112,6 +108,46 @@ test("getNextClusterBreak returns correct values", () => {
           pointLen += 1;
           break;
       }
+    }
+  }
+});
+
+test("getEmojiPresentationRuns returns correct values", () => {
+  const data = getData();
+  data.gb = bufferToDataView(readFileSync("data/data.gb.bin"));
+  data.ebits = bufferToDataView(readFileSync("data/data.ebits.bin"));
+
+  expect(getEmojiPresentationRuns(data, "")).toEqual([0]);
+  expect(getEmojiPresentationRuns(data, " ")).toEqual([0]);
+
+  expect(getEmojiPresentationRuns(data, "⌚")).toEqual([0, 0]);
+  expect(getEmojiPresentationRuns(data, " ⌚")).toEqual([0, 1]);
+  expect(getEmojiPresentationRuns(data, "⌚ ")).toEqual([0, 0, 1]);
+  expect(getEmojiPresentationRuns(data, " ⌚ ")).toEqual([0, 1, 2]);
+  expect(getEmojiPresentationRuns(data, " ⌚⌚ ")).toEqual([0, 1, 3]);
+  expect(getEmojiPresentationRuns(data, " ⌚ ⌚ ")).toEqual([0, 1, 2, 3, 4]);
+
+  const test: string = readFileSync("data/emoji-test.txt", "utf8");
+  for (const line of test.match(
+    /^[0-9A-F]+(?: [0-9A-F]+)*(?=\s*; fully-qualified(?:\s|#))/gm,
+  )!) {
+    // if (line != "1F3F3 FE0F 200D 26A7 FE0F") continue;
+    const points = line.match(/[0-9A-F]+/g)!.map((x) => parseInt(x, 16));
+    const string = pointsToString(points);
+    const len = string.length;
+    e(0, `${string}`, [0, 0]);
+    e(1, ` ${string}`, [0, 1]);
+    e(2, `${string} `, [0, 0, len]);
+    e(3, ` ${string} `, [0, 1, 1 + len]);
+    e(4, ` ${string}${string} `, [0, 1, 1 + 2 * len]);
+    e(5, ` ${string} ${string} `, [0, 1, 1 + len, 2 + len, 2 + 2 * len]);
+  }
+
+  function e(i: number, string: string, expected: number[]) {
+    const actual = getEmojiPresentationRuns(data, string);
+    if (String(actual) != String(expected)) {
+      console.error(pointsToYouPlus(stringToPoints(string)), `#${i}`);
+      expect(actual).toEqual(expected);
     }
   }
 });

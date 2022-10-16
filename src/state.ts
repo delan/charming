@@ -3,23 +3,24 @@ import React from "react";
 import { Data } from "./data";
 import { toHexadecimal } from "./formatting";
 
-export function toFragment(point: number): string {
-  return `#${toHexadecimal(point)}`;
+export function toFragment(points: number[]): string {
+  return `#${points.map((x) => toHexadecimal(x)).join("-")}`;
 }
 
-export function getHashPoint(
+export function getHashPoints(
   hash: string | undefined,
   or?: undefined,
-): number | undefined;
-export function getHashPoint<D>(hash: string | undefined, or: D): number | D;
-export function getHashPoint(hash: string | undefined, or: any) {
+): number[] | undefined;
+export function getHashPoints<D>(hash: string | undefined, or: D): number[] | D;
+export function getHashPoints(hash: string | undefined, or: any) {
   if (hash == "" || typeof hash == "undefined") {
     return or;
   }
 
-  const point = parseInt(hash.slice(1), 16);
+  const parts = hash.slice(1).split("-");
+  const point = parts.map((x) => parseInt(x, 16));
 
-  if (point != point) {
+  if (point.some((x) => x != x)) {
     return or;
   }
 
@@ -27,15 +28,15 @@ export function getHashPoint(hash: string | undefined, or: any) {
     return or;
   }
 
-  if (point >= 0x110000) {
+  if (point.some((x) => x >= 0x110000)) {
     return or;
   }
 
   return point;
 }
 
-export function fixHashPoint(hash: string, point: number): void {
-  const expected = toFragment(point);
+export function fixHashPoints(hash: string, points: number[]): void {
+  const expected = toFragment(points);
   const actual = hash;
 
   if (actual != expected) {
@@ -43,5 +44,18 @@ export function fixHashPoint(hash: string, point: number): void {
   }
 }
 
+export function isSequence(points: number[]): boolean {
+  return points.length > 1;
+}
+
+export function ifSequence<T>(
+  points: number[],
+  yes: (_: number[]) => T,
+  no: (_: number) => T,
+): T {
+  if (isSequence(points)) return yes(points);
+  else return no(points[0]);
+}
+
 export const DataContext = React.createContext<Data | null>(null);
-export const PointContext = React.createContext<number>(0); // FIXME
+export const PointContext = React.createContext<number[]>([0]); // FIXME

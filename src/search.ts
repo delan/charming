@@ -2,11 +2,29 @@ import { AliasType, Data } from "./data";
 import SearchWorker from "./search.worker";
 
 export type SearchResult = BaseSearchResult &
-  (NameishSearchResult | AliasSearchResult | OtherSearchResult);
+  (
+    | SequenceValueSearchResult
+    | SequenceNameSearchResult
+    | NameishSearchResult
+    | AliasSearchResult
+    | OtherSearchResult
+  );
 
 interface BaseSearchResult {
-  point: number;
+  points: number[];
   score: number;
+}
+
+interface SequenceValueSearchResult {
+  reason: "sequenceValue";
+  sequenceIndex: number;
+}
+
+interface SequenceNameSearchResult {
+  reason: "sequenceName";
+  offset: number;
+  sequenceIndex: number;
+  sequenceNameIndex: number;
 }
 
 interface NameishSearchResult {

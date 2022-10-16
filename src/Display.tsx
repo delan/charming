@@ -1,18 +1,41 @@
 import React, { useContext } from "react";
 
-import { pointToString, isSurrogate } from "./encoding";
+import { pointToString, isSurrogate, pointsToString } from "./encoding";
 import { pointToTofu } from "./formatting";
 import { DataContext } from "./state";
-import { Data, isSpaceSeparator, isAnyMark, isEmojiPresentation } from "./data";
+import {
+  Data,
+  isSpaceSeparator,
+  isAnyMark,
+  isEmojiPresentation,
+  getEmojiPresentationRuns,
+} from "./data";
 
-export function Display({ point }: { point: number }) {
+export function Display({ points }: { points: number[] }) {
   const data = useContext(DataContext);
+  const className = (...xs: string[]) => ["Display", ...xs].join(" ");
 
+  if (points.length > 1) {
+    const string = pointsToString(points);
+    const runs = data == null ? [0] : getEmojiPresentationRuns(data, string);
+    const result = runs.map((x, i, xs) => (
+      <span key={i} className={["", "emoji"][i % 2]}>
+        {slice(x, i, xs)}
+      </span>
+    ));
+    return <span className={className("sequence")}>{result}</span>;
+
+    function slice(x: number, i: number, xs: number[]): string {
+      return i < xs.length - 1 ? string.slice(x, xs[i + 1]) : string.slice(x);
+    }
+  }
+
+  const point = points[0];
   const tofu = pointToSyntheticTofu(point);
 
   if (tofu != null) {
     return (
-      <span className="synthetic tofu">
+      <span className={className("synthetic", "tofu")}>
         {[...tofu].map((x, i) => (
           <span key={i}>{x}</span>
         ))}
@@ -24,7 +47,7 @@ export function Display({ point }: { point: number }) {
 
   if (diagonal != null) {
     return (
-      <span className="synthetic diagonal">
+      <span className={className("synthetic", "diagonal")}>
         {[...diagonal].map((x, i) => (
           <span key={i}>{x}</span>
         ))}
@@ -35,17 +58,19 @@ export function Display({ point }: { point: number }) {
   const substitute = pointToSubstitute(data, point);
 
   if (substitute != null) {
-    return <span className="synthetic substitute">{substitute}</span>;
+    return (
+      <span className={className("synthetic", "substitute")}>{substitute}</span>
+    );
   }
 
-  if (data != null) {
-    // FIXME eosrei/twemoji-color-font#39
-    if (isEmojiPresentation(data, point)) {
-      return <span className="emoji">{pointToString(point)}</span>;
-    }
-  }
+  const result =
+    data != null && isEmojiPresentation(data, point) ? (
+      <span className="emoji">{pointToString(point)}</span>
+    ) : (
+      <>{pointToString(point)}</>
+    );
 
-  return <>{pointToString(point)}</>;
+  return <span className={className()}>{result}</span>;
 }
 
 // see dist/scratch/edge-points.html
