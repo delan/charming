@@ -9,6 +9,8 @@ import {
   getAliasValue,
   getNameExceptNr2,
   getNextClusterBreak,
+  getSequenceNames,
+  getSequencePoints,
   getString,
   hasAnyAlias,
   hasAnyNameExceptNr2,
@@ -93,7 +95,7 @@ function* searchByBreakdown(
   }
 }
 
-function* searchBySequence(
+function* searchBySequenceValue(
   data: Data,
   query: string,
 ): Generator<KeyedSearchResult> {
@@ -105,12 +107,42 @@ function* searchBySequence(
   if (sequenceIndex == null) return;
 
   yield {
-    key: `sequence/${points.join("+")}`,
+    key: `sequenceValue/${points.join("+")}`,
     points,
-    reason: "sequence",
+    reason: "sequenceValue",
     sequenceIndex,
     score: 0,
   };
+}
+
+function* searchBySequenceName(
+  data: Data,
+  query: string,
+): Generator<KeyedSearchResult> {
+  if (query.length == 0) return;
+  const upper = query.toUpperCase();
+
+  for (let i = 0; i < data.info.sequenceCount; i++) {
+    const sequenceNames = getSequenceNames(data, i);
+    if (sequenceNames == null) continue;
+
+    for (const [j, sequenceName] of sequenceNames.entries()) {
+      const search = sequenceName.toUpperCase();
+      if (search.includes(upper)) {
+        const points = getSequencePoints(data, i)!;
+        const [score, offset] = scoreMatch(search, upper);
+        yield {
+          key: `sequenceName/${points.join("+")}`,
+          points,
+          reason: "sequenceName",
+          sequenceIndex: i,
+          sequenceNameIndex: j,
+          score,
+          offset,
+        };
+      }
+    }
+  }
 }
 
 function* searchByName(
@@ -281,13 +313,14 @@ addEventListener("message", ({ data: { data = cache, query } }) => {
   const result: KeyedSearchResult[] = [
     ...searchByHexadecimal(query),
     ...searchByDecimal(query),
-    ...searchBySequence(data, query),
+    ...searchBySequenceValue(data, query),
     // three graphemes allows checking for invisible characters between two visible characters
     ...searchByBreakdown(data, query, 3),
     ...sortByScore(
       dedupResults([
         ...searchByName(data, query),
         ...searchByNameAlias(data, query),
+        ...searchBySequenceName(data, query),
       ]),
     ),
     ...sortByScore([...searchByUhdef(data, query)]),

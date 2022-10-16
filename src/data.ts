@@ -288,10 +288,8 @@ export function findSequenceIndex(data: Data, points: number[]): number | null {
   const bucket = findSequenceBucket(data, points[0], points[1]);
   if (bucket == null) return null;
 
-  console.log(bucket);
   for (let i = bucket.start; i < bucket.start + bucket.len; i++) {
     const ps = getSequencePoints(data, i)!;
-    console.log(ps.length, points.length);
     if (ps.length == points.length && ps.every((p, i) => p == points[i])) {
       return i;
     }
@@ -313,13 +311,33 @@ export function getSequencePoints(
   return result;
 }
 
-export function getSequenceFirstName(
+export function getSequenceNames(
   data: Data,
   sequenceIndex: number,
+): string[] | null {
+  const start = data.seqn.getUint16(sequenceIndex * 3 + 0);
+  const len = data.seqn.getUint8(sequenceIndex * 3 + 2);
+  const base = data.info.sequenceCount * 3;
+  const result = [];
+  for (let i = start; i < start + len; i++)
+    result.push(getStringByIndex(data, data.seqn.getUint16(base + i * 2))!);
+  return result;
+}
+
+export function getSequenceNameByIndices(
+  data: Data,
+  sequenceIndex: number,
+  sequenceNameIndex: number,
 ): string | null {
   const start = data.seqn.getUint16(sequenceIndex * 3 + 0);
+  const len = data.seqn.getUint16(sequenceIndex * 3 + 2);
+  if (sequenceNameIndex < 0 || sequenceNameIndex >= len) return null;
+
   const base = data.info.sequenceCount * 3;
-  return getStringByIndex(data, data.seqn.getUint16(base + start * 2));
+  return getStringByIndex(
+    data,
+    data.seqn.getUint16(base + (start + sequenceNameIndex) * 2),
+  );
 }
 
 export function getGraphemeBreak(

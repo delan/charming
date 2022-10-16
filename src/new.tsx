@@ -42,7 +42,7 @@ import {
   getAliasType,
   getAliasValue,
   getNameProperty,
-  getSequenceFirstName,
+  getSequenceNameByIndices,
   getString,
   isEmoji,
   isEmojiPresentation,
@@ -161,7 +161,7 @@ function Detail({ search }: { search: () => void }) {
             (x) => {
               const sequenceIndex = findSequenceIndex(data, x);
               if (sequenceIndex == null) return "(sequence)";
-              return getSequenceFirstName(data, sequenceIndex);
+              return getSequenceNameByIndices(data, sequenceIndex, 0);
             },
             (x) => pointToName(data, x),
           )}
@@ -420,12 +420,30 @@ function SearchResultLabel({
           {getNameProperty(data, point)}
         </>
       );
-    case "sequence":
+    case "sequenceValue":
       return (
         <>
           {pointsToYouPlus(points)}
           {space}
-          {getSequenceFirstName(data, result.sequenceIndex)}
+          {getSequenceNameByIndices(data, result.sequenceIndex, 0)}
+        </>
+      );
+    case "sequenceName":
+      return (
+        <>
+          {pointsToYouPlus(points)}
+          {hint}
+          <SubstringMatches
+            label={
+              getSequenceNameByIndices(
+                data,
+                result.sequenceIndex,
+                result.sequenceNameIndex,
+              )!
+            }
+            query={query}
+            offset={result.offset}
+          />
         </>
       );
     case "name":

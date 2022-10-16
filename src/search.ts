@@ -3,7 +3,8 @@ import SearchWorker from "./search.worker";
 
 export type SearchResult = BaseSearchResult &
   (
-    | SequenceSearchResult
+    | SequenceValueSearchResult
+    | SequenceNameSearchResult
     | NameishSearchResult
     | AliasSearchResult
     | OtherSearchResult
@@ -14,9 +15,16 @@ interface BaseSearchResult {
   score: number;
 }
 
-interface SequenceSearchResult {
-  reason: "sequence";
+interface SequenceValueSearchResult {
+  reason: "sequenceValue";
   sequenceIndex: number;
+}
+
+interface SequenceNameSearchResult {
+  reason: "sequenceName";
+  offset: number;
+  sequenceIndex: number;
+  sequenceNameIndex: number;
 }
 
 interface NameishSearchResult {
