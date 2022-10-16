@@ -141,6 +141,8 @@ body
       color: #0000FF
 
   > dl
+    margin-top: 1em
+
     > dt.compact
       float: left
       clear: left
@@ -151,12 +153,6 @@ body
 
   &.sequence > h1
     font-size: 1rem
-
-    &::before
-      display: block
-      font-size: 1.5em
-      content: "sequence"
-      color: #C0C0C0
 
 .Map
 
@@ -233,6 +229,10 @@ body
 
   .choice
     vertical-align: middle
+
+.Detail.sequence
+  > ul
+    margin-top: 1em
 
 .AliasHint
   line-height: 1
