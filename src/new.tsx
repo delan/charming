@@ -276,6 +276,7 @@ function Search({
   hidden: boolean;
 }) {
   const data = useContext(DataContext);
+  const points = useContext(PointsContext);
   const input = useRef<HTMLInputElement>(null);
 
   const [results, setResults] = useState([]);
@@ -290,15 +291,25 @@ function Search({
 
   return (
     <div className="Search" hidden={hidden}>
-      <input
-        ref={input}
-        autoFocus={true}
-        value={query}
-        onChange={(event) => setQuery(event.target.value)}
-        placeholder="try “em dash” or “69” or “🏳️‍🌈”"
-      />
-
       <div>
+        <a
+          href={toFragment(points)}
+          className="toolbar"
+          aria-label="close"
+          onClick={close}
+        >
+          <i className="fas fa-times" aria-hidden="true"></i>
+        </a>
+        <input
+          ref={input}
+          autoFocus={true}
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="try “em” or “69” or “🏳️‍🌈”"
+        />
+      </div>
+
+      <div className="results">
         <AutoSizer>
           {({ width, height }: { width: number; height: number }) => (
             <SearchResultList

@@ -173,11 +173,24 @@ body
   &[hidden]
     display: none
 
-  > input
+  > :not(.results)
     flex: 0 0 $choice-glyph-size*2
-    font-size: $choice-glyph-size
+    display: flex
+    flex-direction: row
+    gap: 1rem
 
-  > div
+    > a
+      flex: 0 0 auto
+      align-self: center
+      font-size: 1.5rem
+      height: 1em
+
+    > input
+      flex: 1 1 auto
+      min-width: 0
+      font-size: $choice-glyph-size
+
+  > .results
     flex: 1 0 auto
     padding-top: 1em
 
