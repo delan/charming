@@ -14,7 +14,9 @@ pkgs.mkShell {
     pkgs.poppler_utils # pdfdetach(1)
 
     # package.json
-    pkgs.nodejs-10_x
+    # pkgs.nodejs-10_x is marked as insecure
+    # pkgs.nodejs-12_x is marked as insecure
+    pkgs.nodejs-14_x
 
     # webpack.config.js > DefinePlugin
     pkgs.git
