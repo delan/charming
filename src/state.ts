@@ -44,12 +44,16 @@ export function fixHashPoints(hash: string, points: number[]): void {
   }
 }
 
+export function isSequence(points: number[]): boolean {
+  return points.length > 1;
+}
+
 export function ifSequence<T>(
   points: number[],
   yes: (_: number[]) => T,
   no: (_: number) => T,
 ): T {
-  if (points.length > 1) return yes(points);
+  if (isSequence(points)) return yes(points);
   else return no(points[0]);
 }
 

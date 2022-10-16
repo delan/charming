@@ -65,6 +65,11 @@ export function pointsToYouPlus(points: number[]): string {
   return `U+${joinSequence(points, " ", (x) => pointToYouPlus(x, ""))}`;
 }
 
+export function pointsToYouPlusEllipsis(points: number[]): string {
+  if (points.length < 2) return pointToYouPlus(points[0]);
+  return `${pointToYouPlus(points[0])}…`;
+}
+
 export function joinSequence(
   points: number[],
   sep: string,

@@ -55,6 +55,7 @@ import {
   pointToString8,
   pointToEntity10,
   pointsToYouPlus,
+  pointsToYouPlusEllipsis,
 } from "./formatting";
 import { Display } from "./Display";
 import { KeyedSearchResult, search, SearchResult } from "./search";
@@ -345,14 +346,38 @@ const SearchResultRow = React.memo(function SearchResultRow({
   data: { query, close, results },
 }: ListChildComponentProps) {
   const x = results[index];
+
+  const space = " ";
+  const useSequenceStyle = false;
+  const classes = (useSequenceStyle ? ["sequence"] : []).join(" ");
+
+  const hint =
+    x.reason == "alias" ? (
+      <>
+        {space}
+        <span>
+          <AliasHint type={x.aliasType} />
+        </span>
+        {space}
+      </>
+    ) : (
+      <>{space}</>
+    );
+
   return (
-    <li key={x.key} style={style}>
+    <li key={x.key} className={classes} style={style}>
       <a href={toFragment(x.points)} onClick={close}>
         <span className="choice">
           <Display points={x.points} />
         </span>
-        {" "}
-        <SearchResultLabel query={query} result={x} />
+        {hint}
+        <span className="label">
+          <SearchResultLabel
+            query={query}
+            result={x}
+            useSequenceStyle={useSequenceStyle}
+          />
+        </span>
       </a>
     </li>
   );
@@ -362,9 +387,11 @@ areEqual);
 function SearchResultLabel({
   query,
   result,
+  useSequenceStyle,
 }: {
   query: string;
   result: SearchResult;
+  useSequenceStyle: boolean;
 }) {
   const data = useContext(DataContext);
   const space = " ";
@@ -378,28 +405,20 @@ function SearchResultLabel({
   if (data == null)
     return (
       <>
-        {pointToYouPlus(point)}
-        {space}???
+        <span>{pointToYouPlus(point)}</span>
+        {space}
+        <span>???</span>
       </>
     );
 
-  let hint =
-    result.reason == "alias" ? (
-      <>
-        {space}
-        <AliasHint type={result.aliasType} />
-        {space}
-      </>
-    ) : (
-      <>{space}</>
-    );
+  const separator = useSequenceStyle ? <br /> : <>{space}</>;
 
   switch (reason) {
     case "hex":
       return (
         <>
           U+<b>{pointToYouPlus(point, "")}</b>
-          {hint}
+          {separator}
           {getNameProperty(data, point)}
         </>
       );
@@ -408,7 +427,7 @@ function SearchResultLabel({
         <>
           {pointToYouPlus(point)}
           {space}(<b>{point}</b>
-          <sub>10</sub>){hint}
+          <sub>10</sub>){separator}
           {getNameProperty(data, point)}
         </>
       );
@@ -416,23 +435,23 @@ function SearchResultLabel({
       return (
         <>
           {pointToYouPlus(point)}
-          {hint}
+          {separator}
           {getNameProperty(data, point)}
         </>
       );
     case "sequenceValue":
       return (
         <>
-          {pointsToYouPlus(points)}
-          {space}
+          {pointsToYouPlusEllipsis(points)}
+          {separator}
           {getSequenceNameByIndices(data, result.sequenceIndex, 0)}
         </>
       );
     case "sequenceName":
       return (
         <>
-          {pointsToYouPlus(points)}
-          {hint}
+          {pointsToYouPlusEllipsis(points)}
+          {separator}
           <SubstringMatches
             label={
               getSequenceNameByIndices(
@@ -450,7 +469,7 @@ function SearchResultLabel({
       return (
         <>
           {pointToYouPlus(point)}
-          {hint}
+          {separator}
           <SubstringMatches
             label={getNameProperty(data, point)!}
             query={query}
@@ -462,7 +481,7 @@ function SearchResultLabel({
       return (
         <>
           {pointToYouPlus(point)}
-          {hint}
+          {separator}
           <SubstringMatches
             label={getString(data, reason, point)!}
             query={query}
@@ -474,7 +493,7 @@ function SearchResultLabel({
       return (
         <>
           {pointToYouPlus(point)}
-          {hint}
+          {separator}
           <SubstringMatches
             label={getAliasValue(data, result.aliasIndex)!}
             query={query}
