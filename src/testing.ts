@@ -1,5 +1,11 @@
-export function getData() {
+import { Data } from "./data";
+
+export function getData(): Data {
   //                  0123456789abc
+  const info = {
+    sequenceBucketCount: 0,
+    sequenceCount: 0,
+  };
   const string = [..."abcdefghixyz"];
   const empty = makeSparseWithDonkeyVote(0, () => {});
   const bits = makeSparseWithDonkeyVote(1 * 3, (result, start) => {
@@ -7,7 +13,7 @@ export function getData() {
     result.setUint8(start + 1, 0b01010101);
     result.setUint8(start + 2, 0b11001111);
   });
-  // FIXME write tests for ebits, pagebits, alias[cst], gb
+  // FIXME write tests for ebits, pagebits, alias[cist], gb, seq[bpn]
   const ebits = new DataView(new ArrayBuffer(0x1100));
   const pagebits = new DataView(new ArrayBuffer(0x1100));
   const name = makeSparseWithDonkeyVote(2 * 3, (result, start) => {
@@ -49,7 +55,11 @@ export function getData() {
     result.setUint16(start + 2 * 2, 0xffff); // (null)
   });
   const uhman = empty;
+  const seqb = empty;
+  const seqp = empty;
+  const seqn = empty;
   return {
+    info,
     string,
     bits,
     ebits,
@@ -68,6 +78,9 @@ export function getData() {
     hjsn,
     uhdef,
     uhman,
+    seqb,
+    seqp,
+    seqn,
   };
 }
 

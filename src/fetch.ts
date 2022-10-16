@@ -1,3 +1,4 @@
+import info from "../data/data.info.json";
 import string from "../data/data.string.bin";
 import bits from "../data/data.bits.bin";
 import ebits from "../data/data.ebits.bin";
@@ -16,6 +17,9 @@ import hlvt from "../data/data.hlvt.bin";
 import hjsn from "../data/data.hjsn.bin";
 import uhdef from "../data/data.uhdef.bin";
 import uhman from "../data/data.uhman.bin";
+import seqb from "../data/data.seqb.bin";
+import seqp from "../data/data.seqp.bin";
+import seqn from "../data/data.seqn.bin";
 
 import { Data } from "./data";
 
@@ -39,6 +43,9 @@ export function fetchAllData(): Promise<Data> {
     hjsn,
     uhdef,
     uhman,
+    seqb,
+    seqp,
+    seqn,
   );
 }
 
@@ -66,6 +73,9 @@ async function fetchData(
       hjsn,
       uhdef,
       uhman,
+      seqb,
+      seqp,
+      seqn,
     ],
   ] = await Promise.all([
     fetchJson<string[]>(stringPath),
@@ -73,6 +83,7 @@ async function fetchData(
   ]);
 
   return {
+    info,
     string,
     bits,
     ebits,
@@ -91,6 +102,9 @@ async function fetchData(
     hjsn,
     uhdef,
     uhman,
+    seqb,
+    seqp,
+    seqn,
   };
 }
 

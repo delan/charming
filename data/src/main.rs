@@ -14,6 +14,7 @@ mod page;
 mod parse;
 mod pool;
 mod range;
+mod sequence;
 mod uax29;
 mod ud;
 mod ur;
@@ -27,6 +28,7 @@ use std::rc::Rc;
 
 use byteorder::{BigEndian, WriteBytesExt};
 use failure::Error;
+use serde::Serialize;
 
 use crate::age::age_handler;
 use crate::block::block_handler;
@@ -42,6 +44,7 @@ use crate::na::na_handler;
 use crate::page::PageBits;
 use crate::parse::parse;
 use crate::pool::{Pool, Popularity};
+use crate::sequence::Sequences;
 use crate::uax29::generate_egcbreak;
 use crate::ud::{process_ud_ranges, ud_handler, ud_range_handler};
 use crate::ur::ur_handler;
@@ -169,9 +172,10 @@ fn main() -> Result<(), Error> {
         r"^(?P<first>[0-9A-F]+)(?:[.][.](?P<last>[0-9A-F]+))?\s*;\s*(?P<property>Emoji|Extended_Pictographic|Emoji_Component|Emoji_Presentation|Emoji_Modifier|Emoji_Modifier_Base)(\s|#|$)",
     )?;
 
+    let mut sequences = Sequences::default();
     parse(
         &mut ud,
-        |sink, captures| et_handler(&mut popularity, sink, captures),
+        |sink, captures| et_handler(&mut popularity, sink, &mut sequences, captures),
         "emoji-test.txt", None,
         r"^(?P<points>[0-9A-F]+(?: [0-9A-F]+)*)\s*;\s*fully-qualified\s*# .* E[0-9]+[.][0-9]+ (?P<name>.+)",
     )?;
@@ -274,6 +278,7 @@ fn main() -> Result<(), Error> {
     }))?;
     write_sparse(&ud, "data.gb.bin", 0, u8_writer, |x| x.gb.map(|x| x as u8))?;
     write_alias_files(&ud, &pool)?;
+    write_sequence_files(&sequences, &pool)?;
     write("data.pagebits.bin", |mut sink| {
         for page in ud.chunks(256) {
             let mut value = 0;
@@ -288,6 +293,21 @@ fn main() -> Result<(), Error> {
             }
             sink.write_u8(value)?;
         }
+
+        Ok(())
+    })?;
+    write("data.info.json", |mut sink| {
+        #[derive(Serialize)]
+        #[serde(rename_all = "camelCase")]
+        struct DataInfo {
+            sequence_bucket_count: usize,
+            sequence_count: usize,
+        }
+
+        write!(sink, "{}", serde_json::to_string(&DataInfo {
+            sequence_bucket_count: sequences.buckets.len(),
+            sequence_count: sequences.buckets.values().fold(0, |a, x| a + x.len()),
+        })?)?;
 
         Ok(())
     })?;
@@ -319,6 +339,12 @@ fn u8_writer(sink: &mut BufWriter<File>, x: u8) -> Result<(), Error> {
 
 fn u16_writer(sink: &mut BufWriter<File>, x: u16) -> Result<(), Error> {
     sink.write_u16::<BigEndian>(x)?;
+
+    Ok(())
+}
+
+fn u32_writer(sink: &mut BufWriter<File>, x: u32) -> Result<(), Error> {
+    sink.write_u32::<BigEndian>(x)?;
 
     Ok(())
 }
@@ -423,6 +449,75 @@ fn write_alias_files(source: &[Details], pool: &Pool) -> Result<(), Error> {
     write("data.aliast.bin", |mut sink| {
         for r#type in types {
             u8_writer(&mut sink, r#type as u8)?;
+        }
+
+        Ok(())
+    })?;
+
+    Ok(())
+}
+
+fn write_sequence_files(sequences: &Sequences, pool: &Pool) -> Result<(), Error> {
+    write("data.seqb.bin", |mut sink| {
+        let mut start = 0;
+
+        for (key, bucket) in sequences.buckets.iter() {
+            let len = bucket.len().try_into().expect("sequence bucket len overflow");
+            // eprintln!("{:04X}\t{:04X}\t{}\t{}", key.0, key.1, start, len);
+            u32_writer(&mut sink, key.0.try_into().unwrap())?;
+            u32_writer(&mut sink, key.1.try_into().unwrap())?;
+            u16_writer(&mut sink, start)?;
+            u8_writer(&mut sink, len)?;
+            start = start.checked_add(len.into()).expect("sequence bucket start overflow");
+        }
+
+        Ok(())
+    })?;
+
+    write("data.seqp.bin", |mut sink| {
+        let mut start = 0;
+        for bucket in sequences.buckets.values() {
+            for sequence in bucket {
+                let len = sequence.points.len().try_into().expect("sequence points len overflow");
+                // let debug = sequence.points.iter().map(|x| format!("{:04X}", x)).reduce(|a, x| format!("{} {}", a, x)).unwrap();
+                // eprintln!("{}\t{}\t{}", start, len, debug);
+                u16_writer(&mut sink, start)?;
+                u8_writer(&mut sink, len)?;
+                start = start.checked_add(len.into()).expect("sequence points start overflow");
+            }
+        }
+
+        for bucket in sequences.buckets.values() {
+            for sequence in bucket {
+                for &point in sequence.points.iter() {
+                    u32_writer(&mut sink, point.try_into().unwrap())?;
+                }
+            }
+        }
+
+        Ok(())
+    })?;
+
+    write("data.seqn.bin", |mut sink| {
+        let mut start = 0;
+        for bucket in sequences.buckets.values() {
+            for sequence in bucket {
+                let len = sequence.names.len().try_into().expect("sequence names len overflow");
+                // let debug = sequence.points.iter().map(|x| format!("{:04X}", x)).reduce(|a, x| format!("{} {}", a, x)).unwrap();
+                // eprintln!("{}\t{}\t{}", start, len, debug);
+                u16_writer(&mut sink, start)?;
+                u8_writer(&mut sink, len)?;
+                start = start.checked_add(len.into()).expect("sequence names start overflow");
+            }
+        }
+
+        for bucket in sequences.buckets.values() {
+            for sequence in bucket {
+                for name in sequence.names.iter() {
+                    let string = pool.r#use(&name);
+                    u16_writer(&mut sink, string.try_into().expect("string pool overflow"))?;
+                }
+            }
         }
 
         Ok(())

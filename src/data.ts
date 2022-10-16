@@ -13,7 +13,10 @@ export type StringField =
   | "uhman";
 
 export interface Data {
+  info: DataInfo;
+
   string: string[];
+
   bits: DataView;
   ebits: DataView;
   pagebits: DataView;
@@ -31,6 +34,15 @@ export interface Data {
   hjsn: DataView;
   uhdef: DataView;
   uhman: DataView;
+
+  seqb: DataView;
+  seqp: DataView;
+  seqn: DataView;
+}
+
+export interface DataInfo {
+  sequenceBucketCount: number;
+  sequenceCount: number;
 }
 
 export enum AliasType {
@@ -41,6 +53,11 @@ export enum AliasType {
   Abbreviation = 4,
   Unicode1 = 5,
   Cldr = 6,
+}
+
+export interface SequenceBucket {
+  start: number;
+  len: number;
 }
 
 export enum GraphemeBreak {
@@ -232,6 +249,68 @@ export function getAliasType(data: Data, aliasIndex: number): AliasType | null {
   const ty = Uint8;
   const offset = aliasIndex * ty.len;
   return data.aliast[ty.method](offset);
+}
+
+export function findSequenceBucket(
+  data: Data,
+  firstPoint: number,
+  secondPoint: number,
+): SequenceBucket | null {
+  let h = 0,
+    i = 0,
+    j = data.seqb.byteLength / 11;
+  while (h < j) {
+    i = h + Math.floor((j - h) / 2);
+    const x = data.seqb.getUint32(i * 11 + 0);
+    if (x != firstPoint) {
+      if (j - h == 1) return null;
+      else if (x < firstPoint) h = i;
+      else if (x > firstPoint) j = i;
+      continue;
+    }
+    const y = data.seqb.getUint32(i * 11 + 4);
+    if (y != secondPoint) {
+      if (j - h == 1) return null;
+      else if (y < secondPoint) h = i;
+      else if (y > secondPoint) j = i;
+      continue;
+    } else {
+      break;
+    }
+  }
+  const start = data.seqb.getUint16(i * 11 + 8);
+  const len = data.seqb.getUint8(i * 11 + 10);
+  return { start, len };
+}
+
+export function findSequenceIndex(data: Data, points: number[]): number | null {
+  if (points.length < 2) return null;
+  const bucket = findSequenceBucket(data, points[0], points[1]);
+  if (bucket == null) return null;
+
+  console.log(bucket);
+  for (let i = bucket.start; i < bucket.start + bucket.len; i++) {
+    const ps = getSequencePoints(data, i)!;
+    console.log(ps.length, points.length);
+    if (ps.length == points.length && ps.every((p, i) => p == points[i])) {
+      return i;
+    }
+  }
+
+  return null;
+}
+
+export function getSequencePoints(
+  data: Data,
+  sequenceIndex: number,
+): number[] | null {
+  const start = data.seqp.getUint16(sequenceIndex * 3 + 0);
+  const len = data.seqp.getUint8(sequenceIndex * 3 + 2);
+  const base = data.info.sequenceCount * 3;
+  const result = [];
+  for (let i = start; i < start + len; i++)
+    result.push(data.seqp.getUint32(base + i * 4));
+  return result;
 }
 
 export function getGraphemeBreak(
