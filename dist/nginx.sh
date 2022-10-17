@@ -16,14 +16,14 @@ cat << end
 			expires 24h;
 		}
 		location / {
-			rewrite ^($(
-				ls */*.br \
-				| sed 's/^/\//' \
-				| sed 's/[.]br$//' \
-				| sed 's/[.]/[&]/g' \
-				| tr \\n \| \
-				| sed 's/|$//'
-			))\$ \$1.br last;
+$(
+	ls */*.br \
+	| sed 's/^/\//' \
+	| sed 's/[.]br$//' \
+	| sed 's/[.]/[&]/g' \
+	| sed 's/^/			rewrite ^/' \
+	| sed 's/$/$ $1.br last;/'
+)
 
 			expires 24h;
 
