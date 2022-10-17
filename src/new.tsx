@@ -143,18 +143,15 @@ function Detail({ search }: { search: () => void }) {
 
   return (
     <div className={className}>
-      <a
-        href={toFragment(points)}
-        className="toolbar"
-        aria-label="search"
-        onClick={search}
-      >
-        <i className="fas fa-search" aria-hidden="true"></i>
-      </a>
-      <a href={href} className="toolbar" aria-label="source">
-        <i className="fab fa-github" aria-hidden="true"></i>
-      </a>
-      <h1>{pointsToYouPlus(points)}</h1>
+      <div className="toolbar">
+        <a href={toFragment(points)} aria-label="search" onClick={search}>
+          <i className="fas fa-search" aria-hidden="true"></i>
+        </a>
+        <h1>{pointsToYouPlus(points)}</h1>
+        <a href={href} aria-label="source">
+          <i className="fab fa-github" aria-hidden="true"></i>
+        </a>
+      </div>
       <a
         href={toFragment(points)}
         className="big"
@@ -291,13 +288,8 @@ function Search({
 
   return (
     <div className="Search" hidden={hidden}>
-      <div>
-        <a
-          href={toFragment(points)}
-          className="toolbar"
-          aria-label="close"
-          onClick={close}
-        >
+      <div className="toolbar">
+        <a href={toFragment(points)} aria-label="close" onClick={close}>
           <i className="fas fa-times" aria-hidden="true"></i>
         </a>
         <input
@@ -308,7 +300,6 @@ function Search({
           placeholder="try “em” or “69” or “🏳️‍🌈”"
         />
       </div>
-
       <div className="results">
         <AutoSizer>
           {({ width, height }: { width: number; height: number }) => (

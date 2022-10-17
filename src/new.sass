@@ -88,10 +88,16 @@ body
   .Search
     padding: 0
 
+    > .toolbar
+      padding-left: 1em
+
 @media (min-width: 384px)
   .Charming
     .Search
-      padding: 1em 1em 0 1em
+      padding: 0 1em
+
+      > .toolbar
+        padding-left: 0
 
 @media (min-width: 512px)
   .Charming
@@ -128,20 +134,27 @@ body
     color: #C0C0C0
 
   > .toolbar
-    position: absolute
-    top: 1rem
-    font-size: 1.5rem
-    margin: 0
+    display: flex
+    flex-direction: row
+    gap: 1rem
 
-    &[aria-label=search]
-      left: 1rem
+    > *
+      margin: 0
 
-    &[aria-label=source]
-      right: 1rem
+    > a
+      flex: 0 0 auto
+      font-size: 1.5rem
 
-  > h1
-    font-size: 1.5em
-    text-align: center
+      &[aria-label=search]
+        left: 1rem
+
+      &[aria-label=source]
+        right: 1rem
+
+    > h1
+      flex: 1 1 auto
+      font-size: 1.5em
+      text-align: center
 
   > .big
     display: block
@@ -169,7 +182,7 @@ body
       float: right
       clear: right
 
-  &.sequence > h1
+  &.sequence > .toolbar > h1
     font-size: 1rem
 
 .Map
@@ -187,11 +200,14 @@ body
   &[hidden]
     display: none
 
-  > :not(.results)
+  > .toolbar
     flex: 0 0 $choice-glyph-size*2
     display: flex
     flex-direction: row
     gap: 1rem
+
+    > *
+      margin: 0
 
     > a
       flex: 0 0 auto
