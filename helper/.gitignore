@@ -1,5 +1,7 @@
 /.venv/
 /build/
+/dist/
+/fa-*.woff2
 /twemoji-*/
 /twemoji-*.tar.gz
 /Symbola-*

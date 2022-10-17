@@ -251,7 +251,7 @@ fn main() -> Result<(), Error> {
                 let new_points = new_points.iter().map(|x| format!("{:x}", x)).collect::<Vec<_>>();
                 let new = path.with_file_name(new_points.join("-"));
                 let new = new.with_extension(extension);
-                // eprintln!("mv {} {:?}", name, new);
+                eprintln!("mv {} {:?}", name, new);
                 fs::rename(path, new)?;
             }
         }
