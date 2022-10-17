@@ -21,8 +21,8 @@ $(
 	| sed 's/^/\//' \
 	| sed 's/[.]br$//' \
 	| sed 's/[.]/[&]/g' \
-	| sed 's/^/			rewrite ^/' \
-	| sed 's/$/$ $1.br last;/'
+	| sed 's/^/			rewrite ^(/' \
+	| sed 's/$/)$ $1.br last;/'
 )
 
 			expires 24h;
