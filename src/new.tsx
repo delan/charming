@@ -102,6 +102,8 @@ function Charming() {
   React.useEffect(() => {
     // Data is required to determine grapheme cluster breaks in pasted strings
     if (!data) return;
+    // Keyboard interaction only applies when viewing the map
+    if (searchOpen) return;
 
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key == "/") {
@@ -155,25 +157,16 @@ function Charming() {
       }
     };
 
-    const addListeners = () => {
-      window.addEventListener("keydown", onKeyDown);
-      window.addEventListener("copy", onCopy);
-      window.addEventListener("paste", onPaste);
-    };
-    const removeListeners = () => {
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("copy", onCopy);
+    window.addEventListener("paste", onPaste);
+
+    return () => {
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("copy", onCopy);
       window.removeEventListener("paste", onPaste);
     };
-
-    if (!searchOpen) {
-      addListeners();
-    } else {
-      removeListeners();
-    }
-
-    return removeListeners;
-  }, [searchOpen, data]);
+  }, [data]);
 
   return (
     <div className="Charming">
