@@ -77,6 +77,11 @@ function Charming() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
+  const openSearch = () => {
+    setSearchOpen(true);
+    setSearchEverOpened(true);
+  };
+
   const location = useLocation();
   const points = getHashPoints(location.hash, [0]);
 
@@ -93,16 +98,35 @@ function Charming() {
     }
   }, [data, points]);
 
+  React.useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key == "/") {
+        openSearch();
+        e.preventDefault();
+      }
+    };
+
+    const addListeners = () => {
+      window.addEventListener("keydown", onKeyDown);
+    };
+    const removeListeners = () => {
+      window.removeEventListener("keydown", onKeyDown);
+    };
+
+    if (!searchOpen) {
+      addListeners();
+    } else {
+      removeListeners();
+    }
+
+    return removeListeners;
+  }, [searchOpen, data]);
+
   return (
     <div className="Charming">
       <DataContext.Provider value={data}>
         <PointsContext.Provider value={points}>
-          <Detail
-            search={() => {
-              setSearchOpen(true);
-              setSearchEverOpened(true);
-            }}
-          />
+          <Detail search={openSearch} />
           <Map />
           {searchEverOpened && (
             <Search
@@ -286,6 +310,13 @@ function Search({
 
   useEffect(() => void input.current!.focus(), [hidden]);
 
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key == "Escape") {
+      close();
+      e.preventDefault();
+    }
+  };
+
   return (
     <div className="Search" hidden={hidden}>
       <div className="toolbar">
@@ -297,6 +328,7 @@ function Search({
           autoFocus={true}
           value={query}
           onChange={(event) => setQuery(event.target.value)}
+          onKeyDown={onKeyDown}
           placeholder="try “em” or “69” or “🏳️‍🌈”"
         />
       </div>
