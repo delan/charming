@@ -105,8 +105,8 @@ function Charming() {
 
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key == "/") {
-        openSearch();
         e.preventDefault();
+        openSearch();
       }
     };
 
@@ -115,6 +115,8 @@ function Charming() {
       const selection = window.getSelection();
       if (selection && selection.type == "Range") return;
 
+      e.preventDefault();
+
       // Need to use window.location.hash, not just location.hash, so that the closure captures
       // window (and thus location.hash is updated) rather than capturing location (where hash would
       // not be updated)
@@ -122,7 +124,6 @@ function Charming() {
       const points = getHashPoints(window.location.hash, [0]);
 
       e.clipboardData?.setData("text/plain", pointsToString(points));
-      e.preventDefault();
     };
 
     const onPaste = (e: ClipboardEvent) => {
@@ -130,6 +131,8 @@ function Charming() {
       // either case
       const text = e.clipboardData?.getData("text/plain");
       if (!text) return;
+
+      e.preventDefault();
 
       const firstBreak = getNextClusterBreak(data, text, null);
       if (!firstBreak) return;
@@ -150,8 +153,6 @@ function Charming() {
         setSearchQuery(text);
         openSearch();
       }
-
-      e.preventDefault();
     };
 
     const addListeners = () => {
