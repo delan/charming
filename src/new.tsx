@@ -358,8 +358,8 @@ function Search({
 
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key == "Escape") {
-      close();
       e.preventDefault();
+      close();
     }
   };
 
