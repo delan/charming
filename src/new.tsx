@@ -42,12 +42,13 @@ import {
   getAliasType,
   getAliasValue,
   getNameProperty,
+  getNextClusterBreak,
   getSequenceNameByIndices,
   getString,
   isEmoji,
   isEmojiPresentation,
 } from "./data";
-import { pointsToString } from "./encoding";
+import { pointsToString, stringToPoints } from "./encoding";
 import {
   joinSequence,
   pointToYouPlus,
@@ -77,6 +78,11 @@ function Charming() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
+  const openSearch = () => {
+    setSearchOpen(true);
+    setSearchEverOpened(true);
+  };
+
   const location = useLocation();
   const points = getHashPoints(location.hash, [0]);
 
@@ -93,16 +99,80 @@ function Charming() {
     }
   }, [data, points]);
 
+  React.useEffect(() => {
+    // Data is required to determine grapheme cluster breaks in pasted strings
+    if (!data) return;
+    // Keyboard interaction only applies when viewing the map
+    if (searchOpen) return;
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key == "/") {
+        e.preventDefault();
+        openSearch();
+      }
+    };
+
+    const onCopy = (e: ClipboardEvent) => {
+      // If the user is trying to copy text normally, don't prevent them from doing so
+      const selection = window.getSelection();
+      if (selection && selection.type == "Range") return;
+
+      e.preventDefault();
+
+      // Need to use window.location.hash, not just location.hash, so that the closure captures
+      // window (and thus location.hash is updated) rather than capturing location (where hash would
+      // not be updated)
+      // Avoids a dependency on points which would cause the effect to re-run often
+      const points = getHashPoints(window.location.hash, [0]);
+
+      e.clipboardData?.setData("text/plain", pointsToString(points));
+    };
+
+    const onPaste = (e: ClipboardEvent) => {
+      // clipboardData may be null if the clipboard is empty, text may be empty: don't process
+      // either case
+      const text = e.clipboardData?.getData("text/plain");
+      if (!text) return;
+
+      e.preventDefault();
+
+      const firstBreak = getNextClusterBreak(data, text, null);
+      if (!firstBreak) return;
+      const startUnitIndex = firstBreak.startUnitIndex;
+
+      const secondBreak = getNextClusterBreak(data, text, firstBreak);
+      if (!secondBreak) return;
+      const endUnitIndex = secondBreak.startUnitIndex;
+
+      const thirdBreak = getNextClusterBreak(data, text, secondBreak);
+      if (!thirdBreak) {
+        // Only one grapheme cluster in the pasted string
+        const cluster = text.slice(startUnitIndex, endUnitIndex);
+        // Same window vs location capture issue as in onCopy
+        window.location.hash = toFragment(stringToPoints(cluster));
+      } else {
+        // Multiple grapheme clusters in the pasted string
+        setSearchQuery(text);
+        openSearch();
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("copy", onCopy);
+    window.addEventListener("paste", onPaste);
+
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("copy", onCopy);
+      window.removeEventListener("paste", onPaste);
+    };
+  }, [data]);
+
   return (
     <div className="Charming">
       <DataContext.Provider value={data}>
         <PointsContext.Provider value={points}>
-          <Detail
-            search={() => {
-              setSearchOpen(true);
-              setSearchEverOpened(true);
-            }}
-          />
+          <Detail search={openSearch} />
           <Map />
           {searchEverOpened && (
             <Search
@@ -286,6 +356,13 @@ function Search({
 
   useEffect(() => void input.current!.focus(), [hidden]);
 
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key == "Escape") {
+      e.preventDefault();
+      close();
+    }
+  };
+
   return (
     <div className="Search" hidden={hidden}>
       <div className="toolbar">
@@ -297,6 +374,7 @@ function Search({
           autoFocus={true}
           value={query}
           onChange={(event) => setQuery(event.target.value)}
+          onKeyDown={onKeyDown}
           placeholder="try “em” or “69” or “🏳️‍🌈”"
         />
       </div>
