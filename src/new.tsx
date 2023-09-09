@@ -99,7 +99,7 @@ function Charming() {
     }
   }, [data, points]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     // Data is required to determine grapheme cluster breaks in pasted strings
     if (!data) return;
     // Keyboard interaction only applies when viewing the map
@@ -172,7 +172,7 @@ function Charming() {
       window.removeEventListener("copy", onCopy);
       window.removeEventListener("paste", onPaste);
     };
-  }, [data]);
+  }, [data, searchOpen]);
 
   return (
     <div className="Charming">
