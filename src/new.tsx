@@ -217,22 +217,28 @@ function Detail({ search }: { search: () => void }) {
 
   const href = `https://github.com/delan/charming/tree/${__COMMIT_HASH__}`;
 
+  const copy = () => void writeText(pointsToString(points));
+
   return (
     <div className={className}>
       <div className="toolbar">
         <a href={toFragment(points)} aria-label="search" onClick={search}>
-          <i className="fas fa-search" aria-hidden="true"></i>
+          <span className="material-symbols-outlined" aria-hidden="true">
+            {/* search */}
+          </span>
         </a>
-        <h1>{pointsToYouPlus(points)}</h1>
+        <a href={toFragment(points)} aria-label="copy" onClick={copy}>
+          <span className="material-symbols-outlined" aria-hidden="true">
+            {/* content_copy */}
+          </span>
+        </a>
+        <span className="space" />
         <a href={href} aria-label="source">
           <i className="fab fa-github" aria-hidden="true"></i>
         </a>
       </div>
-      <a
-        href={toFragment(points)}
-        className="big"
-        onClick={() => void writeText(pointsToString(points))}
-      >
+      <h1>{pointsToYouPlus(points)}</h1>
+      <a href={toFragment(points)} className="big" onClick={copy}>
         <Display points={points} />
       </a>
       <p>
@@ -373,7 +379,9 @@ function Search({
     <div className="Search" hidden={hidden}>
       <div className="toolbar">
         <a href={toFragment(points)} aria-label="close" onClick={close}>
-          <i className="fas fa-times" aria-hidden="true"></i>
+          <span className="material-symbols-outlined" aria-hidden="true">
+            {/* close */}
+          </span>
         </a>
         <input
           ref={input}

@@ -13,13 +13,22 @@
 
 // ~@fortawesome/fontawesome-free/scss/solid
 @font-face
-  font-family: 'Font Awesome 5 Free'
-  font-weight: 900
-  font-display: $fa-font-display
-  src: url('../helper/dist/fa-solid-900.woff2') format('woff2')
-.fa, .fas
-  font-family: 'Font Awesome 5 Free'
-  font-weight: 900
+  font-family: 'Material Symbols Outlined'
+  src: url('../helper/dist/MaterialSymbolsOutlined.woff2') format('woff2')
+.material-symbols-outlined
+  font-family: 'Material Symbols Outlined'
+  font-weight: normal
+  font-style: normal
+  // font-size: 24px
+  line-height: 1
+  letter-spacing: normal
+  text-transform: none
+  display: inline-block
+  white-space: nowrap
+  word-wrap: normal
+  direction: ltr
+  -moz-font-feature-settings: 'liga'
+  -moz-osx-font-smoothing: grayscale
 
 @font-face
   font-family: Twitter Color Emoji
@@ -151,10 +160,14 @@ body
       &[aria-label=source]
         right: 1rem
 
-    > h1
+    > .space
       flex: 1 1 auto
-      font-size: 1.5em
-      text-align: center
+
+  > h1
+    flex: 1 1 auto
+    margin: 0
+    font-size: 1.5em
+    text-align: center
 
   > .big
     display: block
@@ -182,7 +195,7 @@ body
       float: right
       clear: right
 
-  &.sequence > .toolbar > h1
+  &.sequence > h1
     font-size: 1rem
 
 .Map
