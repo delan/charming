@@ -238,21 +238,19 @@ function Detail({ search }: { search: () => void }) {
         </a>
       </div>
       <h1>{pointsToYouPlus(points)}</h1>
-      <a href={toFragment(points)} className="big" onClick={copy}>
+      <span className="big">
         <Display points={points} />
-      </a>
+      </span>
       <p>
-        <a href={toFragment(points)} onClick={search}>
-          {ifSequence(
-            points,
-            (x) => {
-              const sequenceIndex = findSequenceIndex(data, x);
-              if (sequenceIndex == null) return "(sequence)";
-              return getSequenceNameByIndices(data, sequenceIndex, 0);
-            },
-            (x) => pointToName(data, x),
-          )}
-        </a>
+        {ifSequence(
+          points,
+          (x) => {
+            const sequenceIndex = findSequenceIndex(data, x);
+            if (sequenceIndex == null) return "(sequence)";
+            return getSequenceNameByIndices(data, sequenceIndex, 0);
+          },
+          (x) => pointToName(data, x),
+        )}
       </p>
       {ifSequence(
         points,
