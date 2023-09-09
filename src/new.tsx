@@ -113,6 +113,9 @@ function Charming() {
     };
 
     const onCopy = (e: ClipboardEvent) => {
+      // If the user is in an input field, don’t touch the event
+      if (e.target instanceof Node && e.target?.nodeName == "INPUT") return;
+
       // If the user is trying to copy text normally, don't prevent them from doing so
       const selection = window.getSelection();
       if (selection && selection.type == "Range") return;
@@ -129,6 +132,9 @@ function Charming() {
     };
 
     const onPaste = (e: ClipboardEvent) => {
+      // If the user is in an input field, don’t touch the event
+      if (e.target instanceof Node && e.target?.nodeName == "INPUT") return;
+
       // clipboardData may be null if the clipboard is empty, text may be empty: don't process
       // either case
       const text = e.clipboardData?.getData("text/plain");
