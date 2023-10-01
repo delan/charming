@@ -60,6 +60,7 @@ import {
 } from "./formatting";
 import { Display } from "./Display";
 import { KeyedSearchResult, search, SearchResult } from "./search";
+import useShortcuts, { ShortcutProvider } from "./shortcuts";
 import { nullToDefault } from "./default";
 import { fetchAllData } from "./fetch";
 
@@ -78,7 +79,9 @@ function Charming() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const openSearch = () => {
+  const search = (query?: string) => {
+    if (query) setSearchQuery(query);
+
     setSearchOpen(true);
     setSearchEverOpened(true);
   };
@@ -99,87 +102,14 @@ function Charming() {
     }
   }, [data, points]);
 
-  useEffect(() => {
-    // Data is required to determine grapheme cluster breaks in pasted strings
-    if (!data) return;
-    // Keyboard interaction only applies when viewing the map
-    if (searchOpen) return;
-
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key == "/") {
-        e.preventDefault();
-        openSearch();
-      }
-    };
-
-    const onCopy = (e: ClipboardEvent) => {
-      // If the user is in an input field, don’t touch the event
-      if (e.target instanceof Node && e.target?.nodeName == "INPUT") return;
-
-      // If the user is trying to copy text normally, don't prevent them from doing so
-      const selection = window.getSelection();
-      if (selection && selection.type == "Range") return;
-
-      e.preventDefault();
-
-      // Need to use window.location.hash, not just location.hash, so that the closure captures
-      // window (and thus location.hash is updated) rather than capturing location (where hash would
-      // not be updated)
-      // Avoids a dependency on points which would cause the effect to re-run often
-      const points = getHashPoints(window.location.hash, [0]);
-
-      e.clipboardData?.setData("text/plain", pointsToString(points));
-    };
-
-    const onPaste = (e: ClipboardEvent) => {
-      // If the user is in an input field, don’t touch the event
-      if (e.target instanceof Node && e.target?.nodeName == "INPUT") return;
-
-      // clipboardData may be null if the clipboard is empty, text may be empty: don't process
-      // either case
-      const text = e.clipboardData?.getData("text/plain");
-      if (!text) return;
-
-      e.preventDefault();
-
-      const firstBreak = getNextClusterBreak(data, text, null);
-      if (!firstBreak) return;
-      const startUnitIndex = firstBreak.startUnitIndex;
-
-      const secondBreak = getNextClusterBreak(data, text, firstBreak);
-      if (!secondBreak) return;
-      const endUnitIndex = secondBreak.startUnitIndex;
-
-      const thirdBreak = getNextClusterBreak(data, text, secondBreak);
-      if (!thirdBreak) {
-        // Only one grapheme cluster in the pasted string
-        const cluster = text.slice(startUnitIndex, endUnitIndex);
-        // Same window vs location capture issue as in onCopy
-        window.location.hash = toFragment(stringToPoints(cluster));
-      } else {
-        // Multiple grapheme clusters in the pasted string
-        setSearchQuery(text);
-        openSearch();
-      }
-    };
-
-    window.addEventListener("keydown", onKeyDown);
-    window.addEventListener("copy", onCopy);
-    window.addEventListener("paste", onPaste);
-
-    return () => {
-      window.removeEventListener("keydown", onKeyDown);
-      window.removeEventListener("copy", onCopy);
-      window.removeEventListener("paste", onPaste);
-    };
-  }, [data, searchOpen]);
-
   return (
     <div className="Charming">
       <DataContext.Provider value={data}>
         <PointsContext.Provider value={points}>
-          <Detail search={openSearch} />
-          <Map />
+          <ShortcutProvider active={!searchOpen}>
+            <Detail search={search} />
+            <Map />
+          </ShortcutProvider>
           {searchEverOpened && (
             <Search
               query={searchQuery}
@@ -194,17 +124,10 @@ function Charming() {
   );
 }
 
-function Detail({ search }: { search: () => void }) {
+function Detail({ search }: { search: (query?: string) => void }) {
   const data = useContext(DataContext);
   const points = useContext(PointsContext);
-
-  if (data == null) {
-    return (
-      <div className="Detail">
-        <div className="loading">…</div>
-      </div>
-    );
-  }
+  const shortcuts = useShortcuts();
 
   const className = [
     "Detail",
@@ -218,11 +141,79 @@ function Detail({ search }: { search: () => void }) {
   const href = `https://github.com/delan/charming/tree/${__COMMIT_HASH__}`;
 
   const copy = () => void writeText(pointsToString(points));
+  shortcuts.use("copy", (e) => {
+    e.preventDefault();
+
+    // Need to use window.location.hash, not just location.hash, so that the closure captures
+    // window (and thus location.hash is updated) rather than capturing location (where hash would
+    // not be updated)
+    // Avoids a dependency on points which would cause the effect to re-run often
+    const points = getHashPoints(window.location.hash, [0]);
+    e.detail.clipboardData?.setData("text/plain", pointsToString(points));
+  });
+
+  shortcuts.use(
+    "paste",
+    (e) => {
+      // Data is required to determine grapheme cluster breaks
+      if (!data) return;
+
+      e.preventDefault();
+
+      // clipboardData may be null if the clipboard is empty, text may be empty: don't process
+      // either case
+      const text = e.detail.clipboardData?.getData("text/plain");
+      if (!text) return;
+
+      const firstBreak = getNextClusterBreak(data, text, null);
+      if (!firstBreak) return;
+      const startUnitIndex = firstBreak.startUnitIndex;
+
+      const secondBreak = getNextClusterBreak(data, text, firstBreak);
+      if (!secondBreak) return;
+      const endUnitIndex = secondBreak.startUnitIndex;
+
+      const thirdBreak = getNextClusterBreak(data, text, secondBreak);
+      if (!thirdBreak) {
+        // Only one grapheme cluster in the pasted string
+        const cluster = text.slice(startUnitIndex, endUnitIndex);
+        // Same window vs location capture issue as in copy
+        window.location.hash = toFragment(stringToPoints(cluster));
+      } else {
+        // Multiple grapheme clusters in the pasted string
+        search(text);
+      }
+    },
+    [data, search],
+  );
+
+  shortcuts.use(
+    "keydown",
+    (e) => {
+      if (e.detail.key == "/") {
+        e.preventDefault();
+        search();
+      }
+    },
+    [search],
+  );
+
+  if (data == null) {
+    return (
+      <div className="Detail">
+        <div className="loading">…</div>
+      </div>
+    );
+  }
 
   return (
     <div className={className}>
       <div className="toolbar">
-        <a href={toFragment(points)} aria-label="search" onClick={search}>
+        <a
+          href={toFragment(points)}
+          aria-label="search"
+          onClick={() => search()}
+        >
           <span className="material-symbols-outlined" aria-hidden="true">
             {/* search */}
           </span>
@@ -738,6 +729,8 @@ function MapGrid({
   height: number;
   point: number | null;
 }) {
+  const shortcuts = useShortcuts();
+
   const pointForScroll = point ?? 0;
   const columnCount = Math.floor((width - scrollbar) / 40);
   const rowCount = Math.ceil(1114112 / columnCount);
@@ -757,6 +750,45 @@ function MapGrid({
       grid.current.scrollToItem({ rowIndex });
     }
   }, [pointForScroll]);
+
+  shortcuts.use(
+    "keydown",
+    (e) => {
+      const motion = ([dx, dy]: [number, number]) => {
+        // Keyboard navigation doesn't make sense for sequences, since they don't correspond to a
+        // single cell on the map grid
+        const [point, ...rest] = getHashPoints(window.location.hash, [0]);
+        if (rest.length !== 0) return;
+
+        const x = (point % columnCount) + dx;
+        const y = Math.floor(point / columnCount) + dy;
+        const newPoint = x + y * columnCount;
+
+        // Don't move if we would end up out of bounds, but also don't clamp to min/max to preserve
+        // x/y position when we hit the sides of the map grid
+        if (x < 0 || x >= columnCount || y < 0 || y >= rowCount) return;
+        // The last row of the grid may not be full
+        if (newPoint > 0x10ffff) return;
+
+        window.location.hash = toFragment([newPoint]);
+      };
+
+      if (e.detail.key == "w") {
+        e.preventDefault();
+        motion([0, -1]);
+      } else if (e.detail.key == "s") {
+        e.preventDefault();
+        motion([0, 1]);
+      } else if (e.detail.key == "a") {
+        e.preventDefault();
+        motion([-1, 0]);
+      } else if (e.detail.key == "d") {
+        e.preventDefault();
+        motion([1, 0]);
+      }
+    },
+    [columnCount, rowCount],
+  );
 
   return (
     <FixedSizeGrid
