@@ -58,24 +58,10 @@ class Shortcuts extends TypedEventTarget<ShortcutsEventMap> {
   }
 
   dispatchCopy(e: ClipboardEvent) {
-    // If the user is in an input field, don’t touch the event
-    if (e.target instanceof Node && e.target?.nodeName == "INPUT") return;
-
-    // If the user is trying to copy text normally, don't prevent them from doing so
-    const selection = window.getSelection(); // TODO: not really ok to do here
-    if (selection && selection.type == "Range") return;
-
     this.dispatchWrapped(new ShortcutClipboardEvent("copy", e));
   }
 
   dispatchPaste(e: ClipboardEvent) {
-    // If the user is in an input field, don’t touch the event
-    if (e.target instanceof Node && e.target?.nodeName == "INPUT") return;
-
-    // If the user is trying to copy text normally, don't prevent them from doing so
-    const selection = window.getSelection(); // TODO: not really ok to do here
-    if (selection && selection.type == "Range") return;
-
     this.dispatchWrapped(new ShortcutClipboardEvent("paste", e));
   }
 
@@ -152,9 +138,30 @@ export function ShortcutProvider({
   useEffect(() => {
     if (!active) return;
 
+    const shouldDispatchClipboardEvent = (e: ClipboardEvent) => {
+      // If the user is in an input field, don’t touch the event
+      if (e.target instanceof Node && e.target?.nodeName == "INPUT")
+        return false;
+
+      // If the user is trying to copy text normally, don't prevent them from doing so
+      const selection = window.getSelection();
+      if (selection && selection.type == "Range") return false;
+
+      // Otherwise, we're free to handle it ourselves
+      return true;
+    };
+
     const keyDown = (e: KeyboardEvent) => shortcuts.dispatchKeyDown(e);
-    const copy = (e: ClipboardEvent) => shortcuts.dispatchCopy(e);
-    const paste = (e: ClipboardEvent) => shortcuts.dispatchPaste(e);
+    const copy = (e: ClipboardEvent) => {
+      if (shouldDispatchClipboardEvent(e)) {
+        shortcuts.dispatchCopy(e);
+      }
+    };
+    const paste = (e: ClipboardEvent) => {
+      if (shouldDispatchClipboardEvent(e)) {
+        shortcuts.dispatchPaste(e);
+      }
+    };
 
     window.addEventListener("keydown", keyDown);
     window.addEventListener("copy", copy);
