@@ -190,7 +190,7 @@ function Detail({ search }: { search: (query?: string) => void }) {
   shortcuts.use(
     "keydown",
     (e) => {
-      if (e.detail.key == "/") {
+      if (e.is("/")) {
         e.preventDefault();
         search();
       }
@@ -773,16 +773,16 @@ function MapGrid({
         window.location.hash = toFragment([newPoint]);
       };
 
-      if (e.detail.key == "w") {
+      if (e.is("w")) {
         e.preventDefault();
         motion([0, -1]);
-      } else if (e.detail.key == "s") {
+      } else if (e.is("s")) {
         e.preventDefault();
         motion([0, 1]);
-      } else if (e.detail.key == "a") {
+      } else if (e.is("a")) {
         e.preventDefault();
         motion([-1, 0]);
-      } else if (e.detail.key == "d") {
+      } else if (e.is("d")) {
         e.preventDefault();
         motion([1, 0]);
       }

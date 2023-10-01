@@ -92,12 +92,31 @@ class Shortcuts extends TypedEventTarget<ShortcutsEventMap> {
 class ShortcutKeyboardEvent extends CustomEvent<{
   inner: KeyboardEvent;
   key: string;
+  altKey: boolean;
+  ctrlKey: boolean;
+  metaKey: boolean;
+  shiftKey: boolean;
 }> {
   constructor(type: string, e: KeyboardEvent) {
     super(type, {
       cancelable: true,
-      detail: { inner: e, key: e.key },
+      detail: {
+        inner: e,
+        key: e.key,
+        altKey: e.altKey,
+        ctrlKey: e.ctrlKey,
+        metaKey: e.metaKey,
+        shiftKey: e.shiftKey,
+      },
     });
+  }
+
+  is(key: string): boolean {
+    const detail = this.detail;
+    const modifier =
+      detail.altKey || detail.ctrlKey || detail.metaKey || detail.shiftKey;
+
+    return !modifier && detail.key == key;
   }
 }
 
