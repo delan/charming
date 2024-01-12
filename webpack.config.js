@@ -13,6 +13,7 @@ const config = {
   },
   output: {
     filename: "[contenthash]/[name].js",
+    assetModuleFilename: "[hash:20]/[name][ext]",
     path: path.resolve(__dirname, "dist"),
   },
   resolve: {
@@ -45,9 +46,8 @@ const config = {
           {
             loader: "worker-loader",
             options: {
-              inline: true,
-              fallback: false,
-              name: "[hash:20]/[name].js",
+              inline: "no-fallback",
+              chunkFilename: "[hash:20]/[name].js",
             },
           },
         ],
@@ -60,10 +60,7 @@ const config = {
       {
         test: /[.](woff2|woff|ttf|otf)$/,
         exclude: /[/]node_modules[/]/,
-        loader: "file-loader",
-        options: {
-          name: "[hash:20]/[name].[ext]",
-        },
+        type: "asset/resource",
       },
       {
         test: /[.]bin$/,
@@ -76,10 +73,7 @@ const config = {
       {
         test: /[.](eot|svg|ttf|woff|woff2)$/,
         include: /[/]node_modules[/]@fortawesome[/]fontawesome-free[/]/,
-        loader: "file-loader",
-        options: {
-          name: "[hash:20]/[name].[ext]",
-        },
+        type: "asset/resource",
       },
     ],
   },
