@@ -99,6 +99,11 @@ const config = {
       chunks: ["perf"],
     }),
   ],
+  ignoreWarnings: [
+    // TEMP: old versions of frontend dependencies trigger deprecation warnings in sass
+    // TODO: remove once frontend dependencies are upgraded
+    { module: /node_modules/ },
+  ],
 };
 
 module.exports = (env, argv) => {
