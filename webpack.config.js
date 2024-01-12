@@ -63,11 +63,6 @@ const config = {
         exclude: /[/]node_modules[/]/,
         type: "asset/resource",
       },
-      {
-        test: /[.](eot|svg|ttf|woff|woff2)$/,
-        include: /[/]node_modules[/]@fortawesome[/]fontawesome-free[/]/,
-        type: "asset/resource",
-      },
     ],
   },
   plugins: [

@@ -13,7 +13,7 @@ data:
 data-clean:
 	cd data && rm -f data.string.json data.*.bin
 
-assets: helper/dist/twemoji-$(TWEMOJI).woff2 helper/dist/Symbola-$(SYMBOLA).woff2 helper/dist/fa-brands-400.woff2 helper/dist/MaterialSymbolsOutlined.woff2
+assets: helper/dist/twemoji-$(TWEMOJI).woff2 helper/dist/Symbola-$(SYMBOLA).woff2 helper/dist/MaterialSymbolsOutlined.woff2
 
 assets-clean:
 	cd helper && rm -Rf build dist twemoji-$(TWEMOJI) twemoji-$(TWEMOJI_DIR)
@@ -44,11 +44,6 @@ helper/dist/Symbola-$(SYMBOLA).woff2: helper/Symbola-$(SYMBOLA).otf
 	mkdir -p helper/dist
 	mv helper/Symbola-$(SYMBOLA)-subset.woff2 $@
 
-helper/dist/fa-brands-400.woff2: helper/fa-brands-400.woff2
-	. helper/.venv/bin/activate && >&2 npx glyphhanger --formats=woff2 --subset=$? --whitelist=''
-	mkdir -p helper/dist
-	mv helper/fa-brands-400-subset.woff2 $@
-
 helper/dist/MaterialSymbolsOutlined.woff2: helper/MaterialSymbolsOutlined.woff2
 	. helper/.venv/bin/activate && >&2 npx glyphhanger --formats=woff2 --subset='$?' --whitelist=''
 	mkdir -p helper/dist
@@ -66,8 +61,5 @@ helper/Symbola-$(SYMBOLA).otf: helper/Symbola-$(SYMBOLA).pdf
 
 helper/Symbola-$(SYMBOLA).pdf:
 	curl -Lo $@ https://dn-works.com/wp-content/uploads/2021/UFAS121921/Symbola.pdf
-
-helper/fa-brands-400.woff2: node_modules/@fortawesome/fontawesome-free/webfonts/fa-brands-400.woff2
-	cp -- $? $@
 
 .PHONY: data data-clean assets init init-clean init-nixos
