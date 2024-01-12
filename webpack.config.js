@@ -61,10 +61,7 @@ const config = {
       {
         test: /[.]bin$/,
         exclude: /[/]node_modules[/]/,
-        loader: "file-loader",
-        options: {
-          name: "[hash:20]/[name].[ext]",
-        },
+        type: "asset/resource",
       },
       {
         test: /[.](eot|svg|ttf|woff|woff2)$/,
