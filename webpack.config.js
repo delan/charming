@@ -15,9 +15,6 @@ const config = {
     filename: "[contenthash]/[name].js",
     path: path.resolve(__dirname, "dist"),
   },
-  devServer: {
-    contentBase: "./dist",
-  },
   resolve: {
     extensions: [".js", ".ts", ".jsx", ".tsx"],
   },
@@ -116,15 +113,14 @@ module.exports = (env, argv) => {
       config.devtool = "source-map";
       config.plugins.push(
         new CompressionPlugin({
-          filename: "[path].br[query]",
+          filename: "[file].br[query]",
           algorithm: "brotliCompress",
           test: /[.](js|eot|svg|ttf|woff|woff2|otf|bin)$/,
-          cache: true,
         }),
       );
       break;
     case "development":
-      config.devtool = "cheap-module-eval-source-map";
+      config.devtool = "eval-cheap-module-source-map";
       break;
     default:
       // breaks webpack-dev-server

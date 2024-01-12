@@ -1,7 +1,4 @@
-# webpack [contenthash] and [hash:20]
-/[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]/
-
-# html-webpack-plugin
-/index.html
-/old.html
-/perf.html
+*
+!/scratch
+!.gitignore
+!nginx.sh
