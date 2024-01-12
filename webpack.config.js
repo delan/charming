@@ -22,10 +22,6 @@ const config = {
   module: {
     rules: [
       {
-        test: /[.]html$/,
-        loader: "html-loader",
-      },
-      {
         test: /[.]sass$/,
         exclude: /[/]node_modules[/]/,
         use: [
