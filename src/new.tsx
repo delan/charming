@@ -480,8 +480,7 @@ const SearchResultRow = React.memo(function SearchResultRow({
       </a>
     </li>
   );
-},
-areEqual);
+}, areEqual);
 
 function SearchResultLabel({
   query,
@@ -826,8 +825,7 @@ const Cell = React.memo(function Cell({
       <Display points={[point]} />
     </a>
   );
-},
-areEqual);
+}, areEqual);
 
 function pointToName(data: Data, point: number) {
   return nullToDefault(getNameProperty(data, point), "(no name)");
