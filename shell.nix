@@ -16,7 +16,8 @@ pkgs.mkShell {
     # package.json
     # pkgs.nodejs-10_x is marked as insecure
     # pkgs.nodejs-12_x is marked as insecure
-    pkgs.nodejs-14_x
+    # pkgs.nodejs-14_x is ye olde (and marked as EOL)
+    pkgs.nodejs_20
 
     # webpack.config.js > DefinePlugin
     pkgs.git
