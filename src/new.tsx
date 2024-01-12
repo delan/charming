@@ -364,7 +364,10 @@ function Search({
     }
   }, [data, query]);
 
-  useEffect(() => void input.current!.focus(), [hidden]);
+  useEffect(() => {
+    input.current!.focus();
+    input.current!.select();
+  }, [hidden]);
 
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key == "Escape") {
