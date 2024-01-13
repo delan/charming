@@ -13,20 +13,14 @@ const config = {
   },
   output: {
     filename: "[contenthash]/[name].js",
+    assetModuleFilename: "[hash:20]/[name][ext]",
     path: path.resolve(__dirname, "dist"),
-  },
-  devServer: {
-    contentBase: "./dist",
   },
   resolve: {
     extensions: [".js", ".ts", ".jsx", ".tsx"],
   },
   module: {
     rules: [
-      {
-        test: /[.]html$/,
-        loader: "html-loader",
-      },
       {
         test: /[.]sass$/,
         exclude: /[/]node_modules[/]/,
@@ -48,9 +42,8 @@ const config = {
           {
             loader: "worker-loader",
             options: {
-              inline: true,
-              fallback: false,
-              name: "[hash:20]/[name].js",
+              inline: "no-fallback",
+              chunkFilename: "[hash:20]/[name].js",
             },
           },
         ],
@@ -63,26 +56,12 @@ const config = {
       {
         test: /[.](woff2|woff|ttf|otf)$/,
         exclude: /[/]node_modules[/]/,
-        loader: "file-loader",
-        options: {
-          name: "[hash:20]/[name].[ext]",
-        },
+        type: "asset/resource",
       },
       {
         test: /[.]bin$/,
         exclude: /[/]node_modules[/]/,
-        loader: "file-loader",
-        options: {
-          name: "[hash:20]/[name].[ext]",
-        },
-      },
-      {
-        test: /[.](eot|svg|ttf|woff|woff2)$/,
-        include: /[/]node_modules[/]@fortawesome[/]fontawesome-free[/]/,
-        loader: "file-loader",
-        options: {
-          name: "[hash:20]/[name].[ext]",
-        },
+        type: "asset/resource",
       },
     ],
   },
@@ -108,6 +87,11 @@ const config = {
       chunks: ["perf"],
     }),
   ],
+  ignoreWarnings: [
+    // TEMP: old versions of frontend dependencies trigger deprecation warnings in sass
+    // TODO: remove once frontend dependencies are upgraded
+    { module: /node_modules/ },
+  ],
 };
 
 module.exports = (env, argv) => {
@@ -116,15 +100,14 @@ module.exports = (env, argv) => {
       config.devtool = "source-map";
       config.plugins.push(
         new CompressionPlugin({
-          filename: "[path].br[query]",
+          filename: "[file].br[query]",
           algorithm: "brotliCompress",
           test: /[.](js|eot|svg|ttf|woff|woff2|otf|bin)$/,
-          cache: true,
         }),
       );
       break;
     case "development":
-      config.devtool = "cheap-module-eval-source-map";
+      config.devtool = "eval-cheap-module-source-map";
       break;
     default:
       // breaks webpack-dev-server

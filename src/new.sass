@@ -1,17 +1,9 @@
-@import "~@fortawesome/fontawesome-free/scss/variables"
-@import "~@fortawesome/fontawesome-free/scss/mixins"
-@import "~@fortawesome/fontawesome-free/scss/core"
-@import "~@fortawesome/fontawesome-free/scss/icons"
+@use "sass:math"
 
-// ~@fortawesome/fontawesome-free/scss/brands
-@font-face
-  font-family: 'Font Awesome 5 Brands'
-  font-display: $fa-font-display
-  src: url('../helper/dist/fa-brands-400.woff2') format('woff2')
-.fab
-  font-family: 'Font Awesome 5 Brands'
+.icon
+  width: 1.5rem
+  height: 1.5rem
 
-// ~@fortawesome/fontawesome-free/scss/solid
 @font-face
   font-family: 'Material Symbols Outlined'
   src: url('../helper/dist/MaterialSymbolsOutlined.woff2') format('woff2')
@@ -86,7 +78,7 @@ body
       $box-size: 6rem
 
       font-size: $choice-glyph-size
-      line-height: $box-size/$choice-glyph-size
+      line-height: math.div($box-size, $choice-glyph-size)
 
   .Map
     flex: 1 0 10em
@@ -120,7 +112,7 @@ body
         $box-size: 12rem
 
         font-size: $glyph-size
-        line-height: $box-size/$glyph-size
+        line-height: math.div($box-size, $glyph-size)
 
     .Map
       flex: 3 0 16em
@@ -191,8 +183,6 @@ body
       float: right
       clear: right
 
-.Map
-
 .Search
   position: absolute
   top: 0
@@ -252,7 +242,7 @@ body
       display: block
       height: $choice-cell-size
       font-size: $font-size
-      line-height: $choice-cell-size/$font-size
+      line-height: math.div($choice-cell-size, $font-size)
       text-decoration: none
 
       overflow: hidden
@@ -307,13 +297,13 @@ body
   height: $choice-cell-size
 
   font-size: $choice-glyph-size
-  line-height: $choice-cell-size/$choice-glyph-size
+  line-height: math.div($choice-cell-size, $choice-glyph-size)
   text-align: center
   text-decoration: none
   color: black
 
   outline: $outline-size solid #C0C0C0
-  outline-offset: -$outline-size*3/2
+  outline-offset: math.div(-$outline-size*3, 2)
   overflow: hidden // Firefox
 
   &.active
@@ -339,43 +329,43 @@ body
         position: relative
 
       > span:first-child:nth-last-child(4)
-        top: (-7em/12)
+        top: math.div(-7em, 12)
         left: 1ch
 
         + span
-          top: (-7em/12)
+          top: math.div(-7em, 12)
           left: 1ch
 
           + span
-            top: (3em/12)
+            top: math.div(3em, 12)
             left: -1ch
 
             + span
-              top: (3em/12)
+              top: math.div(3em, 12)
               left: -1ch
 
       > span:first-child:nth-last-child(6)
-        top: (-7em/12)
+        top: math.div(-7em, 12)
         left: 1.5ch
 
         + span
-          top: (-7em/12)
+          top: math.div(-7em, 12)
           left: 1.5ch
 
           + span
-            top: (-7em/12)
+            top: math.div(-7em, 12)
             left: 1.5ch
 
             + span
-              top: (3em/12)
+              top: math.div(3em, 12)
               left: -1.5ch
 
               + span
-                top: (3em/12)
+                top: math.div(3em, 12)
                 left: -1.5ch
 
                 + span
-                  top: (3em/12)
+                  top: math.div(3em, 12)
                   left: -1.5ch
 
     &.diagonal
@@ -383,43 +373,43 @@ body
       font-family: monospace, monospace
 
       > span:first-child:nth-last-child(2)
-        vertical-align: (2em/12)
+        vertical-align: math.div(2em, 12)
 
         + span
-          vertical-align: (-1em/12)
+          vertical-align: math.div(-1em, 12)
 
       > span:first-child:nth-last-child(3)
-        vertical-align: (4em/12)
+        vertical-align: math.div(4em, 12)
 
         + span
-          vertical-align: (1em/12)
+          vertical-align: math.div(1em, 12)
 
           + span
-            vertical-align: (-2em/12)
+            vertical-align: math.div(-2em, 12)
 
       > span:first-child:nth-last-child(4)
-        vertical-align: (5em/12)
+        vertical-align: math.div(5em, 12)
 
         + span
-          vertical-align: (2em/12)
+          vertical-align: math.div(2em, 12)
 
           + span
-            vertical-align: (-1em/12)
+            vertical-align: math.div(-1em, 12)
 
             + span
-              vertical-align: (-4em/12)
+              vertical-align: math.div(-4em, 12)
 
       > span:first-child:nth-last-child(5)
-        vertical-align: (5em/12)
+        vertical-align: math.div(5em, 12)
 
         + span
-          vertical-align: (3em/12)
+          vertical-align: math.div(3em, 12)
 
           + span
-            vertical-align: (1em/12)
+            vertical-align: math.div(1em, 12)
 
             + span
-              vertical-align: (-1em/12)
+              vertical-align: math.div(-1em, 12)
 
               + span
-                vertical-align: (-3em/12)
+                vertical-align: math.div(-3em, 12)
