@@ -1,3 +1,7 @@
+/**
+ * @jest-environment jsdom
+ */
+
 import { toFragment, getHashPoints, fixHashPoints } from "./state";
 
 test("toFragment returns correct value", () =>
