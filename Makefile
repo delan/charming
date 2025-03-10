@@ -60,6 +60,6 @@ helper/Symbola-$(SYMBOLA).otf: helper/Symbola-$(SYMBOLA).pdf
 	pdfdetach -savefile Symbola.otf -o $@ helper/Symbola-$(SYMBOLA).pdf
 
 helper/Symbola-$(SYMBOLA).pdf:
-	curl -Lo $@ https://dn-works.com/wp-content/uploads/2021/UFAS121921/Symbola.pdf
+	curl -Lo $@ https://web.archive.org/web/20240107144224/https://dn-works.com/wp-content/uploads/2021/UFAS121921/Symbola.pdf
 
 .PHONY: data data-clean assets init init-clean init-nixos
