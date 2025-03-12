@@ -2,8 +2,8 @@
 # usage: ( cd data; ./update.sh )
 set -eu
 
-unicode_ver=15.0.0
-emoji_ver=15.0
+unicode_ver=16.0.0
+emoji_ver=16.0
 
 for i in \
     Blocks.txt \

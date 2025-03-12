@@ -16,12 +16,13 @@ use nom::{
 use crate::details::GraphemeBreak;
 
 pub(crate) fn generate_egcbreak() -> Result<String, failure::Error> {
-    // UAX #29 revision 39, Table 1b + Table 1c
-    // https://www.unicode.org/reports/tr29/tr29-39.html#Table_Combining_Char_Sequences_and_Grapheme_Clusters
-    // (note the [CR LF], lowercase ri-sequence, and RI → Regional_Indicator)
+    // UAX #29 revision 45, Table 1b + Table 1c
+    // https://www.unicode.org/reports/tr29/tr29-45.html#Table_Combining_Char_Sequences_and_Grapheme_Clusters
+    // (note the lowercase ri-sequence, and RI → Regional_Indicator)
     let (_, mut grammar) = Grammar::parse(
         r#"
-        egc := CR LF | [CR LF] | Control | precore* core postcore*
+        egc := crlf | Control | precore* core postcore*
+        crlf := CR LF | CR | LF
         precore := Prepend
         core := hangul-syllable | ri-sequence | xpicto-sequence | [^Control CR LF]
         postcore := [Extend ZWJ SpacingMark]

@@ -324,7 +324,7 @@ fn main() -> Result<(), Error> {
         Details::r#static(
             None,
             &[],
-            None,
+            "CJK UNIFIED IDEOGRAPH-",
             None,
             "Other Letter (Lo)",
             "CJK Unified Ideographs",
@@ -333,8 +333,8 @@ fn main() -> Result<(), Error> {
             None,
             None,
             None,
-            None,
-            &[],
+            "xìng",
+            &[Bits::DerivedNameNr2],
             &[]
         )
     );

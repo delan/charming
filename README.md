@@ -46,3 +46,12 @@ npm run dwim
 
 # test coverage
 npm run test:coverage
+
+# how to update unicode
+
+1. bump unicode and emoji versions in data/update.sh
+2. run the update script: `( cd data; ./update.sh )`
+3. update generate_egcbreak() in data/src/uax29.rs
+4. update NAME_RULES in data/src/dynamic.rs
+
+example commit: <https://github.com/delan/charming/pull/53/commits/9f268e9fa970a5767a18402c639958ecbea18f3a>
