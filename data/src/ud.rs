@@ -4,7 +4,7 @@ use failure::Error;
 use regex::Captures;
 
 use crate::captures::CapturesExt;
-use crate::details::{Bits, Details, AliasType, Alias};
+use crate::details::{Alias, AliasType, Bits, Details};
 use crate::pool::Popularity;
 
 pub(crate) fn ud_handler(
@@ -31,9 +31,9 @@ pub(crate) fn ud_handler(
 
     assert!(
         !name.contains("<")
-        || name == "<control>"
-        || name.ends_with(", First>")
-        || name.ends_with(", Last>")
+            || name == "<control>"
+            || name.ends_with(", First>")
+            || name.ends_with(", Last>")
     );
 
     let name = if name.contains("<") {
@@ -67,7 +67,8 @@ pub(crate) fn ud_range_handler(
             assert_eq!(ud_ranges.insert(name.to_owned(), (point, None)), None);
         }
         "Last" => {
-            let pair @ &mut (first, last) = ud_ranges.get_mut(name)
+            let pair @ &mut (first, last) = ud_ranges
+                .get_mut(name)
                 .expect("missing First in UnicodeData");
             assert_eq!(last, None);
             *pair = (first, Some(point));
@@ -78,8 +79,16 @@ pub(crate) fn ud_range_handler(
     Ok(())
 }
 
-pub(crate) fn process_ud_ranges(ranges: HashMap<String, (usize, Option<usize>)>) -> HashMap<usize, usize> {
-    assert_eq!(ranges.values().filter(|(_first, last)| last.is_none()).count(), 0);
+pub(crate) fn process_ud_ranges(
+    ranges: HashMap<String, (usize, Option<usize>)>,
+) -> HashMap<usize, usize> {
+    assert_eq!(
+        ranges
+            .values()
+            .filter(|(_first, last)| last.is_none())
+            .count(),
+        0
+    );
     let mut result = HashMap::default();
 
     for &(first, last) in ranges.values() {

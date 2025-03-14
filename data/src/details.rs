@@ -118,16 +118,34 @@ impl Details {
         let hlvt = hlvt.into();
         let uhdef = uhdef.into().map(|x| x.into());
         let uhman = uhman.into().map(|x| x.into());
-        let bits = bits.iter().map(|&x| x as u8).fold(0, |r,x| r | x);
-        let emoji_bits = emoji_bits.iter().map(|&x| x as u8).fold(0, |r,x| r | x);
+        let bits = bits.iter().map(|&x| x as u8).fold(0, |r, x| r | x);
+        let emoji_bits = emoji_bits.iter().map(|&x| x as u8).fold(0, |r, x| r | x);
 
-        Self { bits, ebits: emoji_bits, name, alias, dnrp, gb, gc, block, age, hst, hjsn, hlvt, uhdef, uhman }
+        Self {
+            bits,
+            ebits: emoji_bits,
+            name,
+            alias,
+            dnrp,
+            gb,
+            gc,
+            block,
+            age,
+            hst,
+            hjsn,
+            hlvt,
+            uhdef,
+            uhman,
+        }
     }
 }
 
 impl Alias {
     pub(crate) fn r#static(inner: &'static str, r#type: AliasType) -> Self {
-        Alias { inner: inner.into(), r#type }
+        Alias {
+            inner: inner.into(),
+            r#type,
+        }
     }
 }
 

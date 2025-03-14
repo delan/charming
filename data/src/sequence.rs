@@ -1,7 +1,6 @@
 use std::{collections::BTreeMap, rc::Rc};
 
-#[derive(Debug)]
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct Sequences {
     pub buckets: BTreeMap<SequenceKey, Vec<Sequence>>,
 }
@@ -14,11 +13,9 @@ pub struct Sequence {
     pub names: Vec<Rc<str>>,
 }
 
-
 impl Sequences {
     pub fn insert(&mut self, points: &[usize], name: Rc<str>) {
-        let bucket = self.buckets.entry(key(points))
-            .or_default();
+        let bucket = self.buckets.entry(key(points)).or_default();
 
         for sequence in bucket.iter_mut() {
             if sequence.points == points {

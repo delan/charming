@@ -1,6 +1,17 @@
-use std::{collections::HashMap, fmt::{self, Formatter, Display}};
+use std::{
+    collections::HashMap,
+    fmt::{self, Display, Formatter},
+};
 
-use nom::{IResult, character::complete::{satisfy, one_of, space1, space0, newline, multispace0}, sequence::{delimited, tuple, separated_pair}, bytes::complete::{tag, take_while1}, combinator::{map, opt, all_consuming}, multi::separated_list1, branch::alt, ParseTo};
+use nom::{
+    branch::alt,
+    bytes::complete::{tag, take_while1},
+    character::complete::{multispace0, newline, one_of, satisfy, space0, space1},
+    combinator::{all_consuming, map, opt},
+    multi::separated_list1,
+    sequence::{delimited, separated_pair, tuple},
+    IResult, ParseTo,
+};
 
 use crate::details::GraphemeBreak;
 
@@ -8,7 +19,8 @@ pub(crate) fn generate_egcbreak() -> Result<String, failure::Error> {
     // UAX #29 revision 39, Table 1b + Table 1c
     // https://www.unicode.org/reports/tr29/tr29-39.html#Table_Combining_Char_Sequences_and_Grapheme_Clusters
     // (note the [CR LF], lowercase ri-sequence, and RI → Regional_Indicator)
-    let (_, mut grammar) = Grammar::parse(r#"
+    let (_, mut grammar) = Grammar::parse(
+        r#"
         egc := CR LF | [CR LF] | Control | precore* core postcore*
         precore := Prepend
         core := hangul-syllable | ri-sequence | xpicto-sequence | [^Control CR LF]
@@ -16,7 +28,8 @@ pub(crate) fn generate_egcbreak() -> Result<String, failure::Error> {
         hangul-syllable := L* (V+ | LV V* | LVT) T* | L+ | T+
         ri-sequence := Regional_Indicator Regional_Indicator
         xpicto-sequence := \p{Extended_Pictographic} (Extend* ZWJ \p{Extended_Pictographic})*
-    "#)?;
+    "#,
+    )?;
 
     grammar.expand();
     Ok(format!("{}", grammar))
@@ -26,11 +39,14 @@ pub(crate) fn generate_egcbreak() -> Result<String, failure::Error> {
 struct Grammar<'i>(Vec<Derivation<'i>>);
 impl<'i> Grammar<'i> {
     fn parse(input: &'i str) -> IResult<&str, Self> {
-        map(all_consuming(delimited(
-            multispace0,
-            separated_list1(newline, Derivation::parse),
-            multispace0,
-        )), Self)(input)
+        map(
+            all_consuming(delimited(
+                multispace0,
+                separated_list1(newline, Derivation::parse),
+                multispace0,
+            )),
+            Self,
+        )(input)
     }
 
     fn expand(&mut self) -> &Alternate<'i> {
@@ -47,7 +63,7 @@ impl<'i> Grammar<'i> {
 }
 impl Display for Grammar<'_> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        self.0[0].0.1.fmt(f)
+        self.0[0].0 .1.fmt(f)
     }
 }
 
@@ -55,11 +71,14 @@ impl Display for Grammar<'_> {
 struct Derivation<'i>((&'i str, Alternate<'i>));
 impl<'i> Derivation<'i> {
     fn parse(input: &'i str) -> IResult<&str, Self> {
-        map(separated_pair(
-            delimited(space0, parse_nonterminal, space0),
-            tag(":="),
-            delimited(space0, Alternate::parse, space0),
-        ), Self)(input)
+        map(
+            separated_pair(
+                delimited(space0, parse_nonterminal, space0),
+                tag(":="),
+                delimited(space0, Alternate::parse, space0),
+            ),
+            Self,
+        )(input)
     }
 }
 
@@ -67,7 +86,10 @@ impl<'i> Derivation<'i> {
 struct Alternate<'i>(Vec<Sequence<'i>>);
 impl<'i> Alternate<'i> {
     fn parse(input: &'i str) -> IResult<&str, Self> {
-        map(separated_list1(tag("|"), delimited(space0, Sequence::parse, space0)), Self)(input)
+        map(
+            separated_list1(tag("|"), delimited(space0, Sequence::parse, space0)),
+            Self,
+        )(input)
     }
     fn expand(&mut self, nonterminals: &HashMap<&'i str, Alternate<'i>>) {
         for sequence in &mut self.0 {
@@ -99,7 +121,7 @@ impl<'i> Sequence<'i> {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         for x in &self.0 {
             x.fmt(f)?;
-        };
+        }
         Ok(())
     }
 }
@@ -111,8 +133,8 @@ impl<'i> TermRepeat<'i> {
         map(tuple((Term::parse, Repeat::parse)), Self)(input)
     }
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        self.0.0.fmt(f)?;
-        self.0.1.fmt(f)
+        self.0 .0.fmt(f)?;
+        self.0 .1.fmt(f)
     }
 }
 
@@ -129,11 +151,18 @@ impl<'i> Term<'i> {
         alt((
             map(parse_nonterminal, Self::Nonterminal),
             map(GcbValue::parse, Self::GcbValue),
-            map(delimited(tag("\\p{"), parse_name, tag("}")), Self::PropertyName),
-            map(delimited(tag("["), tuple((
-                opt(tag("^")),
-                separated_list1(space1, GcbValue::parse),
-            )), tag("]")), |(not, gcbs)| Self::GcbClass(not.is_some(), gcbs)),
+            map(
+                delimited(tag("\\p{"), parse_name, tag("}")),
+                Self::PropertyName,
+            ),
+            map(
+                delimited(
+                    tag("["),
+                    tuple((opt(tag("^")), separated_list1(space1, GcbValue::parse))),
+                    tag("]"),
+                ),
+                |(not, gcbs)| Self::GcbClass(not.is_some(), gcbs),
+            ),
             map(delimited(tag("("), Alternate::parse, tag(")")), Self::Group),
         ))(input)
     }
@@ -145,7 +174,7 @@ impl<'i> Term<'i> {
                 *self = Self::Group(inner);
             }
             Self::Group(alternate) => alternate.expand(nonterminals),
-            _ => {},
+            _ => {}
         }
     }
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {

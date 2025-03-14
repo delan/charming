@@ -2,7 +2,7 @@ use failure::Error;
 use regex::Captures;
 
 use crate::captures::CapturesExt;
-use crate::details::{Details, Alias, AliasType};
+use crate::details::{Alias, AliasType, Details};
 use crate::pool::Popularity;
 use crate::sequence::Sequences;
 
@@ -12,7 +12,8 @@ pub(crate) fn et_handler(
     sequences: &mut Sequences,
     captures: Captures,
 ) -> Result<(), Error> {
-    let points = captures.name_ok("points")?
+    let points = captures
+        .name_ok("points")?
         .split(" ")
         .map(|x| usize::from_str_radix(x, 16))
         .collect::<Result<Vec<_>, _>>()?;

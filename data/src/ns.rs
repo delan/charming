@@ -10,7 +10,8 @@ pub(crate) fn ns_handler(
     sequences: &mut Sequences,
     captures: Captures,
 ) -> Result<(), Error> {
-    let points = captures.name_ok("points")?
+    let points = captures
+        .name_ok("points")?
         .split(" ")
         .map(|x| usize::from_str_radix(x, 16))
         .collect::<Result<Vec<_>, _>>()?;

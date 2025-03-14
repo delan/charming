@@ -2,7 +2,7 @@ use failure::Error;
 use regex::Captures;
 
 use crate::captures::CapturesExt;
-use crate::details::{Details, Alias};
+use crate::details::{Alias, Details};
 use crate::pool::Popularity;
 
 pub(crate) fn na_handler(
