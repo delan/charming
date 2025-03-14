@@ -1,12 +1,18 @@
 use std::{rc::Rc, str::FromStr};
 
+use bon::Builder;
 use color_eyre::eyre::{self, bail};
 
-#[derive(Debug, Default, Clone, PartialEq)]
+#[derive(Debug, Default, Clone, PartialEq, Builder)]
+#[builder(on(Rc<str>, into))]
 pub(crate) struct Details {
+    #[builder(default)]
     pub bits: u8,
+    #[builder(default)]
     pub ebits: u8,
     pub name: Option<Rc<str>>,
+    #[builder(with = |alias: &'static[(&str, AliasType)]| { alias.iter().map(|(x, t)| Alias::r#static(x, *t)).collect() })]
+    #[builder(default)]
     pub alias: Vec<Alias>,
     pub dnrp: Option<Rc<str>>,
     pub gb: Option<GraphemeBreak>,
@@ -81,57 +87,6 @@ pub(crate) enum EmojiBits {
 pub(crate) enum HangulSyllableType {
     Lv,
     Lvt,
-}
-
-impl Details {
-    pub(crate) fn r#static(
-        name: impl Into<Option<&'static str>>,
-        alias: &'static [(&'static str, AliasType)],
-        dnrp: impl Into<Option<&'static str>>,
-        gb: impl Into<Option<GraphemeBreak>>,
-        gc: impl Into<Option<&'static str>>,
-        block: impl Into<Option<&'static str>>,
-        age: impl Into<Option<&'static str>>,
-        hst: impl Into<Option<HangulSyllableType>>,
-        hjsn: impl Into<Option<&'static str>>,
-        hlvt: impl Into<Option<(usize, usize, usize)>>,
-        uhdef: impl Into<Option<&'static str>>,
-        uhman: impl Into<Option<&'static str>>,
-        bits: &'static [Bits],
-        emoji_bits: &'static [EmojiBits],
-    ) -> Self {
-        let name = name.into().map(|x| x.into());
-        let alias = alias.iter().map(|(x, t)| Alias::r#static(x, *t)).collect();
-        let dnrp = dnrp.into().map(|x| x.into());
-        let gb = gb.into();
-        let gc = gc.into().map(|x| x.into());
-        let block = block.into().map(|x| x.into());
-        let age = age.into().map(|x| x.into());
-        let hst = hst.into();
-        let hjsn = hjsn.into().map(|x| x.into());
-        let hlvt = hlvt.into();
-        let uhdef = uhdef.into().map(|x| x.into());
-        let uhman = uhman.into().map(|x| x.into());
-        let bits = bits.iter().map(|&x| x as u8).fold(0, |r, x| r | x);
-        let emoji_bits = emoji_bits.iter().map(|&x| x as u8).fold(0, |r, x| r | x);
-
-        Self {
-            bits,
-            ebits: emoji_bits,
-            name,
-            alias,
-            dnrp,
-            gb,
-            gc,
-            block,
-            age,
-            hst,
-            hjsn,
-            hlvt,
-            uhdef,
-            uhman,
-        }
-    }
 }
 
 impl Alias {

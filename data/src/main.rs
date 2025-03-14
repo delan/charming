@@ -219,228 +219,142 @@ fn main() -> Result<()> {
     use crate::details::AliasType::*;
     assert_eq!(
         ud[0x0000],
-        Details::r#static(
-            None,
-            &[("NULL", Unicode1), ("NULL", Control), ("NUL", Abbreviation)],
-            None,
-            GraphemeBreak::Control,
-            "Control (Cc)",
-            "Basic Latin",
-            "Unicode 1.1",
-            None,
-            None,
-            None,
-            None,
-            None,
-            &[],
-            &[]
-        )
+        Details::builder()
+            .alias(&[("NULL", Unicode1), ("NULL", Control), ("NUL", Abbreviation)])
+            .gb(GraphemeBreak::Control)
+            .gc("Control (Cc)")
+            .block("Basic Latin")
+            .age("Unicode 1.1")
+            .build(),
     );
+
     assert_eq!(
         ud[0x000A],
-        Details::r#static(
-            None,
-            &[
+        Details::builder()
+            .alias(&[
                 ("LINE FEED (LF)", Unicode1),
                 ("LINE FEED", Control),
                 ("NEW LINE", Control),
                 ("END OF LINE", Control),
                 ("LF", Abbreviation),
                 ("NL", Abbreviation),
-                ("EOL", Abbreviation)
-            ],
-            None,
-            GraphemeBreak::Lf,
-            "Control (Cc)",
-            "Basic Latin",
-            "Unicode 1.1",
-            None,
-            None,
-            None,
-            None,
-            None,
-            &[],
-            &[]
-        )
+                ("EOL", Abbreviation),
+            ])
+            .gb(GraphemeBreak::Lf)
+            .gc("Control (Cc)")
+            .block("Basic Latin")
+            .age("Unicode 1.1")
+            .build()
     );
     assert_eq!(
         ud[0x0080],
-        Details::r#static(
-            None,
-            &[("PADDING CHARACTER", Figment), ("PAD", Abbreviation)],
-            None,
-            GraphemeBreak::Control,
-            "Control (Cc)",
-            "Latin-1 Supplement",
-            "Unicode 1.1",
-            None,
-            None,
-            None,
-            None,
-            None,
-            &[],
-            &[]
-        )
+        Details::builder()
+            .alias(&[("PADDING CHARACTER", Figment), ("PAD", Abbreviation)])
+            .gb(GraphemeBreak::Control)
+            .gc("Control (Cc)")
+            .block("Latin-1 Supplement")
+            .age("Unicode 1.1")
+            .build()
     );
     assert_eq!(
         ud[0x039B],
-        Details::r#static(
-            "GREEK CAPITAL LETTER LAMDA",
-            &[("GREEK CAPITAL LETTER LAMBDA", Unicode1)],
-            None,
-            None,
-            "Uppercase Letter (Lu)",
-            "Greek and Coptic",
-            "Unicode 1.1",
-            None,
-            None,
-            None,
-            None,
-            None,
-            &[],
-            &[]
-        )
+        Details::builder()
+            .name("GREEK CAPITAL LETTER LAMDA")
+            .alias(&[("GREEK CAPITAL LETTER LAMBDA", Unicode1)])
+            .gc("Uppercase Letter (Lu)")
+            .block("Greek and Coptic")
+            .age("Unicode 1.1")
+            .build(),
     );
     assert_eq!(
         ud[0x5170],
-        Details::r#static(
-            None,
-            &[],
-            "CJK UNIFIED IDEOGRAPH-",
-            None,
-            "Other Letter (Lo)",
-            "CJK Unified Ideographs",
-            "Unicode 1.1",
-            None,
-            None,
-            None,
-            "orchid; elegant, graceful",
-            "lán",
-            &[Bits::KdefinitionExists, Bits::DerivedNameNr2],
-            &[]
-        )
+        Details::builder()
+            .dnrp("CJK UNIFIED IDEOGRAPH-")
+            .gc("Other Letter (Lo)")
+            .block("CJK Unified Ideographs")
+            .age("Unicode 1.1")
+            .uhdef("orchid; elegant, graceful")
+            .uhman("lán")
+            .bits(Bits::KdefinitionExists as u8 | Bits::DerivedNameNr2 as u8)
+            .build()
     );
     assert_eq!(
         ud[0x9FFF],
-        Details::r#static(
-            None,
-            &[],
-            "CJK UNIFIED IDEOGRAPH-",
-            None,
-            "Other Letter (Lo)",
-            "CJK Unified Ideographs",
-            "Unicode 14.0",
-            None,
-            None,
-            None,
-            None,
-            "xìng",
-            &[Bits::DerivedNameNr2],
-            &[]
-        )
+        Details::builder()
+            .dnrp("CJK UNIFIED IDEOGRAPH-")
+            .gc("Other Letter (Lo)")
+            .block("CJK Unified Ideographs")
+            .age("Unicode 14.0")
+            .uhman("xìng")
+            .bits(Bits::DerivedNameNr2 as u8)
+            .build()
     );
     assert_eq!(
         ud[0xD4DB],
-        Details::r#static(
-            None,
-            &[],
-            "HANGUL SYLLABLE ",
-            GraphemeBreak::HangulLVT,
-            "Other Letter (Lo)",
-            "Hangul Syllables",
-            "Unicode 2.0",
-            HangulSyllableType::Lvt,
-            None,
-            (17, 16, 15),
-            None,
-            None,
-            &[Bits::DerivedNameNr1],
-            &[]
-        )
+        Details::builder()
+            .dnrp("HANGUL SYLLABLE ")
+            .gb(GraphemeBreak::HangulLVT)
+            .gc("Other Letter (Lo)")
+            .block("Hangul Syllables")
+            .age("Unicode 2.0")
+            .hst(HangulSyllableType::Lvt)
+            .hlvt((17, 16, 15))
+            .bits(Bits::DerivedNameNr1 as u8)
+            .build()
     );
     assert_eq!(
         ud[0xD788],
-        Details::r#static(
-            None,
-            &[],
-            "HANGUL SYLLABLE ",
-            GraphemeBreak::HangulLV,
-            "Other Letter (Lo)",
-            "Hangul Syllables",
-            "Unicode 2.0",
-            HangulSyllableType::Lv,
-            None,
-            (18, 20, 0),
-            None,
-            None,
-            &[Bits::DerivedNameNr1],
-            &[]
-        )
+        Details::builder()
+            .dnrp("HANGUL SYLLABLE ")
+            .gb(GraphemeBreak::HangulLV)
+            .gc("Other Letter (Lo)")
+            .block("Hangul Syllables")
+            .age("Unicode 2.0")
+            .hst(HangulSyllableType::Lv)
+            .hlvt((18, 20, 0))
+            .bits(Bits::DerivedNameNr1 as u8)
+            .build()
     );
+
     assert_eq!(
         ud[0xF900],
-        Details::r#static(
-            None,
-            &[],
-            "CJK COMPATIBILITY IDEOGRAPH-",
-            None,
-            "Other Letter (Lo)",
-            "CJK Compatibility Ideographs",
-            "Unicode 1.1",
-            None,
-            None,
-            None,
-            "how? what?",
-            None,
-            &[Bits::KdefinitionExists, Bits::DerivedNameNr2],
-            &[]
-        )
+        Details::builder()
+            .dnrp("CJK COMPATIBILITY IDEOGRAPH-")
+            .gc("Other Letter (Lo)")
+            .block("CJK Compatibility Ideographs")
+            .age("Unicode 1.1")
+            .uhdef("how? what?")
+            .bits(Bits::DerivedNameNr2 as u8 | Bits::KdefinitionExists as u8)
+            .build()
     );
     assert_eq!(
         ud[0xFE18],
-        Details::r#static(
-            "PRESENTATION FORM FOR VERTICAL RIGHT WHITE LENTICULAR BRAKCET",
-            &[(
+        Details::builder()
+            .name("PRESENTATION FORM FOR VERTICAL RIGHT WHITE LENTICULAR BRAKCET")
+            .alias(&[(
                 "PRESENTATION FORM FOR VERTICAL RIGHT WHITE LENTICULAR BRACKET",
-                Correction
-            )],
-            None,
-            None,
-            "Close Punctuation (Pe)",
-            "Vertical Forms",
-            "Unicode 4.1",
-            None,
-            None,
-            None,
-            None,
-            None,
-            &[],
-            &[]
-        )
+                Correction,
+            )])
+            .gc("Close Punctuation (Pe)")
+            .block("Vertical Forms")
+            .age("Unicode 4.1")
+            .build()
     );
     assert_eq!(
         ud[0xFEFF],
-        Details::r#static(
-            "ZERO WIDTH NO-BREAK SPACE",
-            &[
+        Details::builder()
+            .name("ZERO WIDTH NO-BREAK SPACE")
+            .alias(&[
                 ("BYTE ORDER MARK", Unicode1),
                 ("BYTE ORDER MARK", Alternate),
                 ("BOM", Abbreviation),
-                ("ZWNBSP", Abbreviation)
-            ],
-            None,
-            GraphemeBreak::Control,
-            "Format (Cf)",
-            "Arabic Presentation Forms-B",
-            "Unicode 1.1",
-            None,
-            None,
-            None,
-            None,
-            None,
-            &[],
-            &[]
-        )
+                ("ZWNBSP", Abbreviation),
+            ])
+            .gb(GraphemeBreak::Control)
+            .gc("Format (Cf)")
+            .block("Arabic Presentation Forms-B")
+            .age("Unicode 1.1")
+            .build()
     );
 
     if let Some(twemoji) = std::env::args().nth(1) {
