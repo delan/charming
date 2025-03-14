@@ -18,7 +18,7 @@ pub(crate) fn ur_handler(
         "kDefinition" => {
             assert!(sink[point].name.is_none());
             sink[point].uhdef = Some(popularity.vote(value));
-            sink[point].bits |= Bits::KdefinitionExists as u8;
+            sink[point].bits |= Bits::KdefinitionExists;
         }
         "kMandarin" => {
             sink[point].uhman = Some(popularity.vote(value));

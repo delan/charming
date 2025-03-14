@@ -21,7 +21,7 @@ pub(crate) fn ed_handler(sink: &mut Vec<Details>, captures: Captures) -> Result<
             "Emoji_Modifier" => EmojiBits::EmojiModifier,
             "Emoji_Modifier_Base" => EmojiBits::EmojiModifierBase,
             x => panic!("unexpected property: {}", x),
-        } as u8;
+        };
     }
 
     Ok(())

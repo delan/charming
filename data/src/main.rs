@@ -166,8 +166,8 @@ fn main() -> Result<()> {
 
             ud[i].dnrp = Some(popularity.vote(prefix));
             ud[i].bits |= match rule {
-                NameRule::NR1 => Bits::DerivedNameNr1 as u8,
-                NameRule::NR2 => Bits::DerivedNameNr2 as u8,
+                NameRule::NR1 => Bits::DerivedNameNr1,
+                NameRule::NR2 => Bits::DerivedNameNr2,
             };
         }
     }
@@ -275,7 +275,7 @@ fn main() -> Result<()> {
             .age("Unicode 1.1")
             .uhdef("orchid; elegant, graceful")
             .uhman("lán")
-            .bits(Bits::KdefinitionExists as u8 | Bits::DerivedNameNr2 as u8)
+            .bits(Bits::KdefinitionExists | Bits::DerivedNameNr2)
             .build()
     );
     assert_eq!(
@@ -286,7 +286,7 @@ fn main() -> Result<()> {
             .block("CJK Unified Ideographs")
             .age("Unicode 14.0")
             .uhman("xìng")
-            .bits(Bits::DerivedNameNr2 as u8)
+            .bits(Bits::DerivedNameNr2.into())
             .build()
     );
     assert_eq!(
@@ -299,7 +299,7 @@ fn main() -> Result<()> {
             .age("Unicode 2.0")
             .hst(HangulSyllableType::Lvt)
             .hlvt((17, 16, 15))
-            .bits(Bits::DerivedNameNr1 as u8)
+            .bits(Bits::DerivedNameNr1.into())
             .build()
     );
     assert_eq!(
@@ -312,7 +312,7 @@ fn main() -> Result<()> {
             .age("Unicode 2.0")
             .hst(HangulSyllableType::Lv)
             .hlvt((18, 20, 0))
-            .bits(Bits::DerivedNameNr1 as u8)
+            .bits(Bits::DerivedNameNr1.into())
             .build()
     );
 
@@ -324,7 +324,7 @@ fn main() -> Result<()> {
             .block("CJK Compatibility Ideographs")
             .age("Unicode 1.1")
             .uhdef("how? what?")
-            .bits(Bits::DerivedNameNr2 as u8 | Bits::KdefinitionExists as u8)
+            .bits(Bits::DerivedNameNr2 | Bits::KdefinitionExists)
             .build()
     );
     assert_eq!(
@@ -376,13 +376,13 @@ fn main() -> Result<()> {
             let mut new_points = Vec::default();
             for (i, &point) in points.iter().enumerate() {
                 let ebits = ud[point].ebits;
-                let e = (EmojiBits::Emoji as u8 & ebits) != 0;
-                let ep = (EmojiBits::EmojiPresentation as u8 & ebits) != 0;
-                let emb = (EmojiBits::EmojiModifierBase as u8 & ebits) != 0;
+                let e = ebits.contains(EmojiBits::Emoji);
+                let ep = ebits.contains(EmojiBits::EmojiPresentation);
+                let emb = ebits.contains(EmojiBits::EmojiModifierBase);
                 let next_point = points.get(i + 1);
                 let next_is_vs16 = next_point.is_some_and(|&x| x == 0xFE0F);
                 let next_ebits = next_point.map(|&j| ud[j].ebits);
-                let next_em = next_ebits.is_some_and(|x| (EmojiBits::EmojiModifier as u8 & x) != 0);
+                let next_em = next_ebits.is_some_and(|x| x.contains(EmojiBits::EmojiModifier));
                 new_points.push(point);
                 if e && !ep && !next_is_vs16 && !(emb && next_em) {
                     if !emb && next_em {
@@ -437,15 +437,15 @@ fn main() -> Result<()> {
     write_pool_indices(&ud, &pool, "data.uhdef.bin", |x| x.uhdef.map_clone())?;
     write_pool_indices(&ud, &pool, "data.uhman.bin", |x| x.uhman.map_clone())?;
     write_sparse(&ud, "data.bits.bin", 0, u8_writer, |x| {
-        if x.bits > 0 {
-            Some(x.bits)
+        if !x.bits.is_empty() {
+            Some(x.bits.bits())
         } else {
             None
         }
     })?;
     write_sparse(&ud, "data.ebits.bin", 0, u8_writer, |x| {
-        if x.ebits > 0 {
-            Some(x.ebits)
+        if !x.ebits.is_empty() {
+            Some(x.ebits.bits())
         } else {
             None
         }
@@ -464,7 +464,7 @@ fn main() -> Result<()> {
             let mut value = 0;
             if page
                 .iter()
-                .filter(|x| x.name.is_some() || x.bits & Bits::DerivedNameNr1 as u8 != 0)
+                .filter(|x| x.name.is_some() || x.bits.contains(Bits::DerivedNameNr1))
                 .count()
                 > 0
             {

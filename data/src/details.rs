@@ -1,3 +1,4 @@
+use enumflags2::{bitflags, BitFlags};
 use std::{rc::Rc, str::FromStr};
 
 use bon::Builder;
@@ -7,9 +8,9 @@ use color_eyre::eyre::{self, bail};
 #[builder(on(Rc<str>, into))]
 pub(crate) struct Details {
     #[builder(default)]
-    pub bits: u8,
+    pub bits: BitFlags<Bits>,
     #[builder(default)]
-    pub ebits: u8,
+    pub ebits: BitFlags<EmojiBits>,
     pub name: Option<Rc<str>>,
     #[builder(with = |alias: &'static[(&str, AliasType)]| { alias.iter().map(|(x, t)| Alias::r#static(x, *t)).collect() })]
     #[builder(default)]
@@ -64,6 +65,7 @@ pub(crate) enum GraphemeBreak {
 
 #[repr(u8)]
 #[derive(Debug, Clone, Copy)]
+#[bitflags]
 pub(crate) enum Bits {
     KdefinitionExists = 1 << 0,
     IsSpaceSeparator = 1 << 2,
@@ -74,6 +76,7 @@ pub(crate) enum Bits {
 
 #[repr(u8)]
 #[derive(Debug, Clone, Copy)]
+#[bitflags]
 pub(crate) enum EmojiBits {
     Emoji = 1 << 0,
     ExtendedPictographic = 1 << 1,

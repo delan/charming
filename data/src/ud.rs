@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use color_eyre::eyre::Result;
+use enumflags2::BitFlags;
 use regex::Captures;
 
 use crate::captures::CapturesExt;
@@ -22,11 +23,11 @@ pub(crate) fn ud_handler(
     });
 
     let bits = if gc == "Zs" {
-        Bits::IsSpaceSeparator as u8
+        Bits::IsSpaceSeparator.into()
     } else if gc.starts_with("M") {
-        Bits::IsAnyMark as u8
+        Bits::IsAnyMark.into()
     } else {
-        0
+        BitFlags::empty()
     };
 
     assert!(
