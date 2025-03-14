@@ -1,4 +1,4 @@
-use failure::Error;
+use color_eyre::eyre::Result;
 use regex::Captures;
 
 use crate::captures::CapturesExt;
@@ -9,10 +9,10 @@ pub(crate) fn na_handler(
     popularity: &mut Popularity,
     sink: &mut Vec<Details>,
     captures: Captures,
-) -> Result<(), Error> {
-    let point = usize::from_str_radix(captures.name_ok("point")?, 16)?;
-    let alias = captures.name_ok("alias")?;
-    let r#type = captures.name_ok("type")?;
+) -> Result<()> {
+    let point = usize::from_str_radix(captures.try_name("point")?, 16)?;
+    let alias = captures.try_name("alias")?;
+    let r#type = captures.try_name("type")?;
 
     sink[point].alias.push(Alias {
         inner: popularity.vote(alias),

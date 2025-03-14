@@ -28,7 +28,7 @@ use std::io::{BufWriter, Write};
 use std::rc::Rc;
 
 use byteorder::{BigEndian, WriteBytesExt};
-use failure::Error;
+use color_eyre::eyre::Result;
 use serde::Serialize;
 
 use crate::age::age_handler;
@@ -61,7 +61,8 @@ impl OptionRcExt for Option<Rc<str>> {
     }
 }
 
-fn main() -> Result<(), Error> {
+fn main() -> Result<()> {
+    color_eyre::install()?;
     let mut gc_labels = HashMap::default();
 
     parse(
@@ -597,28 +598,25 @@ fn points<T: Default>() -> Vec<T> {
     result
 }
 
-fn write<W: FnOnce(BufWriter<File>) -> Result<(), Error>>(
-    path: &str,
-    writer: W,
-) -> Result<(), Error> {
+fn write<W: FnOnce(BufWriter<File>) -> Result<()>>(path: &str, writer: W) -> Result<()> {
     println!("Writing {} ...", path);
 
     writer(BufWriter::new(File::create(path)?))
 }
 
-fn u8_writer(sink: &mut BufWriter<File>, x: u8) -> Result<(), Error> {
+fn u8_writer(sink: &mut BufWriter<File>, x: u8) -> Result<()> {
     sink.write_u8(x)?;
 
     Ok(())
 }
 
-fn u16_writer(sink: &mut BufWriter<File>, x: u16) -> Result<(), Error> {
+fn u16_writer(sink: &mut BufWriter<File>, x: u16) -> Result<()> {
     sink.write_u16::<BigEndian>(x)?;
 
     Ok(())
 }
 
-fn u32_writer(sink: &mut BufWriter<File>, x: u32) -> Result<(), Error> {
+fn u32_writer(sink: &mut BufWriter<File>, x: u32) -> Result<()> {
     sink.write_u32::<BigEndian>(x)?;
 
     Ok(())
@@ -628,14 +626,14 @@ fn write_sparse<
     T,
     U: Copy + PartialEq + Debug,
     G: FnMut(&T) -> Option<U>,
-    W: FnMut(&mut BufWriter<File>, U) -> Result<(), Error>,
+    W: FnMut(&mut BufWriter<File>, U) -> Result<()>,
 >(
     source: &[T],
     path: &str,
     default: U,
     mut writer: W,
     mut getter: G,
-) -> Result<(), Error> {
+) -> Result<()> {
     write(path, |mut sink| {
         let mut page_counts = Vec::default();
 
@@ -678,7 +676,7 @@ fn write_pool_indices<G: FnMut(&Details) -> Option<Rc<str>>>(
     pool: &Pool,
     path: &str,
     mut getter: G,
-) -> Result<(), Error> {
+) -> Result<()> {
     write_sparse(source, path, 0xFFFF, u16_writer, |x| {
         getter(x).map(|x| pool.r#use(&x).try_into().expect("string pool overflow"))
     })
@@ -697,7 +695,7 @@ fn derived_name(point: usize) -> Option<String> {
     None
 }
 
-fn write_alias_files(source: &[Details], pool: &Pool) -> Result<(), Error> {
+fn write_alias_files(source: &[Details], pool: &Pool) -> Result<()> {
     let mut counts = Vec::default();
     let mut indices = Vec::default();
     let mut strings = Vec::default();
@@ -743,7 +741,7 @@ fn write_alias_files(source: &[Details], pool: &Pool) -> Result<(), Error> {
     Ok(())
 }
 
-fn write_sequence_files(sequences: &Sequences, pool: &Pool) -> Result<(), Error> {
+fn write_sequence_files(sequences: &Sequences, pool: &Pool) -> Result<()> {
     write("data.seqb.bin", |mut sink| {
         let mut start = 0;
 

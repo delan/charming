@@ -1,4 +1,4 @@
-use failure::Error;
+use color_eyre::eyre::Result;
 use regex::Captures;
 
 use crate::details::Details;
@@ -9,7 +9,7 @@ pub(crate) fn age_handler(
     popularity: &mut Popularity,
     sink: &mut Vec<Details>,
     captures: Captures,
-) -> Result<(), Error> {
+) -> Result<()> {
     range_handler(
         |r, x| r.age = Some(popularity.vote(&format!("Unicode {}", x))),
         sink,

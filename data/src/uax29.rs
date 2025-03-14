@@ -3,6 +3,7 @@ use std::{
     fmt::{self, Display, Formatter},
 };
 
+use color_eyre::Result;
 use nom::{
     branch::alt,
     bytes::complete::{tag, take_while1},
@@ -15,7 +16,7 @@ use nom::{
 
 use crate::details::GraphemeBreak;
 
-pub(crate) fn generate_egcbreak() -> Result<String, failure::Error> {
+pub(crate) fn generate_egcbreak() -> Result<String> {
     // UAX #29 revision 45, Table 1b + Table 1c
     // https://www.unicode.org/reports/tr29/tr29-45.html#Table_Combining_Char_Sequences_and_Grapheme_Clusters
     // (note the lowercase ri-sequence, and RI → Regional_Indicator)

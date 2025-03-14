@@ -1,12 +1,6 @@
 use std::{rc::Rc, str::FromStr};
 
-#[derive(failure::Fail, Debug)]
-#[fail(display = "unknown Name_Alias type")]
-pub(crate) struct AliasTypeFromStrError;
-
-#[derive(failure::Fail, Debug)]
-#[fail(display = "unknown Grapheme_Cluster_Break value")]
-pub(crate) struct GraphemeBreakFromStrError;
+use color_eyre::eyre::{self, bail};
 
 #[derive(Debug, Default, Clone, PartialEq)]
 pub(crate) struct Details {
@@ -150,7 +144,7 @@ impl Alias {
 }
 
 impl FromStr for AliasType {
-    type Err = AliasTypeFromStrError;
+    type Err = eyre::Report;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(match s {
@@ -159,13 +153,13 @@ impl FromStr for AliasType {
             "alternate" => Self::Alternate,
             "figment" => Self::Figment,
             "abbreviation" => Self::Abbreviation,
-            _ => return Err(AliasTypeFromStrError),
+            _ => bail!("unknown Name_Alias type: {s}"),
         })
     }
 }
 
 impl FromStr for GraphemeBreak {
-    type Err = GraphemeBreakFromStrError;
+    type Err = eyre::Report;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(match s {
@@ -182,7 +176,7 @@ impl FromStr for GraphemeBreak {
             "T" => Self::HangulT,
             "LV" => Self::HangulLV,
             "LVT" => Self::HangulLVT,
-            _ => return Err(GraphemeBreakFromStrError),
+            _ => bail!("unknown Grapheme_Cluster_Break value: {s}"),
         })
     }
 }

@@ -1,4 +1,4 @@
-use failure::Error;
+use color_eyre::eyre::Result;
 use regex::Captures;
 
 use crate::captures::CapturesExt;
@@ -9,10 +9,10 @@ pub(crate) fn ur_handler(
     popularity: &mut Popularity,
     sink: &mut Vec<Details>,
     captures: Captures,
-) -> Result<(), Error> {
-    let point = usize::from_str_radix(captures.name_ok("point")?, 16)?;
-    let key = captures.name_ok("key")?;
-    let value = captures.name_ok("value")?;
+) -> Result<()> {
+    let point = usize::from_str_radix(captures.try_name("point")?, 16)?;
+    let key = captures.try_name("key")?;
+    let value = captures.try_name("value")?;
 
     match key {
         "kDefinition" => {

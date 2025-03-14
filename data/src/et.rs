@@ -1,4 +1,4 @@
-use failure::Error;
+use color_eyre::eyre::Result;
 use regex::Captures;
 
 use crate::captures::CapturesExt;
@@ -11,13 +11,13 @@ pub(crate) fn et_handler(
     sink: &mut Vec<Details>,
     sequences: &mut Sequences,
     captures: Captures,
-) -> Result<(), Error> {
+) -> Result<()> {
     let points = captures
-        .name_ok("points")?
+        .try_name("points")?
         .split(" ")
         .map(|x| usize::from_str_radix(x, 16))
         .collect::<Result<Vec<_>, _>>()?;
-    let name = captures.name_ok("name")?;
+    let name = captures.try_name("name")?;
 
     if points.len() > 1 {
         // eprintln!("{} {}", captures.name_ok("points")?, captures.name_ok("name")?);
