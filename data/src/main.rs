@@ -462,14 +462,13 @@ fn main() -> Result<()> {
             let mut new_points = Vec::default();
             for (i, &point) in points.iter().enumerate() {
                 let ebits = ud[point].ebits;
-                let e = (EmojiBits::IsEmoji as u8 & ebits) != 0;
-                let ep = (EmojiBits::IsEmojiPresentation as u8 & ebits) != 0;
-                let emb = (EmojiBits::IsEmojiModifierBase as u8 & ebits) != 0;
+                let e = (EmojiBits::Emoji as u8 & ebits) != 0;
+                let ep = (EmojiBits::EmojiPresentation as u8 & ebits) != 0;
+                let emb = (EmojiBits::EmojiModifierBase as u8 & ebits) != 0;
                 let next_point = points.get(i + 1);
                 let next_is_vs16 = next_point.is_some_and(|&x| x == 0xFE0F);
                 let next_ebits = next_point.map(|&j| ud[j].ebits);
-                let next_em =
-                    next_ebits.is_some_and(|x| (EmojiBits::IsEmojiModifier as u8 & x) != 0);
+                let next_em = next_ebits.is_some_and(|x| (EmojiBits::EmojiModifier as u8 & x) != 0);
                 new_points.push(point);
                 if e && !ep && !next_is_vs16 && !(emb && next_em) {
                     if !emb && next_em {

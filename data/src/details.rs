@@ -69,12 +69,12 @@ pub(crate) enum Bits {
 #[repr(u8)]
 #[derive(Debug, Clone, Copy)]
 pub(crate) enum EmojiBits {
-    IsEmoji = 1 << 0,
-    IsExtendedPictographic = 1 << 1,
-    IsEmojiComponent = 1 << 2,
-    IsEmojiPresentation = 1 << 3,
-    IsEmojiModifier = 1 << 4,
-    IsEmojiModifierBase = 1 << 5,
+    Emoji = 1 << 0,
+    ExtendedPictographic = 1 << 1,
+    EmojiComponent = 1 << 2,
+    EmojiPresentation = 1 << 3,
+    EmojiModifier = 1 << 4,
+    EmojiModifierBase = 1 << 5,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]

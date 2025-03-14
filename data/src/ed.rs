@@ -14,12 +14,12 @@ pub(crate) fn ed_handler(sink: &mut Vec<Details>, captures: Captures) -> Result<
 
     for i in p..q {
         sink[i].ebits |= match property {
-            "Emoji" => EmojiBits::IsEmoji,
-            "Extended_Pictographic" => EmojiBits::IsExtendedPictographic,
-            "Emoji_Component" => EmojiBits::IsEmojiComponent,
-            "Emoji_Presentation" => EmojiBits::IsEmojiPresentation,
-            "Emoji_Modifier" => EmojiBits::IsEmojiModifier,
-            "Emoji_Modifier_Base" => EmojiBits::IsEmojiModifierBase,
+            "Emoji" => EmojiBits::Emoji,
+            "Extended_Pictographic" => EmojiBits::ExtendedPictographic,
+            "Emoji_Component" => EmojiBits::EmojiComponent,
+            "Emoji_Presentation" => EmojiBits::EmojiPresentation,
+            "Emoji_Modifier" => EmojiBits::EmojiModifier,
+            "Emoji_Modifier_Base" => EmojiBits::EmojiModifierBase,
             x => panic!("unexpected property: {}", x),
         } as u8;
     }
