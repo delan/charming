@@ -114,7 +114,7 @@ fn main() -> Result<(), Error> {
 
     parse(
         &mut ud,
-        |sink, captures| hst_handler(sink, captures),
+        hst_handler,
         "HangulSyllableType.txt", None,
         r"^(?P<first>[0-9A-F]+)(?:[.][.](?P<last>[0-9A-F]+))?\s*;\s*(?P<value>[^ ]+)",
     )?;
@@ -146,7 +146,7 @@ fn main() -> Result<(), Error> {
             // Each character with a derived name should either have
             // no explicit name (iff defined in bulk) or an explicit
             // name that matches its derived name.
-            assert!(ud[i].name.as_deref().map_or(true, |x| Some(x) == derived_name(i).as_deref()));
+            assert!(ud[i].name.as_deref().is_none_or(|x| Some(x) == derived_name(i).as_deref()));
 
             // Strip out all derived names from output data, to avoid
             // polluting string pool and client heap.
@@ -192,7 +192,7 @@ fn main() -> Result<(), Error> {
 
     parse(
         &mut ud,
-        |sink, captures| gbp_handler(sink, captures),
+        gbp_handler,
         "GraphemeBreakProperty.txt", None,
         r"^(?P<first>[0-9A-F]+)(?:[.][.](?P<last>[0-9A-F]+))?\s*;\s*(?P<value>[^ ]+)",
     )?;
@@ -234,9 +234,9 @@ fn main() -> Result<(), Error> {
                 let ep = (EmojiBits::IsEmojiPresentation as u8 & ebits) != 0;
                 let emb = (EmojiBits::IsEmojiModifierBase as u8 & ebits) != 0;
                 let next_point = points.get(i + 1);
-                let next_is_vs16 = next_point.map_or(false, |&x| x == 0xFE0F);
+                let next_is_vs16 = next_point.is_some_and(|&x| x == 0xFE0F);
                 let next_ebits = next_point.map(|&j| ud[j].ebits);
-                let next_em = next_ebits.map_or(false, |x| (EmojiBits::IsEmojiModifier as u8 & x) != 0);
+                let next_em = next_ebits.is_some_and(|x| (EmojiBits::IsEmojiModifier as u8 & x) != 0);
                 new_points.push(point);
                 if e && !ep && !next_is_vs16 && !(emb && next_em) {
                     if !emb && next_em {
@@ -284,7 +284,7 @@ fn main() -> Result<(), Error> {
     write_sparse(&ud, "data.ebits.bin", 0, u8_writer, |x| if x.ebits > 0 { Some(x.ebits) } else { None })?;
     write_sparse(&ud, "data.hlvt.bin", 0, u16_writer, |x| x.hlvt.map(|(l, v, t)| {
         assert!(l < (1 << 5) && v < (1 << 5) && t < (1 << 5));
-        return (1 << 15 | l << 10 | v << 5 | t) as u16;
+        ((1 << 15) | (l << 10) | (v << 5) | t) as u16
     }))?;
     write_sparse(&ud, "data.gb.bin", 0, u8_writer, |x| x.gb.map(|x| x as u8))?;
     write_alias_files(&ud, &pool)?;
@@ -524,7 +524,7 @@ fn write_sequence_files(sequences: &Sequences, pool: &Pool) -> Result<(), Error>
         for bucket in sequences.buckets.values() {
             for sequence in bucket {
                 for name in sequence.names.iter() {
-                    let string = pool.r#use(&name);
+                    let string = pool.r#use(name);
                     u16_writer(&mut sink, string.try_into().expect("string pool overflow"))?;
                 }
             }

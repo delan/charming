@@ -1,7 +1,7 @@
 use crate::details::{Details, HangulSyllableType};
 
 // Table 4-8.  Name Derivation Rule Prefix Strings
-pub(crate) const NAME_RULES: [(usize, usize, NameRule, &'static str); 16] = [
+pub(crate) const NAME_RULES: [(usize, usize, NameRule, &str); 16] = [
     (0xAC00, 0xD7A3, NameRule::NR1, "HANGUL SYLLABLE "),
     (0x3400, 0x4DBF, NameRule::NR2, "CJK UNIFIED IDEOGRAPH-"),
     (0x4E00, 0x9FFC, NameRule::NR2, "CJK UNIFIED IDEOGRAPH-"),

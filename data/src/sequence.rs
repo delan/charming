@@ -1,6 +1,7 @@
 use std::{collections::BTreeMap, rc::Rc};
 
 #[derive(Debug)]
+#[derive(Default)]
 pub struct Sequences {
     pub buckets: BTreeMap<SequenceKey, Vec<Sequence>>,
 }
@@ -13,11 +14,6 @@ pub struct Sequence {
     pub names: Vec<Rc<str>>,
 }
 
-impl Default for Sequences {
-    fn default() -> Self {
-        Self { buckets: BTreeMap::default() }
-    }
-}
 
 impl Sequences {
     pub fn insert(&mut self, points: &[usize], name: Rc<str>) {

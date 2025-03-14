@@ -10,7 +10,7 @@ pub(crate) trait CapturesExt {
     fn name_or<'a>(&'a self, name: &str, default: &'a str) -> &'a str;
 }
 
-impl<'t> CapturesExt for Captures<'t> {
+impl CapturesExt for Captures<'_> {
     fn name_ok(&self, name: &str) -> Result<&str, Error> {
         Ok(self.name(name).ok_or(CapturesError)?.into())
     }

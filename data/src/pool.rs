@@ -29,7 +29,6 @@ impl Popularity {
             .inner
             .drain()
             .filter(|x| Rc::strong_count(x) > 1)
-            .map(|x| x.clone())
             .collect();
 
         result.sort_by(|p, q| {

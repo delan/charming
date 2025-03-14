@@ -81,7 +81,7 @@ impl<'i> Alternate<'i> {
             write!(f, "|")?;
             x.fmt(f)?;
         }
-        return Ok(());
+        Ok(())
     }
 }
 
@@ -97,9 +97,10 @@ impl<'i> Sequence<'i> {
         }
     }
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        Ok(for x in &self.0 {
+        for x in &self.0 {
             x.fmt(f)?;
-        })
+        };
+        Ok(())
     }
 }
 
@@ -148,7 +149,7 @@ impl<'i> Term<'i> {
         }
     }
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        Ok(match self {
+        match self {
             Self::Nonterminal(_) => panic!(),
             Self::GcbValue(x) => {
                 write!(f, "[")?;
@@ -172,7 +173,8 @@ impl<'i> Term<'i> {
                 alternate.fmt(f)?;
                 write!(f, ")")?;
             }
-        })
+        };
+        Ok(())
     }
 }
 
@@ -205,11 +207,12 @@ impl Repeat {
         })(input)
     }
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        Ok(match self {
+        match self {
             Self::One => {}
             Self::Star => f.write_str("*")?,
             Self::Plus => f.write_str("+")?,
-        })
+        };
+        Ok(())
     }
 }
 
