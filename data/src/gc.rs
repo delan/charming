@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use failure::Error;
+use color_eyre::eyre;
 use regex::Captures;
 
 use crate::captures::CapturesExt;
@@ -8,9 +8,9 @@ use crate::captures::CapturesExt;
 pub(crate) fn gc_handler(
     sink: &mut HashMap<String, String>,
     captures: Captures,
-) -> Result<(), Error> {
-    let key = captures.name_ok("key")?;
-    let value = captures.name_ok("value")?;
+) -> eyre::Result<()> {
+    let key = captures.try_name("key")?;
+    let value = captures.try_name("value")?;
     let value = value.replace('_', " ");
     let value = format!("{} ({})", value, key);
 

@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
-use failure::Error;
+use color_eyre::eyre;
+use enumflags2::BitFlags;
 use regex::Captures;
 
 use crate::captures::CapturesExt;
@@ -10,23 +11,23 @@ use crate::pool::Popularity;
 pub(crate) fn ud_handler(
     gc_labels: &HashMap<String, String>,
     popularity: &mut Popularity,
-    sink: &mut Vec<Details>,
+    sink: &mut [Details],
     captures: Captures,
-) -> Result<(), Error> {
-    let point = usize::from_str_radix(captures.name_ok("point")?, 16)?;
-    let name = captures.name_ok("name")?;
-    let gc = captures.name_ok("gc")?;
+) -> eyre::Result<()> {
+    let point = usize::from_str_radix(captures.try_name("point")?, 16)?;
+    let name = captures.try_name("name")?;
+    let gc = captures.try_name("gc")?;
     let nau1 = captures.name("nau1").map(|x| Alias {
         inner: popularity.vote(x.into()),
         r#type: AliasType::Unicode1,
     });
 
     let bits = if gc == "Zs" {
-        Bits::IsSpaceSeparator as u8
+        Bits::IsSpaceSeparator.into()
     } else if gc.starts_with("M") {
-        Bits::IsAnyMark as u8
+        Bits::IsAnyMark.into()
     } else {
-        0
+        BitFlags::empty()
     };
 
     assert!(
@@ -57,10 +58,10 @@ pub(crate) fn ud_handler(
 pub(crate) fn ud_range_handler(
     ud_ranges: &mut HashMap<String, (usize, Option<usize>)>,
     captures: Captures,
-) -> Result<(), Error> {
-    let point = usize::from_str_radix(captures.name_ok("point")?, 16)?;
-    let name = captures.name_ok("name")?;
-    let kind = captures.name_ok("kind")?;
+) -> eyre::Result<()> {
+    let point = usize::from_str_radix(captures.try_name("point")?, 16)?;
+    let name = captures.try_name("name")?;
+    let kind = captures.try_name("kind")?;
 
     match kind {
         "First" => {

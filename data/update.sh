@@ -1,6 +1,9 @@
 #!/bin/sh
-# usage: ( cd data; ./update.sh 15.0.0 )
+# usage: ( cd data; ./update.sh )
 set -eu
+
+unicode_ver=16.0.0
+emoji_ver=16.0
 
 for i in \
     Blocks.txt \
@@ -13,10 +16,13 @@ for i in \
     UnicodeData.txt \
     auxiliary/GraphemeBreakProperty.txt \
     auxiliary/GraphemeBreakTest.txt \
+    emoji/emoji-data.txt \
     Unihan.zip \
 ; do
     echo $i
-    curl -fsSO https://www.unicode.org/Public/15.0.0/ucd/$i
+    curl -f\#O https://www.unicode.org/Public/${unicode_ver}/ucd/$i
 done
+echo 'emoji-test.txt (this may take a while)'
+curl -f\#O https://www.unicode.org/Public/emoji/${emoji_ver}/emoji-test.txt
 unzip -o Unihan.zip Unihan_Readings.txt
 rm Unihan.zip

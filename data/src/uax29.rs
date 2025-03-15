@@ -3,6 +3,7 @@ use std::{
     fmt::{self, Display, Formatter},
 };
 
+use color_eyre::Result;
 use nom::{
     branch::alt,
     bytes::complete::{tag, take_while1},
@@ -15,13 +16,14 @@ use nom::{
 
 use crate::details::GraphemeBreak;
 
-pub(crate) fn generate_egcbreak() -> Result<String, failure::Error> {
-    // UAX #29 revision 39, Table 1b + Table 1c
-    // https://www.unicode.org/reports/tr29/tr29-39.html#Table_Combining_Char_Sequences_and_Grapheme_Clusters
-    // (note the [CR LF], lowercase ri-sequence, and RI → Regional_Indicator)
+pub(crate) fn generate_egcbreak() -> Result<String> {
+    // UAX #29 revision 45, Table 1b + Table 1c
+    // https://www.unicode.org/reports/tr29/tr29-45.html#Table_Combining_Char_Sequences_and_Grapheme_Clusters
+    // (note the lowercase ri-sequence, and RI → Regional_Indicator)
     let (_, mut grammar) = Grammar::parse(
         r#"
-        egc := CR LF | [CR LF] | Control | precore* core postcore*
+        egc := crlf | Control | precore* core postcore*
+        crlf := CR LF | CR | LF
         precore := Prepend
         core := hangul-syllable | ri-sequence | xpicto-sequence | [^Control CR LF]
         postcore := [Extend ZWJ SpacingMark]
@@ -38,7 +40,7 @@ pub(crate) fn generate_egcbreak() -> Result<String, failure::Error> {
 #[derive(Debug, Clone)]
 struct Grammar<'i>(Vec<Derivation<'i>>);
 impl<'i> Grammar<'i> {
-    fn parse(input: &'i str) -> IResult<&str, Self> {
+    fn parse(input: &'i str) -> IResult<&'i str, Self> {
         map(
             all_consuming(delimited(
                 multispace0,
@@ -70,7 +72,7 @@ impl Display for Grammar<'_> {
 #[derive(Debug, Clone)]
 struct Derivation<'i>((&'i str, Alternate<'i>));
 impl<'i> Derivation<'i> {
-    fn parse(input: &'i str) -> IResult<&str, Self> {
+    fn parse(input: &'i str) -> IResult<&'i str, Self> {
         map(
             separated_pair(
                 delimited(space0, parse_nonterminal, space0),
@@ -85,7 +87,7 @@ impl<'i> Derivation<'i> {
 #[derive(Debug, Clone)]
 struct Alternate<'i>(Vec<Sequence<'i>>);
 impl<'i> Alternate<'i> {
-    fn parse(input: &'i str) -> IResult<&str, Self> {
+    fn parse(input: &'i str) -> IResult<&'i str, Self> {
         map(
             separated_list1(tag("|"), delimited(space0, Sequence::parse, space0)),
             Self,
@@ -110,7 +112,7 @@ impl<'i> Alternate<'i> {
 #[derive(Debug, Clone)]
 struct Sequence<'i>(Vec<TermRepeat<'i>>);
 impl<'i> Sequence<'i> {
-    fn parse(input: &'i str) -> IResult<&str, Self> {
+    fn parse(input: &'i str) -> IResult<&'i str, Self> {
         map(separated_list1(space1, TermRepeat::parse), Self)(input)
     }
     fn expand(&mut self, nonterminals: &HashMap<&'i str, Alternate<'i>>) {
@@ -129,7 +131,7 @@ impl<'i> Sequence<'i> {
 #[derive(Debug, Clone)]
 struct TermRepeat<'i>((Term<'i>, Repeat));
 impl<'i> TermRepeat<'i> {
-    fn parse(input: &'i str) -> IResult<&str, Self> {
+    fn parse(input: &'i str) -> IResult<&'i str, Self> {
         map(tuple((Term::parse, Repeat::parse)), Self)(input)
     }
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
@@ -147,7 +149,7 @@ enum Term<'i> {
     Group(Alternate<'i>),
 }
 impl<'i> Term<'i> {
-    fn parse(input: &'i str) -> IResult<&str, Self> {
+    fn parse(input: &'i str) -> IResult<&'i str, Self> {
         alt((
             map(parse_nonterminal, Self::Nonterminal),
             map(GcbValue::parse, Self::GcbValue),

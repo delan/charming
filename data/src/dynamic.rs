@@ -1,16 +1,20 @@
 use crate::details::{Details, HangulSyllableType};
 
 // Table 4-8.  Name Derivation Rule Prefix Strings
-pub(crate) const NAME_RULES: [(usize, usize, NameRule, &str); 16] = [
+// https://www.unicode.org/versions/Unicode16.0.0/core-spec/chapter-4/#G2082
+pub(crate) const NAME_RULES: [(usize, usize, NameRule, &str); 19] = [
     (0xAC00, 0xD7A3, NameRule::NR1, "HANGUL SYLLABLE "),
     (0x3400, 0x4DBF, NameRule::NR2, "CJK UNIFIED IDEOGRAPH-"),
-    (0x4E00, 0x9FFC, NameRule::NR2, "CJK UNIFIED IDEOGRAPH-"),
-    (0x20000, 0x2A6DD, NameRule::NR2, "CJK UNIFIED IDEOGRAPH-"),
-    (0x2A700, 0x2B734, NameRule::NR2, "CJK UNIFIED IDEOGRAPH-"),
+    (0x4E00, 0x9FFF, NameRule::NR2, "CJK UNIFIED IDEOGRAPH-"),
+    (0x20000, 0x2A6DF, NameRule::NR2, "CJK UNIFIED IDEOGRAPH-"),
+    (0x2A700, 0x2B739, NameRule::NR2, "CJK UNIFIED IDEOGRAPH-"),
     (0x2B740, 0x2B81D, NameRule::NR2, "CJK UNIFIED IDEOGRAPH-"),
     (0x2B820, 0x2CEA1, NameRule::NR2, "CJK UNIFIED IDEOGRAPH-"),
     (0x2CEB0, 0x2EBE0, NameRule::NR2, "CJK UNIFIED IDEOGRAPH-"),
+    (0x2EBF0, 0x2EE5D, NameRule::NR2, "CJK UNIFIED IDEOGRAPH-"),
     (0x30000, 0x3134A, NameRule::NR2, "CJK UNIFIED IDEOGRAPH-"),
+    (0x31350, 0x323AF, NameRule::NR2, "CJK UNIFIED IDEOGRAPH-"),
+    (0x13460, 0x143FA, NameRule::NR2, "EGYPTIAN HIEROGLYPH-"),
     (0x17000, 0x187F7, NameRule::NR2, "TANGUT IDEOGRAPH-"),
     (0x18D00, 0x18D08, NameRule::NR2, "TANGUT IDEOGRAPH-"),
     (
@@ -46,10 +50,7 @@ pub(crate) enum NameRule {
 }
 
 // 3.12  Conjoining Jamo Behavior
-pub(crate) fn hangul_lvt_indices(
-    data: &Vec<Details>,
-    point: usize,
-) -> Option<(usize, usize, usize)> {
+pub(crate) fn hangul_lvt_indices(data: &[Details], point: usize) -> Option<(usize, usize, usize)> {
     const S_BASE: usize = 0xAC00;
     // const L_BASE: usize = 0x1100;
     // const V_BASE: usize = 0x1161;

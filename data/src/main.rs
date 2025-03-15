@@ -28,7 +28,7 @@ use std::io::{BufWriter, Write};
 use std::rc::Rc;
 
 use byteorder::{BigEndian, WriteBytesExt};
-use failure::Error;
+use color_eyre::eyre;
 use serde::Serialize;
 
 use crate::age::age_handler;
@@ -61,7 +61,8 @@ impl OptionRcExt for Option<Rc<str>> {
     }
 }
 
-fn main() -> Result<(), Error> {
+fn main() -> eyre::Result<()> {
+    color_eyre::install()?;
     let mut gc_labels = HashMap::default();
 
     parse(
@@ -119,7 +120,7 @@ fn main() -> Result<(), Error> {
 
     parse(
         &mut ud,
-        hst_handler,
+        |sink, captures| hst_handler(sink, captures),
         "HangulSyllableType.txt",
         None,
         r"^(?P<first>[0-9A-F]+)(?:[.][.](?P<last>[0-9A-F]+))?\s*;\s*(?P<value>[^ ]+)",
@@ -150,23 +151,23 @@ fn main() -> Result<(), Error> {
     // properties for these characters in bulk, but others are listed
     // individually due to their unique properties.
     for (first, last, rule, prefix) in NAME_RULES {
-        for i in first..=last {
+        for (i, item) in ud.iter_mut().enumerate().take(last + 1).skip(first) {
             // Each character with a derived name should either have
             // no explicit name (iff defined in bulk) or an explicit
             // name that matches its derived name.
-            assert!(ud[i]
+            assert!(item
                 .name
                 .as_deref()
                 .is_none_or(|x| Some(x) == derived_name(i).as_deref()));
 
             // Strip out all derived names from output data, to avoid
             // polluting string pool and client heap.
-            ud[i].name = None;
+            item.name = None;
 
-            ud[i].dnrp = Some(popularity.vote(prefix));
-            ud[i].bits |= match rule {
-                NameRule::NR1 => Bits::DerivedNameNr1 as u8,
-                NameRule::NR2 => Bits::DerivedNameNr2 as u8,
+            item.dnrp = Some(popularity.vote(prefix));
+            item.bits |= match rule {
+                NameRule::NR1 => Bits::DerivedNameNr1,
+                NameRule::NR2 => Bits::DerivedNameNr2,
             };
         }
     }
@@ -181,7 +182,7 @@ fn main() -> Result<(), Error> {
 
     parse(
         &mut ud,
-        ed_handler,
+        |sink, captures| ed_handler(sink, captures),
         "emoji-data.txt",
         None,
         r"^(?P<first>[0-9A-F]+)(?:[.][.](?P<last>[0-9A-F]+))?\s*;\s*(?P<property>Emoji|Extended_Pictographic|Emoji_Component|Emoji_Presentation|Emoji_Modifier|Emoji_Modifier_Base)(\s|#|$)",
@@ -207,7 +208,7 @@ fn main() -> Result<(), Error> {
 
     parse(
         &mut ud,
-        gbp_handler,
+        |sink, captures| gbp_handler(sink, captures),
         "GraphemeBreakProperty.txt",
         None,
         r"^(?P<first>[0-9A-F]+)(?:[.][.](?P<last>[0-9A-F]+))?\s*;\s*(?P<value>[^ ]+)",
@@ -218,228 +219,142 @@ fn main() -> Result<(), Error> {
     use crate::details::AliasType::*;
     assert_eq!(
         ud[0x0000],
-        Details::r#static(
-            None,
-            &[("NULL", Unicode1), ("NULL", Control), ("NUL", Abbreviation)],
-            None,
-            GraphemeBreak::Control,
-            "Control (Cc)",
-            "Basic Latin",
-            "Unicode 1.1",
-            None,
-            None,
-            None,
-            None,
-            None,
-            &[],
-            &[]
-        )
+        Details::builder()
+            .alias(&[("NULL", Unicode1), ("NULL", Control), ("NUL", Abbreviation)])
+            .gb(GraphemeBreak::Control)
+            .gc("Control (Cc)")
+            .block("Basic Latin")
+            .age("Unicode 1.1")
+            .build(),
     );
+
     assert_eq!(
         ud[0x000A],
-        Details::r#static(
-            None,
-            &[
+        Details::builder()
+            .alias(&[
                 ("LINE FEED (LF)", Unicode1),
                 ("LINE FEED", Control),
                 ("NEW LINE", Control),
                 ("END OF LINE", Control),
                 ("LF", Abbreviation),
                 ("NL", Abbreviation),
-                ("EOL", Abbreviation)
-            ],
-            None,
-            GraphemeBreak::Lf,
-            "Control (Cc)",
-            "Basic Latin",
-            "Unicode 1.1",
-            None,
-            None,
-            None,
-            None,
-            None,
-            &[],
-            &[]
-        )
+                ("EOL", Abbreviation),
+            ])
+            .gb(GraphemeBreak::Lf)
+            .gc("Control (Cc)")
+            .block("Basic Latin")
+            .age("Unicode 1.1")
+            .build()
     );
     assert_eq!(
         ud[0x0080],
-        Details::r#static(
-            None,
-            &[("PADDING CHARACTER", Figment), ("PAD", Abbreviation)],
-            None,
-            GraphemeBreak::Control,
-            "Control (Cc)",
-            "Latin-1 Supplement",
-            "Unicode 1.1",
-            None,
-            None,
-            None,
-            None,
-            None,
-            &[],
-            &[]
-        )
+        Details::builder()
+            .alias(&[("PADDING CHARACTER", Figment), ("PAD", Abbreviation)])
+            .gb(GraphemeBreak::Control)
+            .gc("Control (Cc)")
+            .block("Latin-1 Supplement")
+            .age("Unicode 1.1")
+            .build()
     );
     assert_eq!(
         ud[0x039B],
-        Details::r#static(
-            "GREEK CAPITAL LETTER LAMDA",
-            &[("GREEK CAPITAL LETTER LAMBDA", Unicode1)],
-            None,
-            None,
-            "Uppercase Letter (Lu)",
-            "Greek and Coptic",
-            "Unicode 1.1",
-            None,
-            None,
-            None,
-            None,
-            None,
-            &[],
-            &[]
-        )
+        Details::builder()
+            .name("GREEK CAPITAL LETTER LAMDA")
+            .alias(&[("GREEK CAPITAL LETTER LAMBDA", Unicode1)])
+            .gc("Uppercase Letter (Lu)")
+            .block("Greek and Coptic")
+            .age("Unicode 1.1")
+            .build(),
     );
     assert_eq!(
         ud[0x5170],
-        Details::r#static(
-            None,
-            &[],
-            "CJK UNIFIED IDEOGRAPH-",
-            None,
-            "Other Letter (Lo)",
-            "CJK Unified Ideographs",
-            "Unicode 1.1",
-            None,
-            None,
-            None,
-            "orchid; elegant, graceful",
-            "lán",
-            &[Bits::KdefinitionExists, Bits::DerivedNameNr2],
-            &[]
-        )
+        Details::builder()
+            .dnrp("CJK UNIFIED IDEOGRAPH-")
+            .gc("Other Letter (Lo)")
+            .block("CJK Unified Ideographs")
+            .age("Unicode 1.1")
+            .uhdef("orchid; elegant, graceful")
+            .uhman("lán")
+            .bits(Bits::KdefinitionExists | Bits::DerivedNameNr2)
+            .build()
     );
     assert_eq!(
         ud[0x9FFF],
-        Details::r#static(
-            None,
-            &[],
-            None,
-            None,
-            "Other Letter (Lo)",
-            "CJK Unified Ideographs",
-            "Unicode 14.0",
-            None,
-            None,
-            None,
-            None,
-            None,
-            &[],
-            &[]
-        )
+        Details::builder()
+            .dnrp("CJK UNIFIED IDEOGRAPH-")
+            .gc("Other Letter (Lo)")
+            .block("CJK Unified Ideographs")
+            .age("Unicode 14.0")
+            .uhman("xìng")
+            .bits(Bits::DerivedNameNr2.into())
+            .build()
     );
     assert_eq!(
         ud[0xD4DB],
-        Details::r#static(
-            None,
-            &[],
-            "HANGUL SYLLABLE ",
-            GraphemeBreak::HangulLVT,
-            "Other Letter (Lo)",
-            "Hangul Syllables",
-            "Unicode 2.0",
-            HangulSyllableType::Lvt,
-            None,
-            (17, 16, 15),
-            None,
-            None,
-            &[Bits::DerivedNameNr1],
-            &[]
-        )
+        Details::builder()
+            .dnrp("HANGUL SYLLABLE ")
+            .gb(GraphemeBreak::HangulLVT)
+            .gc("Other Letter (Lo)")
+            .block("Hangul Syllables")
+            .age("Unicode 2.0")
+            .hst(HangulSyllableType::Lvt)
+            .hlvt((17, 16, 15))
+            .bits(Bits::DerivedNameNr1.into())
+            .build()
     );
     assert_eq!(
         ud[0xD788],
-        Details::r#static(
-            None,
-            &[],
-            "HANGUL SYLLABLE ",
-            GraphemeBreak::HangulLV,
-            "Other Letter (Lo)",
-            "Hangul Syllables",
-            "Unicode 2.0",
-            HangulSyllableType::Lv,
-            None,
-            (18, 20, 0),
-            None,
-            None,
-            &[Bits::DerivedNameNr1],
-            &[]
-        )
+        Details::builder()
+            .dnrp("HANGUL SYLLABLE ")
+            .gb(GraphemeBreak::HangulLV)
+            .gc("Other Letter (Lo)")
+            .block("Hangul Syllables")
+            .age("Unicode 2.0")
+            .hst(HangulSyllableType::Lv)
+            .hlvt((18, 20, 0))
+            .bits(Bits::DerivedNameNr1.into())
+            .build()
     );
+
     assert_eq!(
         ud[0xF900],
-        Details::r#static(
-            None,
-            &[],
-            "CJK COMPATIBILITY IDEOGRAPH-",
-            None,
-            "Other Letter (Lo)",
-            "CJK Compatibility Ideographs",
-            "Unicode 1.1",
-            None,
-            None,
-            None,
-            "how? what?",
-            None,
-            &[Bits::KdefinitionExists, Bits::DerivedNameNr2],
-            &[]
-        )
+        Details::builder()
+            .dnrp("CJK COMPATIBILITY IDEOGRAPH-")
+            .gc("Other Letter (Lo)")
+            .block("CJK Compatibility Ideographs")
+            .age("Unicode 1.1")
+            .uhdef("how? what?")
+            .bits(Bits::DerivedNameNr2 | Bits::KdefinitionExists)
+            .build()
     );
     assert_eq!(
         ud[0xFE18],
-        Details::r#static(
-            "PRESENTATION FORM FOR VERTICAL RIGHT WHITE LENTICULAR BRAKCET",
-            &[(
+        Details::builder()
+            .name("PRESENTATION FORM FOR VERTICAL RIGHT WHITE LENTICULAR BRAKCET")
+            .alias(&[(
                 "PRESENTATION FORM FOR VERTICAL RIGHT WHITE LENTICULAR BRACKET",
-                Correction
-            )],
-            None,
-            None,
-            "Close Punctuation (Pe)",
-            "Vertical Forms",
-            "Unicode 4.1",
-            None,
-            None,
-            None,
-            None,
-            None,
-            &[],
-            &[]
-        )
+                Correction,
+            )])
+            .gc("Close Punctuation (Pe)")
+            .block("Vertical Forms")
+            .age("Unicode 4.1")
+            .build()
     );
     assert_eq!(
         ud[0xFEFF],
-        Details::r#static(
-            "ZERO WIDTH NO-BREAK SPACE",
-            &[
+        Details::builder()
+            .name("ZERO WIDTH NO-BREAK SPACE")
+            .alias(&[
                 ("BYTE ORDER MARK", Unicode1),
                 ("BYTE ORDER MARK", Alternate),
                 ("BOM", Abbreviation),
-                ("ZWNBSP", Abbreviation)
-            ],
-            None,
-            GraphemeBreak::Control,
-            "Format (Cf)",
-            "Arabic Presentation Forms-B",
-            "Unicode 1.1",
-            None,
-            None,
-            None,
-            None,
-            None,
-            &[],
-            &[]
-        )
+                ("ZWNBSP", Abbreviation),
+            ])
+            .gb(GraphemeBreak::Control)
+            .gc("Format (Cf)")
+            .block("Arabic Presentation Forms-B")
+            .age("Unicode 1.1")
+            .build()
     );
 
     if let Some(twemoji) = std::env::args().nth(1) {
@@ -461,25 +376,25 @@ fn main() -> Result<(), Error> {
             let mut new_points = Vec::default();
             for (i, &point) in points.iter().enumerate() {
                 let ebits = ud[point].ebits;
-                let e = (EmojiBits::IsEmoji as u8 & ebits) != 0;
-                let ep = (EmojiBits::IsEmojiPresentation as u8 & ebits) != 0;
-                let emb = (EmojiBits::IsEmojiModifierBase as u8 & ebits) != 0;
+                let e = ebits.contains(EmojiBits::Emoji);
+                let ep = ebits.contains(EmojiBits::EmojiPresentation);
+                let emb = ebits.contains(EmojiBits::EmojiModifierBase);
                 let next_point = points.get(i + 1);
                 let next_is_vs16 = next_point.is_some_and(|&x| x == 0xFE0F);
                 let next_ebits = next_point.map(|&j| ud[j].ebits);
-                let next_em =
-                    next_ebits.is_some_and(|x| (EmojiBits::IsEmojiModifier as u8 & x) != 0);
+                let next_em = next_ebits.is_some_and(|x| x.contains(EmojiBits::EmojiModifier));
                 new_points.push(point);
-                if e && !ep && !next_is_vs16 && !(emb && next_em) {
-                    if !emb && next_em {
-                        eprintln!(
-                            "Warning: {}: tolerating non-RGI emoji modifier sequence",
-                            name
-                        );
-                    } else {
-                        // eprintln!("Warning: {}: U+{:04X} without VS16 or Emoji_Modifier", point, name);
-                        new_points.push(0xFE0F);
-                    }
+                if !e || ep || next_is_vs16 || emb && next_em {
+                    continue;
+                }
+                if !emb && next_em {
+                    eprintln!(
+                        "Warning: {}: tolerating non-RGI emoji modifier sequence",
+                        name
+                    );
+                } else {
+                    // eprintln!("Warning: {}: U+{:04X} without VS16 or Emoji_Modifier", point, name);
+                    new_points.push(0xFE0F);
                 }
             }
             if new_points != points {
@@ -523,15 +438,15 @@ fn main() -> Result<(), Error> {
     write_pool_indices(&ud, &pool, "data.uhdef.bin", |x| x.uhdef.map_clone())?;
     write_pool_indices(&ud, &pool, "data.uhman.bin", |x| x.uhman.map_clone())?;
     write_sparse(&ud, "data.bits.bin", 0, u8_writer, |x| {
-        if x.bits > 0 {
-            Some(x.bits)
+        if !x.bits.is_empty() {
+            Some(x.bits.bits())
         } else {
             None
         }
     })?;
     write_sparse(&ud, "data.ebits.bin", 0, u8_writer, |x| {
-        if x.ebits > 0 {
-            Some(x.ebits)
+        if !x.ebits.is_empty() {
+            Some(x.ebits.bits())
         } else {
             None
         }
@@ -550,7 +465,7 @@ fn main() -> Result<(), Error> {
             let mut value = 0;
             if page
                 .iter()
-                .filter(|x| x.name.is_some() || x.bits & Bits::DerivedNameNr1 as u8 != 0)
+                .filter(|x| x.name.is_some() || x.bits.contains(Bits::DerivedNameNr1))
                 .count()
                 > 0
             {
@@ -597,28 +512,28 @@ fn points<T: Default>() -> Vec<T> {
     result
 }
 
-fn write<W: FnOnce(BufWriter<File>) -> Result<(), Error>>(
+fn write<W: FnOnce(BufWriter<File>) -> eyre::Result<()>>(
     path: &str,
     writer: W,
-) -> Result<(), Error> {
+) -> eyre::Result<()> {
     println!("Writing {} ...", path);
 
     writer(BufWriter::new(File::create(path)?))
 }
 
-fn u8_writer(sink: &mut BufWriter<File>, x: u8) -> Result<(), Error> {
+fn u8_writer(sink: &mut BufWriter<File>, x: u8) -> eyre::Result<()> {
     sink.write_u8(x)?;
 
     Ok(())
 }
 
-fn u16_writer(sink: &mut BufWriter<File>, x: u16) -> Result<(), Error> {
+fn u16_writer(sink: &mut BufWriter<File>, x: u16) -> eyre::Result<()> {
     sink.write_u16::<BigEndian>(x)?;
 
     Ok(())
 }
 
-fn u32_writer(sink: &mut BufWriter<File>, x: u32) -> Result<(), Error> {
+fn u32_writer(sink: &mut BufWriter<File>, x: u32) -> eyre::Result<()> {
     sink.write_u32::<BigEndian>(x)?;
 
     Ok(())
@@ -628,14 +543,14 @@ fn write_sparse<
     T,
     U: Copy + PartialEq + Debug,
     G: FnMut(&T) -> Option<U>,
-    W: FnMut(&mut BufWriter<File>, U) -> Result<(), Error>,
+    W: FnMut(&mut BufWriter<File>, U) -> eyre::Result<()>,
 >(
     source: &[T],
     path: &str,
     default: U,
     mut writer: W,
     mut getter: G,
-) -> Result<(), Error> {
+) -> eyre::Result<()> {
     write(path, |mut sink| {
         let mut page_counts = Vec::default();
 
@@ -674,11 +589,11 @@ fn write_sparse<
 }
 
 fn write_pool_indices<G: FnMut(&Details) -> Option<Rc<str>>>(
-    source: &Vec<Details>,
+    source: &[Details],
     pool: &Pool,
     path: &str,
     mut getter: G,
-) -> Result<(), Error> {
+) -> eyre::Result<()> {
     write_sparse(source, path, 0xFFFF, u16_writer, |x| {
         getter(x).map(|x| pool.r#use(&x).try_into().expect("string pool overflow"))
     })
@@ -697,7 +612,7 @@ fn derived_name(point: usize) -> Option<String> {
     None
 }
 
-fn write_alias_files(source: &[Details], pool: &Pool) -> Result<(), Error> {
+fn write_alias_files(source: &[Details], pool: &Pool) -> eyre::Result<()> {
     let mut counts = Vec::default();
     let mut indices = Vec::default();
     let mut strings = Vec::default();
@@ -743,7 +658,7 @@ fn write_alias_files(source: &[Details], pool: &Pool) -> Result<(), Error> {
     Ok(())
 }
 
-fn write_sequence_files(sequences: &Sequences, pool: &Pool) -> Result<(), Error> {
+fn write_sequence_files(sequences: &Sequences, pool: &Pool) -> eyre::Result<()> {
     write("data.seqb.bin", |mut sink| {
         let mut start = 0;
 

@@ -1,4 +1,4 @@
-use failure::Error;
+use color_eyre::eyre;
 use regex::Captures;
 
 use crate::captures::CapturesExt;
@@ -7,11 +7,11 @@ use crate::pool::Popularity;
 
 pub(crate) fn jamo_handler(
     popularity: &mut Popularity,
-    sink: &mut Vec<Details>,
+    sink: &mut [Details],
     captures: Captures,
-) -> Result<(), Error> {
-    let point = usize::from_str_radix(captures.name_ok("point")?, 16)?;
-    let value = captures.name_ok("value")?;
+) -> eyre::Result<()> {
+    let point = usize::from_str_radix(captures.try_name("point")?, 16)?;
+    let value = captures.try_name("value")?;
 
     sink[point].hjsn = Some(popularity.vote(value));
 
