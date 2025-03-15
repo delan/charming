@@ -20,9 +20,9 @@ for i in \
     Unihan.zip \
 ; do
     echo $i
-    curl -fsO https://www.unicode.org/Public/${unicode_ver}/ucd/$i
+    curl -f\#O https://www.unicode.org/Public/${unicode_ver}/ucd/$i
 done
-echo "emoji-text.txt (this may take a while)"
-curl -fO https://www.unicode.org/Public/emoji/${emoji_ver}/emoji-test.txt
+echo 'emoji-test.txt (this may take a while)'
+curl -f\#O https://www.unicode.org/Public/emoji/${emoji_ver}/emoji-test.txt
 unzip -o Unihan.zip Unihan_Readings.txt
 rm Unihan.zip
