@@ -1,0 +1,17 @@
+name: "output size"
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: samueldr/lix-gha-installer-action@v1
+    - run: nix develop -c ci/build.sh
+    - name: network size
+      run: ls dist/*/*.{br,woff2} | sort -t/ -sk3,3 | xargs du --apparent-size -ch
+    - name: estimated memory size (data only)
+      run: ls dist/*/*.bin | sort -t/ -sk3,3 | xargs du --apparent-size -ch
