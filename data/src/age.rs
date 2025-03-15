@@ -7,7 +7,7 @@ use crate::range::range_handler;
 
 pub(crate) fn age_handler(
     popularity: &mut Popularity,
-    sink: &mut Vec<Details>,
+    sink: &mut [Details],
     captures: Captures,
 ) -> Result<()> {
     range_handler(

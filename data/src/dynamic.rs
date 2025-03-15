@@ -50,10 +50,7 @@ pub(crate) enum NameRule {
 }
 
 // 3.12  Conjoining Jamo Behavior
-pub(crate) fn hangul_lvt_indices(
-    data: &Vec<Details>,
-    point: usize,
-) -> Option<(usize, usize, usize)> {
+pub(crate) fn hangul_lvt_indices(data: &[Details], point: usize) -> Option<(usize, usize, usize)> {
     const S_BASE: usize = 0xAC00;
     // const L_BASE: usize = 0x1100;
     // const V_BASE: usize = 0x1161;

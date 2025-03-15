@@ -120,7 +120,7 @@ fn main() -> Result<()> {
 
     parse(
         &mut ud,
-        hst_handler,
+        |sink, captures| hst_handler(sink, captures),
         "HangulSyllableType.txt",
         None,
         r"^(?P<first>[0-9A-F]+)(?:[.][.](?P<last>[0-9A-F]+))?\s*;\s*(?P<value>[^ ]+)",
@@ -151,21 +151,21 @@ fn main() -> Result<()> {
     // properties for these characters in bulk, but others are listed
     // individually due to their unique properties.
     for (first, last, rule, prefix) in NAME_RULES {
-        for i in first..=last {
+        for (i, item) in ud.iter_mut().enumerate().take(last + 1).skip(first) {
             // Each character with a derived name should either have
             // no explicit name (iff defined in bulk) or an explicit
             // name that matches its derived name.
-            assert!(ud[i]
+            assert!(item
                 .name
                 .as_deref()
                 .is_none_or(|x| Some(x) == derived_name(i).as_deref()));
 
             // Strip out all derived names from output data, to avoid
             // polluting string pool and client heap.
-            ud[i].name = None;
+            item.name = None;
 
-            ud[i].dnrp = Some(popularity.vote(prefix));
-            ud[i].bits |= match rule {
+            item.dnrp = Some(popularity.vote(prefix));
+            item.bits |= match rule {
                 NameRule::NR1 => Bits::DerivedNameNr1,
                 NameRule::NR2 => Bits::DerivedNameNr2,
             };
@@ -182,7 +182,7 @@ fn main() -> Result<()> {
 
     parse(
         &mut ud,
-        ed_handler,
+        |sink, captures| ed_handler(sink, captures),
         "emoji-data.txt",
         None,
         r"^(?P<first>[0-9A-F]+)(?:[.][.](?P<last>[0-9A-F]+))?\s*;\s*(?P<property>Emoji|Extended_Pictographic|Emoji_Component|Emoji_Presentation|Emoji_Modifier|Emoji_Modifier_Base)(\s|#|$)",
@@ -208,7 +208,7 @@ fn main() -> Result<()> {
 
     parse(
         &mut ud,
-        gbp_handler,
+        |sink, captures| gbp_handler(sink, captures),
         "GraphemeBreakProperty.txt",
         None,
         r"^(?P<first>[0-9A-F]+)(?:[.][.](?P<last>[0-9A-F]+))?\s*;\s*(?P<value>[^ ]+)",
@@ -384,16 +384,17 @@ fn main() -> Result<()> {
                 let next_ebits = next_point.map(|&j| ud[j].ebits);
                 let next_em = next_ebits.is_some_and(|x| x.contains(EmojiBits::EmojiModifier));
                 new_points.push(point);
-                if e && !ep && !next_is_vs16 && !(emb && next_em) {
-                    if !emb && next_em {
-                        eprintln!(
-                            "Warning: {}: tolerating non-RGI emoji modifier sequence",
-                            name
-                        );
-                    } else {
-                        // eprintln!("Warning: {}: U+{:04X} without VS16 or Emoji_Modifier", point, name);
-                        new_points.push(0xFE0F);
-                    }
+                if !e || ep || next_is_vs16 || emb && next_em {
+                    continue;
+                }
+                if !emb && next_em {
+                    eprintln!(
+                        "Warning: {}: tolerating non-RGI emoji modifier sequence",
+                        name
+                    );
+                } else {
+                    // eprintln!("Warning: {}: U+{:04X} without VS16 or Emoji_Modifier", point, name);
+                    new_points.push(0xFE0F);
                 }
             }
             if new_points != points {
@@ -585,7 +586,7 @@ fn write_sparse<
 }
 
 fn write_pool_indices<G: FnMut(&Details) -> Option<Rc<str>>>(
-    source: &Vec<Details>,
+    source: &[Details],
     pool: &Pool,
     path: &str,
     mut getter: G,

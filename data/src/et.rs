@@ -8,7 +8,7 @@ use crate::sequence::Sequences;
 
 pub(crate) fn et_handler(
     popularity: &mut Popularity,
-    sink: &mut Vec<Details>,
+    sink: &mut [Details],
     sequences: &mut Sequences,
     captures: Captures,
 ) -> Result<()> {

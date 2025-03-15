@@ -11,7 +11,7 @@ use crate::pool::Popularity;
 pub(crate) fn ud_handler(
     gc_labels: &HashMap<String, String>,
     popularity: &mut Popularity,
-    sink: &mut Vec<Details>,
+    sink: &mut [Details],
     captures: Captures,
 ) -> Result<()> {
     let point = usize::from_str_radix(captures.try_name("point")?, 16)?;
