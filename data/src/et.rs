@@ -1,4 +1,4 @@
-use color_eyre::eyre::Result;
+use color_eyre::eyre;
 use regex::Captures;
 
 use crate::captures::CapturesExt;
@@ -11,7 +11,7 @@ pub(crate) fn et_handler(
     sink: &mut [Details],
     sequences: &mut Sequences,
     captures: Captures,
-) -> Result<()> {
+) -> eyre::Result<()> {
     let points = captures
         .try_name("points")?
         .split(" ")

@@ -1,4 +1,4 @@
-use color_eyre::eyre::Result;
+use color_eyre::eyre;
 use regex::Captures;
 
 use crate::captures::CapturesExt;
@@ -8,7 +8,7 @@ pub(crate) fn range_handler<S: FnMut(&mut Details, &str)>(
     mut setter: S,
     sink: &mut [Details],
     captures: Captures,
-) -> Result<()> {
+) -> eyre::Result<()> {
     let first = captures.try_name("first")?;
     let last = captures.name_or("last", first);
 

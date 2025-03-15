@@ -1,4 +1,4 @@
-use color_eyre::eyre::Result;
+use color_eyre::eyre;
 use regex::Captures;
 
 use crate::details::Details;
@@ -9,6 +9,6 @@ pub(crate) fn block_handler(
     popularity: &mut Popularity,
     sink: &mut [Details],
     captures: Captures,
-) -> Result<()> {
+) -> eyre::Result<()> {
     range_handler(|r, x| r.block = Some(popularity.vote(x)), sink, captures)
 }

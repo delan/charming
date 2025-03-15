@@ -1,16 +1,16 @@
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
-use color_eyre::eyre::Result;
+use color_eyre::eyre;
 use regex::{Captures, Regex};
 
-pub(crate) fn parse<R, H: FnMut(&mut R, Captures) -> Result<()>>(
+pub(crate) fn parse<R, H: FnMut(&mut R, Captures) -> eyre::Result<()>>(
     sink: &mut R,
     mut handler: H,
     path: &str,
     label: impl Into<Option<&'static str>>,
     pattern: &str,
-) -> Result<()> {
+) -> eyre::Result<()> {
     if let Some(label) = label.into() {
         println!("Processing {} ({}) ...", path, label);
     } else {

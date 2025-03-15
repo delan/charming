@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use color_eyre::eyre::Result;
+use color_eyre::eyre;
 use enumflags2::BitFlags;
 use regex::Captures;
 
@@ -13,7 +13,7 @@ pub(crate) fn ud_handler(
     popularity: &mut Popularity,
     sink: &mut [Details],
     captures: Captures,
-) -> Result<()> {
+) -> eyre::Result<()> {
     let point = usize::from_str_radix(captures.try_name("point")?, 16)?;
     let name = captures.try_name("name")?;
     let gc = captures.try_name("gc")?;
@@ -58,7 +58,7 @@ pub(crate) fn ud_handler(
 pub(crate) fn ud_range_handler(
     ud_ranges: &mut HashMap<String, (usize, Option<usize>)>,
     captures: Captures,
-) -> Result<()> {
+) -> eyre::Result<()> {
     let point = usize::from_str_radix(captures.try_name("point")?, 16)?;
     let name = captures.try_name("name")?;
     let kind = captures.try_name("kind")?;

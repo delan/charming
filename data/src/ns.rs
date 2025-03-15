@@ -1,4 +1,4 @@
-use color_eyre::eyre::Result;
+use color_eyre::eyre;
 use regex::Captures;
 
 use crate::captures::CapturesExt;
@@ -9,7 +9,7 @@ pub(crate) fn ns_handler(
     popularity: &mut Popularity,
     sequences: &mut Sequences,
     captures: Captures,
-) -> Result<()> {
+) -> eyre::Result<()> {
     let points = captures
         .try_name("points")?
         .split(" ")

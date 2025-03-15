@@ -1,4 +1,4 @@
-use color_eyre::eyre::Result;
+use color_eyre::eyre;
 use regex::Captures;
 
 use crate::captures::CapturesExt;
@@ -9,7 +9,7 @@ pub(crate) fn na_handler(
     popularity: &mut Popularity,
     sink: &mut [Details],
     captures: Captures,
-) -> Result<()> {
+) -> eyre::Result<()> {
     let point = usize::from_str_radix(captures.try_name("point")?, 16)?;
     let alias = captures.try_name("alias")?;
     let r#type = captures.try_name("type")?;

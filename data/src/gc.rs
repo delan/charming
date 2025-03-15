@@ -1,11 +1,14 @@
 use std::collections::HashMap;
 
-use color_eyre::eyre::Result;
+use color_eyre::eyre;
 use regex::Captures;
 
 use crate::captures::CapturesExt;
 
-pub(crate) fn gc_handler(sink: &mut HashMap<String, String>, captures: Captures) -> Result<()> {
+pub(crate) fn gc_handler(
+    sink: &mut HashMap<String, String>,
+    captures: Captures,
+) -> eyre::Result<()> {
     let key = captures.try_name("key")?;
     let value = captures.try_name("value")?;
     let value = value.replace('_', " ");

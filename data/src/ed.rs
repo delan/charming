@@ -1,10 +1,10 @@
-use color_eyre::eyre::Result;
+use color_eyre::eyre;
 use regex::Captures;
 
 use crate::captures::CapturesExt;
 use crate::details::{Details, EmojiBits};
 
-pub(crate) fn ed_handler(sink: &mut [Details], captures: Captures) -> Result<()> {
+pub(crate) fn ed_handler(sink: &mut [Details], captures: Captures) -> eyre::Result<()> {
     let first = captures.try_name("first")?;
     let last = captures.name_or("last", first);
     let property = captures.try_name("property")?;
