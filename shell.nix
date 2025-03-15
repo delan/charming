@@ -26,6 +26,6 @@ pkgs.mkShell {
     pkgs.cargo # pkgs.rust_1_58.packages.stable.cargo
 
     # helper > requirements.txt
-    pkgs.python38
+    pkgs.python313
   ];
 }

@@ -24,8 +24,8 @@ init-clean:
 
 init-nixos: init
 	# FIXME this can’t possibly be the best solution
-	patchelf --set-interpreter $$(cat $$NIX_CC/nix-support/dynamic-linker) helper/.venv/lib/*/site-packages/ninja/data/bin/ninja
-	helper/.venv/lib/*/site-packages/ninja/data/bin/ninja --version
+	patchelf --set-interpreter $$(cat $$NIX_CC/nix-support/dynamic-linker) helper/.venv/bin/ninja
+	helper/.venv/bin/ninja --version
 
 helper/.venv:
 	python3 -m venv -- '$@'
