@@ -16,8 +16,8 @@ assets: helper/dist/twemoji-$(TWEMOJI).woff2 helper/dist/Symbola-$(SYMBOLA).woff
 assets-clean:
 	cd helper && rm -Rf build dist twemoji-$(TWEMOJI) twemoji-$(TWEMOJI_DIR)
 
-init: helper/.venv helper/requirements.txt
-	. helper/.venv/bin/activate && pip install -r helper/requirements.txt
+init: helper/.venv pyproject.toml uv.lock
+	. helper/.venv/bin/activate && uv pip install -r pyproject.toml
 
 init-clean:
 	rm -Rf helper/.venv
@@ -28,7 +28,7 @@ init-nixos: init
 	helper/.venv/bin/ninja --version
 
 helper/.venv:
-	python3 -m venv -- '$@'
+	uv venv -- '$@'
 
 helper/dist/twemoji-$(TWEMOJI).woff2: helper/twemoji-$(TWEMOJI)
 	cd data && cargo run -- $(TWEMOJI)

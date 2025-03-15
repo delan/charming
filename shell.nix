@@ -27,5 +27,6 @@ pkgs.mkShell {
 
     # helper > requirements.txt
     pkgs.python313
+    pkgs.uv
   ];
 }

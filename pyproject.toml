@@ -1,0 +1,10 @@
+[project]
+name = "charming"
+version = "0.1.0"
+description = "Unicode character browser"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "nanoemoji==0.15.1",
+    "Brotli==1.0.9",
+]
