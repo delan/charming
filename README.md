@@ -1,13 +1,13 @@
 Welcome! You’ll need:
 
-• Nix and one of the following
-  • nix-shell [--pure]
-  • direnv allow
-• or your own environment with
-  • make(1) + git(1) + pdfdetach(1)
-  • Rust 1.58+
-  • Python 3.8+ (for make assets)
-  • Node.js 10+ (for make assets)
+- Nix and one of the following
+  - nix-shell [--pure]
+  - direnv allow
+- or your own environment with
+  - make(1) + git(1) + pdfdetach(1)
+  - Rust 1.58+
+  - Python 3.8+ (for make assets)
+  - Node.js 10+ (for make assets)
 
 # fetch dependencies
 git submodule update --init --recursive
