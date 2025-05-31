@@ -1,0 +1,12 @@
+{
+  "name": "charming",
+  "start_url": "/",
+  "icons": [
+    {
+      "src": "icons/512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "display": "standalone"
+}
